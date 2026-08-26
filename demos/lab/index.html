@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Codescape Lab</title>
+<link rel="stylesheet" href="/styles.css?v=20260814-6">
+<style>
+  body { background:#fbfaf7; }
+  .lab { width:min(880px,calc(100% - 56px)); margin-inline:auto; padding-bottom:96px; }
+  .topbar { display:flex; justify-content:space-between; align-items:baseline;
+            padding:28px 0; border-bottom:1px solid var(--line); }
+  .topbar a, .stamp { color:var(--muted);
+            font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+            letter-spacing:.08em; text-transform:uppercase; }
+  .topbar a:hover { color:var(--accent); }
+
+  .masthead { padding:clamp(52px,8vw,88px) 0 clamp(34px,5vw,52px); }
+  .masthead h1 { margin:0 0 18px; font-size:clamp(46px,8vw,92px); }
+  .masthead .eyebrow { margin:0 0 20px; }
+  .masthead p { max-width:560px; margin:0; color:var(--muted); font-size:15px; }
+
+  .caution { max-width:560px; margin:22px 0 0; padding:14px 16px;
+             border:1px solid rgba(104,113,91,.28); border-left:2px solid var(--accent);
+             border-radius:0 12px 12px 0; background:#fff;
+             color:var(--muted); font-size:13px; }
+
+  .band { padding-top:52px; }
+  .band-head { display:flex; align-items:baseline; gap:14px; padding-bottom:6px; }
+  .band-head h2 { font-family:Georgia,"Times New Roman",serif; font-weight:400;
+                  font-size:26px; letter-spacing:-.03em; color:var(--text); }
+  .band-head .count { color:var(--accent);
+                      font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;
+                      letter-spacing:.1em; }
+  .band > p { max-width:560px; margin:0 0 18px; color:var(--muted); font-size:14px; }
+
+  ul.rows { list-style:none; margin:0; padding:0; border-top:1px solid var(--line); }
+  ul.rows li { border-bottom:1px solid var(--line); }
+  .row { position:relative; display:grid;
+         grid-template-columns:60px minmax(0,1fr) 92px; gap:22px;
+         align-items:baseline; padding:20px 0; transition:padding .25s ease; }
+  .row .seal { color:var(--accent);
+               font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; }
+  .row h3 { margin:0; font-size:21px; font-weight:600; letter-spacing:-.045em; line-height:1.1;
+            transition:color .25s ease,transform .25s ease; }
+  .row .desc { max-width:520px; margin:7px 0 0; color:var(--muted); font-size:14px; }
+  .row .meta { margin:9px 0 0; color:var(--muted);
+               font:10px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.05em; }
+  .row .meta b { color:var(--text); font-weight:600; }
+  .row .go { text-align:right; color:var(--muted); font-size:13px; white-space:nowrap; }
+  .row .go span { color:var(--accent); }
+  a.row::before { content:""; position:absolute; left:-28px; right:-28px; top:0; bottom:0;
+                  z-index:-1; background:radial-gradient(340px circle at var(--pointer-x,50%) var(--pointer-y,50%),rgba(104,113,91,.09),transparent 70%);
+                  opacity:0; transition:opacity .25s ease; }
+  a.row:hover::before { opacity:1; }
+  a.row:hover { padding-left:10px; padding-right:10px; }
+  a.row:hover h3 { color:var(--accent); transform:translateX(4px); }
+  a.row:hover .go { color:var(--accent); }
+  .row.idea .go { color:var(--muted); }
+  .row.idea h3 { color:var(--muted); }
+
+  .row.look h3 { color:var(--text); }
+  .tries { display:flex; flex-wrap:wrap; gap:8px; margin:11px 0 0; }
+  .tries a { padding:6px 12px; border:1px solid rgba(104,113,91,.34); border-radius:999px;
+             background:#fff; color:var(--accent);
+             font:11px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace;
+             transition:background .2s ease,color .2s ease; }
+  .tries a:hover { background:var(--accent); color:#fff; }
+
+  .keys { display:flex; flex-wrap:wrap; gap:7px; margin:0 0 20px; }
+  .keys span { padding:5px 9px; border:1px solid var(--line); border-radius:999px; background:#fff;
+               color:var(--muted); font:11px/1.1 ui-monospace,SFMono-Regular,Menlo,monospace; }
+  .keys b { color:var(--text); font-weight:600; }
+
+  .colophon { margin-top:72px; padding-top:26px; border-top:1px solid var(--line);
+              color:var(--muted); font-size:13px; }
+
+  @media (max-width:760px) {
+    .lab { width:min(100% - 32px,880px); }
+    .row { grid-template-columns:34px minmax(0,1fr) 26px; gap:12px; }
+    .row .go { font-size:0; }
+    .row .go span { font-size:20px; }
+  }
+</style>
+</head>
+<body>
+<div class="lab">
+  <div class="topbar">
+    <a href="https://rishva.up.railway.app/">&larr; Rishva Iyer</a>
+    <span class="stamp">Unlisted &middot; staging</span>
+  </div>
+
+  <header class="masthead">
+    <p class="eyebrow">codescape <span>&amp;</span> other maps</p>
+    <h1>The Lab</h1>
+    <p>Where code cities go before they are ready. Nothing here is linked from the portfolio,
+    and nothing here is finished. Builds sit on this shelf until they either earn a project
+    card or get cut on purpose.</p>
+    <p class="caution">Every page below publishes a complete file tree: each path, its line
+    count, its commit count. All public repos except Thirdwurld, which was approved. Worth
+    re-checking before adding one.</p>
+  </header>
+
+  <section class="band">
+    <div class="band-head"><h2>Looks</h2><span class="count">A B C</span></div>
+    <p>The same three cities rendered three other ways. Nothing about the data changes: same
+    layout, same heights, same districts, same click-to-inspect. Only the material, the light
+    and the chrome move. Open one of each and pick.</p>
+    <ul class="rows">
+      <li><div class="row look">
+        <span class="seal">A</span>
+        <span><h3>Daylight massing</h3>
+          <p class="desc">Cream sky, plaster buildings, warm sun with a cool sky bounce. No lit
+          windows anywhere: churn becomes recessed openings instead of light, so the channel
+          survives without glowing. Contact darkening at the base seats the buildings on the
+          ground the way fog used to.</p>
+          <p class="tries"><a href="/demos/lab/looks/daylight/contextiskey/">contextIsKey</a>
+          <a href="/demos/lab/looks/daylight/thirdwurld/">Thirdwurld</a>
+          <a href="/demos/lab/looks/daylight/radar/">Radar</a></p></span>
+        <span class="go">3 cities</span></div></li>
+      <li><div class="row look">
+        <span class="seal">B</span>
+        <span><h3>Ink on paper</h3>
+          <p class="desc">Flat wash on drafting paper, ruled grid, and a hard fresnel ramp that
+          draws an ink outline on every silhouette without an edge pass. Shading is almost gone,
+          so the treemap structure reads harder than in any other look. The biggest departure of
+          the three.</p>
+          <p class="tries"><a href="/demos/lab/looks/blueprint/contextiskey/">contextIsKey</a>
+          <a href="/demos/lab/looks/blueprint/thirdwurld/">Thirdwurld</a>
+          <a href="/demos/lab/looks/blueprint/radar/">Radar</a></p></span>
+        <span class="go">3 cities</span></div></li>
+      <li><div class="row look">
+        <span class="seal">C</span>
+        <span><h3>Dusk stone</h3>
+          <p class="desc">Keeps the night drama and drops the neon. Warm grey stone, dusty rose
+          horizon instead of navy, windows dimmed to about half and pulled well away from white,
+          rim light warm rather than electric blue.</p>
+          <p class="tries"><a href="/demos/lab/looks/dusk/contextiskey/">contextIsKey</a>
+          <a href="/demos/lab/looks/dusk/thirdwurld/">Thirdwurld</a>
+          <a href="/demos/lab/looks/dusk/radar/">Radar</a></p></span>
+        <span class="go">3 cities</span></div></li>
+    </ul>
+  </section>
+
+  <section class="band">
+    <div class="band-head"><h2>Three-view cities</h2><span class="count">03</span></div>
+    <p>New builds. One page per project, with City, Timelapse and Coverage sharing the same
+    geometry rather than living as three pages that drift apart.</p>
+    <div class="keys">
+      <span><b>1 2 3</b> switch view</span>
+      <span><b>Space</b> play</span>
+      <span><b>&larr; &rarr;</b> step</span>
+      <span><b>Home / End</b> jump</span>
+      <span><b>H</b> hide UI</span>
+      <span><b>click</b> inspect</span>
+    </div>
+    <ul class="rows">
+      <li><a class="row" href="/demos/lab/thirdwurld/">
+        <span class="seal">01</span>
+        <span><h3>Thirdwurld</h3>
+          <p class="desc">The flagship city, plus 447 frames of construction stepped by commit.
+          A fork: thirteen months of sparse inherited history, then four hundred commits in
+          eighteen days.</p>
+          <p class="meta">1,111 files &middot; <b>226,280</b> lines &middot; 14 districts
+          &middot; timelapse <b>447</b> frames &middot; line drift 11</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/lab/contextiskey/">
+        <span class="seal">02</span>
+        <span><h3>contextIsKey</h3>
+          <p class="desc">The only build with all three views. Coverage runs the real test suite
+          and lights each building by what actually executed, flaring on the test currently on
+          screen.</p>
+          <p class="meta">129 files &middot; <b>14,895</b> lines &middot; coverage
+          <b>91.29%</b> of 3,352 statements &middot; 49 of 129 measurable &middot; 165 steps</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/lab/radar/">
+        <span class="seal">03</span>
+        <span><h3>Surveillance Radar</h3>
+          <p class="desc">Snapshotted from HEAD rather than the working tree, because that
+          checkout is chronically dirty and would otherwise leak unpublished work into the
+          city.</p>
+          <p class="meta">113 files &middot; <b>15,295</b> lines &middot; 12 districts &middot;
+          timelapse <b>29</b> frames &middot; 1 historic file off-map</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+    </ul>
+  </section>
+
+  <section class="band">
+    <div class="band-head"><h2>Cut, but worth a look</h2><span class="count">01</span></div>
+    <ul class="rows">
+      <li><a class="row" href="/demos/lab/complaintgraph/">
+        <span class="seal">04</span>
+        <span><h3>ComplaintGraph village</h3>
+          <p class="desc">Cut because 28 files do not read as a city. Its largest district is
+          eleven flat JSON data files, so it lands as a slab. Below roughly 80 to 100 files the
+          whole effect stops working, and this is the evidence.</p>
+          <p class="meta">28 files &middot; <b>6,020</b> lines &middot; 6 districts &middot;
+          extent 102 against Thirdwurld's 620</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+    </ul>
+  </section>
+
+  <section class="band">
+    <div class="band-head"><h2>Other forms</h2><span class="count">05</span></div>
+    <p>Same data, no city. Tree is the directory hierarchy in three dimensions, branch thickness
+    by subtree lines and leaf glow by churn. Helix places each file on a time spiral by the
+    commit that introduced it.</p>
+    <ul class="rows">
+      <li><a class="row" href="/demos/lab/forms/thirdwurld.html">
+        <span class="seal">05</span>
+        <span><h3>Thirdwurld &middot; tree and helix</h3>
+          <p class="desc">The only repo with enough history for the helix to say anything. Six
+          hundred days end to end, and the spiral turns the fork's dead stretch into a visible
+          gap.</p>
+          <p class="meta">1,026 leaves &middot; 975 helix nodes &middot; <b>600.1</b> days
+          &middot; Dec 2024 to Aug 2026</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/lab/forms/betterask.html">
+        <span class="seal">06</span>
+        <span><h3>BetterAsk &middot; tree and helix</h3>
+          <p class="desc">Why the helix was pulled from the portfolio: all 44 files arrived in a
+          single commit, so the spiral is one flat ring. The tree still reads.</p>
+          <p class="meta">44 leaves &middot; <b>0.0</b> days of history</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/lab/forms/warmline.html">
+        <span class="seal">07</span>
+        <span><h3>WarmLine &middot; tree and helix</h3>
+          <p class="meta">28 leaves &middot; <b>4.6</b> days of history</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/lab/forms/replygraph.html">
+        <span class="seal">08</span>
+        <span><h3>ReplyGraph &middot; tree and helix</h3>
+          <p class="meta">49 leaves &middot; <b>11.2</b> days of history</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/lab/forms/jobagent.html">
+        <span class="seal">09</span>
+        <span><h3>JobAgent &middot; tree and helix</h3>
+          <p class="meta">54 leaves &middot; <b>8.1</b> days of history</p></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+    </ul>
+  </section>
+
+  <section class="band">
+    <div class="band-head"><h2>Already published</h2><span class="count">04</span></div>
+    <p>The older single-view builds, linked from project cards. Here to compare against the
+    three-view versions above.</p>
+    <ul class="rows">
+      <li><a class="row" href="/demos/codescape/"><span class="seal">10</span>
+        <span><h3>Thirdwurld</h3></span><span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/codescape-radar/"><span class="seal">11</span>
+        <span><h3>Surveillance Radar</h3></span><span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/codescape-contextiskey/"><span class="seal">12</span>
+        <span><h3>contextIsKey</h3></span><span class="go">Open <span>&#8599;</span></span></a></li>
+      <li><a class="row" href="/demos/codescape-all/"><span class="seal">13</span>
+        <span><h3>Metro &middot; nineteen public repos as one city</h3></span>
+        <span class="go">Open <span>&#8599;</span></span></a></li>
+    </ul>
+  </section>
+
+  <section class="band">
+    <div class="band-head"><h2>On the bench</h2><span class="count">05</span></div>
+    <p>New channels on the same engine. Nothing built yet.</p>
+    <ul class="rows">
+      <li><div class="row idea"><span class="seal">14</span>
+        <span><h3>Decay city</h3>
+          <p class="desc">Colour by age instead of language. Untouched code cools to grey stone
+          and goes dark, active code stays warm and lit, and an ember marks the files that are
+          both old and still moving.</p></span>
+        <span class="go">Next</span></div></li>
+      <li><div class="row idea"><span class="seal">15</span>
+        <span><h3>Diff city</h3>
+          <p class="desc">Two refs in, one city out. Growth extrudes upward, shrinkage sinks,
+          new files rise from empty lots, deletions leave lit foundations.</p></span>
+        <span class="go">Idea</span></div></li>
+      <li><div class="row idea"><span class="seal">16</span>
+        <span><h3>Blame and bus factor</h3>
+          <p class="desc">Colour by dominant author, roof glow by author entropy. Single-owner
+          buildings burn one flat colour. Names hashed before anything ships.</p></span>
+        <span class="go">Idea</span></div></li>
+      <li><div class="row idea"><span class="seal">17</span>
+        <span><h3>Skyways</h3>
+          <p class="desc">The import graph drawn as arcs over the existing streets, with cycles
+          picked out in red.</p></span>
+        <span class="go">Idea</span></div></li>
+      <li><div class="row idea"><span class="seal">18</span>
+        <span><h3>Agent trace</h3>
+          <p class="desc">An agent session replayed as a walk through the city. Files read go
+          dim, files written flare, abandoned branches leave scorch marks.</p></span>
+        <span class="go">Idea</span></div></li>
+    </ul>
+  </section>
+
+  <p class="colophon">Unlisted staging page, no index, no inbound links. If you got here without
+  the address, nothing on it is finished.</p>
+</div>
+<script>
+  for (const el of document.querySelectorAll('a.row')) {
+    el.addEventListener('pointermove', e => {
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--pointer-x', (e.clientX - r.left) + 'px');
+      el.style.setProperty('--pointer-y', (e.clientY - r.top) + 'px');
+    });
+  }
+</script>
+</body>
+</html>

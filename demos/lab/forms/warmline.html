@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WarmLine Codescape</title>
+<meta name="description" content="WarmLine rendered in 3D: files placed along a time spiral by the commit that introduced them.">
+<meta name="theme-color" content="#05070c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305070c'/%3E%3Crect x='5' y='14' width='5' height='13' fill='%23ff6b35'/%3E%3Crect x='12' y='7' width='5' height='20' fill='%23ffb347'/%3E%3Crect x='19' y='17' width='5' height='10' fill='%235cc8fa'/%3E%3C/svg%3E">
+<style>
+:root{
+  --void:#05070c; --panel:rgba(9,13,21,.84); --hair:#1b2434; --hair2:#27354b;
+  --txt:#c9d4e4; --dim:#75849b; --faint:#4b586c; --koi:#ff6b35;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--void);color:var(--txt);font-family:var(--mono);
+  font-size:12px;overflow:hidden;-webkit-font-smoothing:antialiased}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+canvas.drag{cursor:grabbing}
+.panel{position:fixed;z-index:5;background:var(--panel);border:1px solid var(--hair);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.lbl{font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+#back{position:fixed;z-index:5;top:0;left:0;border-left:0;border-top:0;padding:9px 14px;
+  display:flex;align-items:center;gap:8px;color:var(--dim);text-decoration:none;
+  font-size:9.5px;letter-spacing:.18em;text-transform:uppercase}
+#back:hover{color:var(--koi);background:rgba(255,255,255,.035)}
+#back:focus-visible{outline:1px solid var(--koi);outline-offset:-2px}
+#id{top:34px;left:0;border-left:0;padding:13px 16px}
+#id h1{margin:0;font-size:14px;letter-spacing:.26em;text-transform:uppercase;color:#eaf0fa;font-weight:600}
+#id .sub{margin-top:3px;color:var(--koi);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase}
+#id .st{margin-top:10px;padding-top:9px;border-top:1px solid var(--hair);color:var(--dim);font-size:11px}
+#modes{top:0;right:0;border-right:0;border-top:0;padding:11px 13px;display:flex;gap:7px}
+.btn{background:#070b12;border:1px solid var(--hair2);color:var(--dim);font-family:var(--mono);
+  font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;padding:7px 12px;cursor:pointer}
+.btn:hover{color:var(--txt);border-color:#3a4a63}
+.btn:focus-visible{outline:2px solid var(--koi);outline-offset:1px}
+.btn[aria-pressed="true"]{color:var(--void);background:var(--koi);border-color:var(--koi)}
+#leg{left:0;bottom:0;border-left:0;border-bottom:0;padding:11px 14px}
+#leg ul{margin:8px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:3px 14px}
+#leg li{display:flex;align-items:center;gap:7px;color:var(--dim);font-size:10.5px}
+#leg i{width:8px;height:8px;flex:none}
+#note{right:0;bottom:0;border-right:0;border-bottom:0;padding:10px 14px;max-width:340px;
+  color:var(--dim);font-size:10.5px;line-height:1.5}
+#note b{color:var(--koi);font-weight:600}
+#tip{position:fixed;z-index:6;pointer-events:none;background:rgba(6,9,15,.95);
+  border:1px solid var(--hair2);padding:5px 9px;font-size:10.5px;white-space:nowrap;
+  opacity:0;transition:opacity .12s;transform:translate(12px,-50%)}
+#tip b{color:var(--koi)}
+#axis{position:fixed;z-index:4;pointer-events:none;color:var(--faint);font-size:9px;
+  letter-spacing:.2em;text-transform:uppercase;opacity:0;transition:opacity .3s}
+@media (max-width:820px){#note,#leg{display:none}}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<a class="panel" id="back" href="https://rishva.up.railway.app/"><span aria-hidden="true">&larr;</span> Rishva Iyer &middot; portfolio</a>
+<header class="panel" id="id">
+  <h1 id="nm"></h1>
+  <div class="sub" id="br"></div>
+  <div class="st" id="st"></div>
+</header>
+<div class="panel" id="modes">
+  <button class="btn" id="m-tree" aria-pressed="true">Tree</button>
+  <button class="btn" id="m-helix" aria-pressed="false">Helix</button>
+  <button class="btn" id="m-spin" aria-pressed="true">Spin</button>
+</div>
+<div class="panel" id="leg"><div class="lbl">Spectrum</div><ul id="ll"></ul></div>
+<div class="panel" id="note"></div>
+<div id="tip"></div>
+<div id="axis"></div>
+
+<script>
+const D = {"name":"WarmLine","key":"warmline","branch":"voice/spoken-intake","files":28,"loc":8221,"tree":{"segs":[{"a":[0,0,0],"b":[0.0,7.333,0.0],"r":[3.2,2.88]},{"a":[0.0,7.333,0.0],"b":[0.0,14.667,0.0],"r":[2.88,2.56]},{"a":[0.0,14.667,0.0],"b":[0.0,22.0,0.0],"r":[2.56,2.24]},{"a":[0.0,22.0,0.0],"b":[-0.238,28.03,-2.286],"r":[1.7,1.53]},{"a":[-0.238,28.03,-2.286],"b":[-0.485,34.026,-4.66],"r":[1.53,1.36]},{"a":[-0.485,34.026,-4.66],"b":[-0.741,39.984,-7.125],"r":[1.36,1.19]},{"a":[-0.741,39.984,-7.125],"b":[-3.303,44.454,-9.658],"r":[1.186,1.067]},{"a":[-3.303,44.454,-9.658],"b":[-5.968,48.803,-12.293],"r":[1.067,0.949]},{"a":[-5.968,48.803,-12.293],"b":[-8.735,53.023,-15.03],"r":[0.949,0.83]},{"a":[-8.735,53.023,-15.03],"b":[-12.612,55.338,-16.811],"r":[0.526,0.474]},{"a":[-12.612,55.338,-16.811],"b":[-16.596,57.418,-18.643],"r":[0.474,0.421]},{"a":[-16.596,57.418,-18.643],"b":[-20.68,59.252,-20.52],"r":[0.421,0.369]},{"a":[-20.68,59.252,-20.52],"b":[-24.521,61.117,-20.627],"r":[0.257,0.232]},{"a":[-24.521,61.117,-20.627],"b":[-28.475,62.728,-20.738],"r":[0.232,0.206]},{"a":[-28.475,62.728,-20.738],"b":[-32.527,64.073,-20.852],"r":[0.206,0.18]},{"a":[-32.527,64.073,-20.852],"b":[-35.274,66.632,-21.132],"r":[0.166,0.15]},{"a":[-35.274,66.632,-21.132],"b":[-38.172,69.015,-21.429],"r":[0.15,0.133]},{"a":[-38.172,69.015,-21.429],"b":[-41.219,71.203,-21.74],"r":[0.133,0.116]},{"a":[-41.219,71.203,-21.74],"b":[-42.504,72.459,-22.541],"r":[0.072,0.058]},{"a":[-42.504,72.459,-22.541],"b":[-43.889,73.558,-23.404],"r":[0.058,0.044]},{"a":[-43.889,73.558,-23.404],"b":[-45.366,74.477,-24.323],"r":[0.044,0.03]},{"a":[-41.219,71.203,-21.74],"b":[-43.156,71.197,-21.553],"r":[0.064,0.051]},{"a":[-43.156,71.197,-21.553],"b":[-45.078,70.959,-21.367],"r":[0.051,0.039]},{"a":[-45.078,70.959,-21.367],"b":[-46.959,70.497,-21.186],"r":[0.039,0.027]},{"a":[-41.219,71.203,-21.74],"b":[-41.867,72.987,-21.374],"r":[0.059,0.048]},{"a":[-41.867,72.987,-21.374],"b":[-42.594,74.729,-20.962],"r":[0.048,0.036]},{"a":[-42.594,74.729,-20.962],"b":[-43.409,76.42,-20.502],"r":[0.036,0.025]},{"a":[-41.219,71.203,-21.74],"b":[-42.569,70.957,-23.077],"r":[0.053,0.043]},{"a":[-42.569,70.957,-23.077],"b":[-43.889,70.492,-24.385],"r":[0.043,0.033]},{"a":[-43.889,70.492,-24.385],"b":[-45.164,69.821,-25.648],"r":[0.033,0.022]},{"a":[-32.527,64.073,-20.852],"b":[-34.142,63.071,-21.893],"r":[0.079,0.064]},{"a":[-34.142,63.071,-21.893],"b":[-35.677,61.902,-22.882],"r":[0.064,0.049]},{"a":[-35.677,61.902,-22.882],"b":[-37.123,60.586,-23.815],"r":[0.049,0.033]},{"a":[-20.68,59.252,-20.52],"b":[-22.937,61.009,-23.692],"r":[0.182,0.164]},{"a":[-22.937,61.009,-23.692],"b":[-25.256,62.506,-26.951],"r":[0.164,0.146]},{"a":[-25.256,62.506,-26.951],"b":[-27.629,63.733,-30.284],"r":[0.146,0.128]},{"a":[-27.629,63.733,-30.284],"b":[-28.498,65.221,-31.814],"r":[0.106,0.086]},{"a":[-28.498,65.221,-31.814],"b":[-29.427,66.553,-33.449],"r":[0.086,0.065]},{"a":[-29.427,66.553,-33.449],"b":[-30.413,67.708,-35.182],"r":[0.065,0.045]},{"a":[-27.629,63.733,-30.284],"b":[-27.923,62.716,-32.249],"r":[0.078,0.063]},{"a":[-27.923,62.716,-32.249],"b":[-28.202,61.527,-34.117],"r":[0.063,0.048]},{"a":[-28.202,61.527,-34.117],"b":[-28.466,60.183,-35.88],"r":[0.048,0.033]},{"a":[-20.68,59.252,-20.52],"b":[-24.784,58.203,-21.068],"r":[0.144,0.129]},{"a":[-24.784,58.203,-21.068],"b":[-28.809,56.881,-21.606],"r":[0.129,0.115]},{"a":[-28.809,56.881,-21.606],"b":[-32.741,55.298,-22.132],"r":[0.115,0.101]},{"a":[-32.741,55.298,-22.132],"b":[-35.076,55.185,-22.315],"r":[0.096,0.078]},{"a":[-35.076,55.185,-22.315],"b":[-37.386,54.83,-22.496],"r":[0.078,0.059]},{"a":[-37.386,54.83,-22.496],"b":[-39.648,54.241,-22.673],"r":[0.059,0.04]},{"a":[-32.741,55.298,-22.132],"b":[-33.371,53.683,-23.363],"r":[0.034,0.028]},{"a":[-33.371,53.683,-23.363],"b":[-33.953,51.985,-24.502],"r":[0.028,0.021]},{"a":[-33.953,51.985,-24.502],"b":[-34.489,50.215,-25.551],"r":[0.021,0.014]},{"a":[-20.68,59.252,-20.52],"b":[-22.696,63.015,-20.643],"r":[0.142,0.127]},{"a":[-22.696,63.015,-20.643],"b":[-24.844,66.705,-20.774],"r":[0.127,0.113]},{"a":[-24.844,66.705,-20.774],"b":[-27.129,70.311,-20.914],"r":[0.113,0.099]},{"a":[-27.129,70.311,-20.914],"b":[-27.531,72.613,-20.718],"r":[0.095,0.077]},{"a":[-27.531,72.613,-20.718],"b":[-27.979,74.904,-20.499],"r":[0.077,0.058]},{"a":[-27.979,74.904,-20.499],"b":[-28.478,77.181,-20.256],"r":[0.058,0.04]},{"a":[-27.129,70.311,-20.914],"b":[-28.691,70.69,-22.303],"r":[0.033,0.027]},{"a":[-28.691,70.69,-22.303],"b":[-30.274,70.848,-23.71],"r":[0.027,0.02]},{"a":[-30.274,70.848,-23.71],"b":[-31.861,70.783,-25.121],"r":[0.02,0.014]},{"a":[-20.68,59.252,-20.52],"b":[-21.587,58.653,-22.683],"r":[0.129,0.104]},{"a":[-21.587,58.653,-22.683],"b":[-22.471,57.858,-24.792],"r":[0.104,0.079]},{"a":[-22.471,57.858,-24.792],"b":[-23.327,56.876,-26.834],"r":[0.079,0.054]},{"a":[-8.735,53.023,-15.03],"b":[-8.897,55.849,-15.974],"r":[0.483,0.39]},{"a":[-8.897,55.849,-15.974],"b":[-9.071,58.65,-16.991],"r":[0.39,0.296]},{"a":[-9.071,58.65,-16.991],"b":[-9.258,61.42,-18.084],"r":[0.296,0.203]},{"a":[-8.735,53.023,-15.03],"b":[-10.328,53.481,-17.505],"r":[0.474,0.382]},{"a":[-10.328,53.481,-17.505],"b":[-11.935,53.717,-20.003],"r":[0.382,0.291]},{"a":[-11.935,53.717,-20.003],"b":[-13.547,53.73,-22.508],"r":[0.291,0.199]},{"a":[-8.735,53.023,-15.03],"b":[-12.133,55.641,-13.602],"r":[0.216,0.194]},{"a":[-12.133,55.641,-13.602],"b":[-15.648,58.07,-12.124],"r":[0.194,0.173]},{"a":[-15.648,58.07,-12.124],"b":[-19.275,60.296,-10.599],"r":[0.173,0.151]},{"a":[-19.275,60.296,-10.599],"b":[-21.04,61.526,-9.338],"r":[0.151,0.122]},{"a":[-21.04,61.526,-9.338],"b":[-22.881,62.575,-8.022],"r":[0.122,0.093]},{"a":[-22.881,62.575,-8.022],"b":[-24.788,63.429,-6.659],"r":[0.093,0.063]},{"a":[-8.735,53.023,-15.03],"b":[-7.299,54.359,-16.825],"r":[0.216,0.174]},{"a":[-7.299,54.359,-16.825],"b":[-5.809,55.538,-18.687],"r":[0.174,0.132]},{"a":[-5.809,55.538,-18.687],"b":[-4.271,56.548,-20.608],"r":[0.132,0.091]},{"a":[-0.741,39.984,-7.125],"b":[0.786,42.561,-6.604],"r":[0.309,0.25]},{"a":[0.786,42.561,-6.604],"b":[2.394,45.081,-6.056],"r":[0.25,0.19]},{"a":[2.394,45.081,-6.056],"b":[4.085,47.54,-5.479],"r":[0.19,0.13]},{"a":[-0.741,39.984,-7.125],"b":[-0.383,40.383,-10.011],"r":[0.309,0.25]},{"a":[-0.383,40.383,-10.011],"b":[-0.022,40.607,-12.916],"r":[0.25,0.19]},{"a":[-0.022,40.607,-12.916],"b":[0.34,40.654,-15.828],"r":[0.19,0.13]},{"a":[0.0,22.0,0.0],"b":[-1.728,27.768,2.322],"r":[1.293,1.164]},{"a":[-1.728,27.768,2.322],"b":[-3.521,33.481,4.729],"r":[1.164,1.035]},{"a":[-3.521,33.481,4.729],"b":[-5.378,39.135,7.224],"r":[1.035,0.905]},{"a":[-5.378,39.135,7.224],"b":[-7.255,41.068,9.548],"r":[0.9,0.726]},{"a":[-7.255,41.068,9.548],"b":[-9.192,42.843,11.947],"r":[0.726,0.552]},{"a":[-9.192,42.843,11.947],"b":[-11.186,44.451,14.417],"r":[0.552,0.378]},{"a":[-5.378,39.135,7.224],"b":[-3.972,41.709,8.12],"r":[0.235,0.19]},{"a":[-3.972,41.709,8.12],"b":[-2.493,44.223,9.063],"r":[0.19,0.144]},{"a":[-2.493,44.223,9.063],"b":[-0.938,46.673,10.055],"r":[0.144,0.099]},{"a":[-5.378,39.135,7.224],"b":[-7.562,40.7,6.013],"r":[0.235,0.19]},{"a":[-7.562,40.7,6.013],"b":[-9.814,42.131,4.764],"r":[0.19,0.144]},{"a":[-9.814,42.131,4.764],"b":[-12.13,43.422,3.48],"r":[0.144,0.099]},{"a":[0.0,22.0,0.0],"b":[3.948,27.045,-0.78],"r":[0.676,0.608]},{"a":[3.948,27.045,-0.78],"b":[8.023,31.984,-1.585],"r":[0.608,0.54]},{"a":[8.023,31.984,-1.585],"b":[12.224,36.811,-2.415],"r":[0.54,0.473]},{"a":[12.224,36.811,-2.415],"b":[17.538,38.946,-2.674],"r":[0.465,0.419]},{"a":[17.538,38.946,-2.674],"b":[22.945,40.828,-2.938],"r":[0.419,0.372]},{"a":[22.945,40.828,-2.938],"b":[28.437,42.447,-3.206],"r":[0.372,0.326]},{"a":[28.437,42.447,-3.206],"b":[31.171,42.345,-4.681],"r":[0.283,0.228]},{"a":[31.171,42.345,-4.681],"b":[33.891,42.012,-6.148],"r":[0.228,0.173]},{"a":[33.891,42.012,-6.148],"b":[36.582,41.451,-7.599],"r":[0.173,0.119]},{"a":[28.437,42.447,-3.206],"b":[30.024,44.938,-3.497],"r":[0.181,0.146]},{"a":[30.024,44.938,-3.497],"b":[31.715,47.356,-3.806],"r":[0.146,0.111]},{"a":[31.715,47.356,-3.806],"b":[33.515,49.691,-4.135],"r":[0.111,0.076]},{"a":[12.224,36.811,-2.415],"b":[12.47,38.798,-4.82],"r":[0.123,0.099]},{"a":[12.47,38.798,-4.82],"b":[12.726,40.667,-7.317],"r":[0.099,0.075]},{"a":[12.726,40.667,-7.317],"b":[12.991,42.408,-9.904],"r":[0.075,0.052]},{"a":[0.0,22.0,0.0],"b":[-4.035,26.391,-2.466],"r":[0.649,0.585]},{"a":[-4.035,26.391,-2.466],"b":[-8.182,30.637,-5.0],"r":[0.585,0.52]},{"a":[-8.182,30.637,-5.0],"b":[-12.438,34.732,-7.601],"r":[0.52,0.455]},{"a":[-12.438,34.732,-7.601],"b":[-17.084,35.684,-10.825],"r":[0.449,0.404]},{"a":[-17.084,35.684,-10.825],"b":[-21.763,36.355,-14.072],"r":[0.404,0.359]},{"a":[-21.763,36.355,-14.072],"b":[-26.463,36.74,-17.335],"r":[0.359,0.314]},{"a":[-26.463,36.74,-17.335],"b":[-29.346,36.404,-18.596],"r":[0.314,0.254]},{"a":[-29.346,36.404,-18.596],"b":[-32.197,35.836,-19.845],"r":[0.254,0.193]},{"a":[-32.197,35.836,-19.845],"b":[-35.004,35.044,-21.073],"r":[0.193,0.132]},{"a":[-12.438,34.732,-7.601],"b":[-13.746,37.124,-6.104],"r":[0.118,0.095]},{"a":[-13.746,37.124,-6.104],"b":[-15.117,39.434,-4.537],"r":[0.095,0.072]},{"a":[-15.117,39.434,-4.537],"b":[-16.55,41.655,-2.898],"r":[0.072,0.05]},{"a":[0.0,22.0,0.0],"b":[1.466,25.409,5.28],"r":[0.582,0.524]},{"a":[1.466,25.409,5.28],"b":[2.963,28.626,10.67],"r":[0.524,0.466]},{"a":[2.963,28.626,10.67],"b":[4.489,31.643,16.167],"r":[0.466,0.408]},{"a":[4.489,31.643,16.167],"b":[4.836,31.837,19.695],"r":[0.398,0.321]},{"a":[4.836,31.837,19.695],"b":[5.184,31.818,23.228],"r":[0.321,0.244]},{"a":[5.184,31.818,23.228],"b":[5.53,31.587,26.755],"r":[0.244,0.167]},{"a":[4.489,31.643,16.167],"b":[6.848,33.683,16.657],"r":[0.106,0.086]},{"a":[6.848,33.683,16.657],"b":[9.299,35.607,17.167],"r":[0.086,0.065]},{"a":[9.299,35.607,17.167],"b":[11.84,37.404,17.696],"r":[0.065,0.045]}],"leaves":[{"x":-45.37,"y":74.48,"z":-24.32,"s":3.16,"c":[0.25,0.72,0.98],"g":0.347,"p":"src/domain/missions/appointmentScout.ts","l":206,"k":2,"e":".ts","v":0},{"x":-46.96,"y":70.5,"z":-21.19,"s":2.97,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/missions/lostAndFound.ts","l":159,"k":1,"e":".ts","v":0},{"x":-43.41,"y":76.42,"z":-20.5,"s":2.85,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/missions/reachability.ts","l":134,"k":1,"e":".ts","v":0},{"x":-45.16,"y":69.82,"z":-25.65,"s":2.71,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/missions/generic.ts","l":107,"k":1,"e":".ts","v":0},{"x":-37.12,"y":60.59,"z":-23.82,"s":2.77,"c":[0.25,0.72,0.98],"g":0.417,"p":"src/domain/llm.ts","l":117,"k":3,"e":".ts","v":0},{"x":-30.41,"y":67.71,"z":-35.18,"s":3.22,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/speech.ts","l":223,"k":1,"e":".ts","v":0},{"x":-28.47,"y":60.18,"z":-35.88,"s":2.75,"c":[0.25,0.72,0.98],"g":0.474,"p":"src/domain/base.ts","l":114,"k":4,"e":".ts","v":0},{"x":-39.65,"y":54.24,"z":-22.67,"s":3.06,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/commitments.ts","l":180,"k":1,"e":".ts","v":0},{"x":-34.49,"y":50.21,"z":-25.55,"s":1.97,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/template.ts","l":18,"k":1,"e":".ts","v":0},{"x":-28.48,"y":77.18,"z":-20.26,"s":3.04,"c":[0.25,0.72,0.98],"g":0.417,"p":"src/domain/translate.ts","l":175,"k":3,"e":".ts","v":0},{"x":-31.86,"y":70.78,"z":-25.12,"s":1.95,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/registry.ts","l":17,"k":1,"e":".ts","v":0},{"x":-23.33,"y":56.88,"z":-26.83,"s":2.96,"c":[0.25,0.72,0.98],"g":0.524,"p":"src/domain/interpret.ts","l":157,"k":5,"e":".ts","v":0},{"x":-9.26,"y":61.42,"z":-18.08,"s":5.2,"c":[0.96,0.45,0.72],"g":0.859,"p":"src/styles.css","l":1328,"k":15,"e":".css","v":0},{"x":-13.55,"y":53.73,"z":-22.51,"s":5.2,"c":[0.36,0.8,1.0],"g":1.0,"p":"src/App.tsx","l":1273,"k":21,"e":".tsx","v":0},{"x":-24.79,"y":63.43,"z":-6.66,"s":3.15,"c":[0.25,0.72,0.98],"g":0.777,"p":"src/i18n/strings.ts","l":203,"k":12,"e":".ts","v":0},{"x":-4.27,"y":56.55,"z":-20.61,"s":1.82,"c":[0.36,0.8,1.0],"g":0.254,"p":"src/main.tsx","l":10,"k":1,"e":".tsx","v":0},{"x":4.08,"y":47.54,"z":-5.48,"s":2.18,"c":[0.66,0.53,0.98],"g":0.417,"p":"package.json","l":35,"k":3,"e":".json","v":0},{"x":0.34,"y":40.65,"z":-15.83,"s":1.3,"c":[0.36,0.42,0.52],"g":0.417,"p":".env.example","l":0,"k":3,"e":".example","v":0},{"x":-11.19,"y":44.45,"z":14.42,"s":5.2,"c":[0.3,0.35,0.44],"g":0.417,"p":"pnpm-lock.yaml","l":2393,"k":3,"e":".yaml","v":1},{"x":-0.94,"y":46.67,"z":10.05,"s":2.15,"c":[0.98,0.45,0.44],"g":0.524,"p":"index.html","l":32,"k":5,"e":".html","v":0},{"x":-12.13,"y":43.42,"z":3.48,"s":1.3,"c":[0.36,0.42,0.52],"g":0.254,"p":".gitignore","l":0,"k":1,"e":"-","v":0},{"x":36.58,"y":41.45,"z":-7.6,"s":3.77,"c":[0.6,0.66,0.76],"g":0.347,"p":"docs/design.md","l":403,"k":2,"e":".md","v":0},{"x":33.52,"y":49.69,"z":-4.14,"s":2.93,"c":[0.6,0.66,0.76],"g":0.417,"p":"docs/DEVPOST_SUBMISSION.md","l":150,"k":3,"e":".md","v":0},{"x":12.99,"y":42.41,"z":-9.9,"s":2.0,"c":[0.66,0.53,0.98],"g":0.254,"p":"tsconfig.json","l":20,"k":1,"e":".json","v":0},{"x":-35.0,"y":35.04,"z":-21.07,"s":4.02,"c":[0.25,0.72,0.98],"g":0.748,"p":"server/index.ts","l":511,"k":11,"e":".ts","v":0},{"x":-16.55,"y":41.66,"z":-2.9,"s":1.9,"c":[0.66,0.53,0.98],"g":0.254,"p":"tsconfig.server.json","l":14,"k":1,"e":".json","v":0},{"x":5.53,"y":31.59,"z":26.75,"s":3.25,"c":[0.6,0.66,0.76],"g":0.683,"p":"README.md","l":230,"k":9,"e":".md","v":0},{"x":11.84,"y":37.4,"z":17.7,"s":1.86,"c":[0.25,0.72,0.98],"g":0.254,"p":"vite.config.ts","l":12,"k":1,"e":".ts","v":0}],"cy":38.6,"rad":41.8},"helix":{"items":[{"x":18.7,"y":0.0,"z":0.0,"h":1.2,"w":2.0,"c":[0.36,0.42,0.52],"g":0.254,"p":".gitignore","l":0,"k":1,"e":"-","v":0,"t":1785983761},{"x":18.56,"y":0.51,"z":3.41,"h":12.02,"w":3.09,"c":[0.6,0.66,0.76],"g":0.683,"p":"README.md","l":230,"k":9,"e":".md","v":0,"t":1785983761},{"x":17.8,"y":1.02,"z":6.76,"h":15.52,"w":3.37,"c":[0.6,0.66,0.76],"g":0.347,"p":"docs/design.md","l":403,"k":2,"e":".md","v":0,"t":1785983761},{"x":16.43,"y":1.53,"z":9.95,"h":5.24,"w":2.5,"c":[0.98,0.45,0.44],"g":0.524,"p":"index.html","l":32,"k":5,"e":".html","v":0,"t":1785983761},{"x":14.49,"y":2.04,"z":12.87,"h":5.42,"w":2.51,"c":[0.66,0.53,0.98],"g":0.417,"p":"package.json","l":35,"k":3,"e":".json","v":0,"t":1785983761},{"x":12.04,"y":2.56,"z":15.41,"h":11.6,"w":4.2,"c":[0.3,0.35,0.44],"g":0.417,"p":"pnpm-lock.yaml","l":2393,"k":3,"e":".yaml","v":1,"t":1785983761},{"x":9.14,"y":3.07,"z":17.48,"h":17.33,"w":3.5,"c":[0.25,0.72,0.98],"g":0.748,"p":"server/index.ts","l":511,"k":11,"e":".ts","v":0,"t":1785983761},{"x":5.88,"y":3.58,"z":19.0,"h":26.66,"w":4.16,"c":[0.36,0.8,1.0],"g":1.0,"p":"src/App.tsx","l":1273,"k":21,"e":".tsx","v":0,"t":1785983761},{"x":2.38,"y":4.09,"z":19.92,"h":8.82,"w":2.82,"c":[0.25,0.72,0.98],"g":0.474,"p":"src/domain/base.ts","l":114,"k":4,"e":".ts","v":0,"t":1785983761},{"x":-1.27,"y":4.6,"z":20.19,"h":10.14,"w":2.94,"c":[0.25,0.72,0.98],"g":0.524,"p":"src/domain/interpret.ts","l":157,"k":5,"e":".ts","v":0,"t":1785983761},{"x":-4.94,"y":5.11,"z":19.79,"h":11.44,"w":3.04,"c":[0.25,0.72,0.98],"g":0.347,"p":"src/domain/missions/appointmentScout.ts","l":206,"k":2,"e":".ts","v":0,"t":1785983761},{"x":-8.5,"y":5.62,"z":18.73,"h":8.58,"w":2.8,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/missions/generic.ts","l":107,"k":1,"e":".ts","v":0,"t":1785983761},{"x":-11.84,"y":6.13,"z":17.03,"h":10.2,"w":2.94,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/missions/lostAndFound.ts","l":159,"k":1,"e":".ts","v":0,"t":1785983761},{"x":-14.84,"y":6.64,"z":14.73,"h":9.46,"w":2.88,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/missions/reachability.ts","l":134,"k":1,"e":".ts","v":0,"t":1785983761},{"x":-17.39,"y":7.16,"z":11.91,"h":4.14,"w":2.38,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/registry.ts","l":17,"k":1,"e":".ts","v":0,"t":1785983761},{"x":-19.41,"y":7.67,"z":8.64,"h":4.23,"w":2.39,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/template.ts","l":18,"k":1,"e":".ts","v":0,"t":1785983761},{"x":-20.82,"y":8.18,"z":5.04,"h":10.64,"w":2.98,"c":[0.25,0.72,0.98],"g":0.417,"p":"src/domain/translate.ts","l":175,"k":3,"e":".ts","v":0,"t":1785983761},{"x":-21.56,"y":8.69,"z":1.21,"h":3.46,"w":2.31,"c":[0.36,0.8,1.0],"g":0.254,"p":"src/main.tsx","l":10,"k":1,"e":".tsx","v":0,"t":1785983761},{"x":-21.59,"y":9.2,"z":-2.73,"h":27.2,"w":4.2,"c":[0.96,0.45,0.72],"g":0.859,"p":"src/styles.css","l":1328,"k":15,"e":".css","v":0,"t":1785983761},{"x":-20.9,"y":9.71,"z":-6.63,"h":4.39,"w":2.41,"c":[0.66,0.53,0.98],"g":0.254,"p":"tsconfig.json","l":20,"k":1,"e":".json","v":0,"t":1785983761},{"x":-19.51,"y":10.22,"z":-10.38,"h":3.87,"w":2.36,"c":[0.66,0.53,0.98],"g":0.254,"p":"tsconfig.server.json","l":14,"k":1,"e":".json","v":0,"t":1785983761},{"x":-17.45,"y":10.73,"z":-13.83,"h":3.67,"w":2.33,"c":[0.25,0.72,0.98],"g":0.254,"p":"vite.config.ts","l":12,"k":1,"e":".ts","v":0,"t":1785983761},{"x":-14.44,"y":11.3,"z":-17.21,"h":1.2,"w":2.0,"c":[0.36,0.42,0.52],"g":0.417,"p":".env.example","l":0,"k":3,"e":".example","v":0,"t":1785984487},{"x":-11.18,"y":11.81,"z":-19.68,"h":8.92,"w":2.83,"c":[0.25,0.72,0.98],"g":0.417,"p":"src/domain/llm.ts","l":117,"k":3,"e":".ts","v":0,"t":1785984487},{"x":13.52,"y":14.98,"z":-19.45,"h":11.37,"w":3.04,"c":[0.25,0.72,0.98],"g":0.777,"p":"src/i18n/strings.ts","l":203,"k":12,"e":".ts","v":0,"t":1786017139},{"x":22.45,"y":16.61,"z":-9.09,"h":9.94,"w":2.92,"c":[0.6,0.66,0.76],"g":0.417,"p":"docs/DEVPOST_SUBMISSION.md","l":150,"k":3,"e":".md","v":0,"t":1786030893},{"x":-33.19,"y":44.64,"z":-4.91,"h":11.85,"w":3.08,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/speech.ts","l":223,"k":1,"e":".ts","v":0,"t":1786369508},{"x":-27.51,"y":46.0,"z":-19.98,"h":10.77,"w":2.99,"c":[0.25,0.72,0.98],"g":0.254,"p":"src/domain/commitments.ts","l":180,"k":1,"e":".ts","v":0,"t":1786379903}],"ribbon":[18.7,0.0,0.0,18.72,0.19,1.28,18.65,0.38,2.56,18.5,0.58,3.83,18.26,0.77,5.1,17.93,0.96,6.35,17.51,1.15,7.58,17.01,1.34,8.78,16.43,1.53,9.95,15.77,1.72,11.08,15.03,1.92,12.17,14.21,2.11,13.21,13.32,2.3,14.19,12.37,2.49,15.11,11.35,2.68,15.97,10.27,2.88,16.76,9.14,3.07,17.48,7.95,3.26,18.12,6.72,3.45,18.67,5.45,3.64,19.15,4.15,3.83,19.54,2.82,4.02,19.84,1.47,4.22,20.05,0.11,4.41,20.17,-1.27,4.6,20.19,-2.65,4.79,20.12,-4.02,4.98,19.96,-5.39,5.17,19.7,-6.74,5.37,19.35,-8.06,5.56,18.9,-9.36,5.75,18.37,-10.62,5.94,17.74,-11.84,6.13,17.03,-13.01,6.33,16.24,-14.12,6.52,15.36,-15.18,6.71,14.41,-16.18,6.9,13.38,-17.1,7.09,12.29,-17.95,7.28,11.13,-18.72,7.48,9.91,-19.41,7.67,8.64,-20.02,7.86,7.32,-20.53,8.05,5.96,-20.95,8.24,4.57,-21.27,8.43,3.14,-21.5,8.62,1.69,-21.63,8.82,0.23,-21.66,9.01,-1.25,-21.59,9.2,-2.73,-21.42,9.39,-4.2,-21.14,9.58,-5.66,-20.77,9.78,-7.11,-20.29,9.97,-8.53,-19.72,10.16,-9.92,-19.06,10.35,-11.27,-18.3,10.54,-12.58,-17.45,10.73,-13.83,-16.52,10.92,-15.03,-15.5,11.12,-16.17,-14.41,11.31,-17.23,-13.24,11.5,-18.22,-12.0,11.69,-19.14,-10.7,11.88,-19.96,-9.35,12.08,-20.7,-7.94,12.27,-21.35,-6.49,12.46,-21.9,-5.0,12.65,-22.36,-3.47,12.84,-22.71,-1.93,13.03,-22.95,-0.36,13.22,-23.1,1.21,13.42,-23.13,2.79,13.61,-23.06,4.36,13.8,-22.88,5.93,13.99,-22.59,7.47,14.18,-22.19,8.99,14.38,-21.69,10.47,14.57,-21.09,11.91,14.76,-20.38,13.31,14.95,-19.58,14.65,15.14,-18.68,15.93,15.33,-17.69,17.14,15.53,-16.61,18.28,15.72,-15.44,19.34,15.91,-14.2,20.31,16.1,-12.89,21.2,16.29,-11.51,21.99,16.48,-10.07,22.68,16.68,-8.57,23.27,16.87,-7.03,23.76,17.06,-5.44,24.14,17.25,-3.82,24.4,17.44,-2.18,24.56,17.63,-0.51,24.6,17.82,1.16,24.53,18.02,2.84,24.34,18.21,4.51,24.04,18.4,6.17,23.63,18.59,7.81,23.1,18.78,9.43,22.46,18.97,11.0,21.72,19.17,12.54,20.87,19.36,14.02,19.91,19.55,15.45,18.86,19.74,16.81,17.72,19.93,18.1,16.49,20.12,19.31,15.18,20.32,20.44,13.79,20.51,21.48,12.33,20.7,22.42,10.8,20.89,23.26,9.21,21.08,24.0,7.58,21.28,24.64,5.9,21.47,25.16,4.19,21.66,25.56,2.44,21.85,25.85,0.68,22.04,26.02,-1.09,22.23,26.07,-2.87,22.43,26.0,-4.64,22.62,25.81,-6.4,22.81,25.49,-8.14,23.0,25.06,-9.85,23.19,24.51,-11.52,23.38,23.84,-13.15,23.57,23.05,-14.72,23.77,22.16,-16.23,23.96,21.16,-17.68,24.15,20.05,-19.05,24.34,18.85,-20.33,24.53,17.55,-21.53,24.72,16.17,-22.63,24.92,14.7,-23.64,25.11,13.16,-24.53,25.3,11.55,-25.32,25.49,9.87,-26.0,25.68,8.15,-26.55,25.88,6.37,-26.99,26.07,4.56,-27.3,26.26,2.72,-27.48,26.45,0.86,-27.54,26.64,-1.01,-27.47,26.83,-2.89,-27.28,27.03,-4.76,-26.95,27.22,-6.62,-26.5,27.41,-8.46,-25.92,27.6,-10.26,-25.22,27.79,-12.03,-24.4,27.98,-13.75,-23.46,28.18,-15.41,-22.41,28.37,-17.01,-21.25,28.56,-18.54,-19.98,28.75,-19.98,-18.62,28.94,-21.35,-17.16,29.13,-22.61,-15.62,29.32,-23.78,-14.0,29.52,-24.84,-12.3,29.71,-25.8,-10.54,29.9,-26.63,-8.73,30.09,-27.35,-6.86,30.28,-27.94,-4.96,30.47,-28.41,-3.02,30.67,-28.74,-1.06,30.86,-28.94,0.91,31.05,-29.01,2.89,31.24,-28.95,4.86,31.43,-28.75,6.82,31.62,-28.41,8.76,31.82,-27.94,10.66,32.01,-27.34,12.52,32.2,-26.61,14.33,32.39,-25.75,16.09,32.58,-24.77,17.77,32.77,-23.67,19.38,32.97,-22.46,20.91,33.16,-21.13,22.35,33.35,-19.7,23.69,33.54,-18.18,24.92,33.73,-16.56,26.04,33.93,-14.86,27.05,34.12,-13.08,27.94,34.31,-11.23,28.7,34.5,-9.32,29.33,34.69,-7.37,29.82,34.88,-5.37,30.18,35.07,-3.33,30.4,35.27,-1.27,30.48,35.46,0.8,30.42,35.65,2.88,30.22,35.84,4.95,29.87,36.03,7.01,29.39,36.23,9.04,28.77,36.42,11.04,28.01,36.61,13.0,27.11,36.8,14.91,26.09,36.99,16.75,24.94,37.18,18.52,23.67,37.38,20.22,22.29,37.57,21.83,20.79,37.76,23.34,19.2,37.95,24.75,17.51,38.14,26.05,15.72,38.33,27.24,13.86,38.52,28.3,11.93,38.72,29.24,9.94,38.91,30.04,7.88,39.1,30.71,5.79,39.29,31.24,3.66,39.48,31.62,1.5,39.68,31.86,-0.67,39.87,31.95,-2.85,40.06,31.9,-5.02,40.25,31.69,-7.18,40.44,31.34,-9.31,40.63,30.84,-11.41,40.82,30.19,-13.46,41.02,29.41,-15.46,41.21,28.48,-17.4,41.4,27.42,-19.26,41.59,26.22,-21.04,41.78,24.9,-22.73,41.98,23.45,-24.32,42.17,21.9,-25.8,42.36,20.23,-27.17,42.55,18.47,-28.42,42.74,16.61,-29.54,42.93,14.66,-30.53,43.12,12.65,-31.38,43.32,10.56,-32.09,43.51,8.42,-32.65,43.7,6.23,-33.06,43.89,4.0,-33.32,44.08,1.75,-33.42,44.27,-0.53,-33.37,44.47,-2.8,-33.17,44.66,-5.08,-32.81,44.85,-7.33,-32.29,45.04,-9.57,-31.63,45.23,-11.76,-30.81,45.43,-13.91,-29.85,45.62,-16.01,-28.75,45.81,-18.03,-27.51,46.0,-19.98],"span":["Aug 2026","Aug 2026"],"days":4.6,"flat":0,"one":"06 Aug 2026","cy":28.4,"rad":34.0},"legend":[["JavaScript",[1.0,0.66,0.22]],["TypeScript",[0.25,0.72,0.98]],["Python",[0.33,0.86,0.52]],["Hyperfy .hyp",[1.0,0.42,0.2]],["JSON / YAML",[0.66,0.53,0.98]],["Markdown",[0.6,0.66,0.76]],["CSS",[0.96,0.45,0.72]],["HTML",[0.98,0.45,0.44]],["Shell",[0.18,0.83,0.75]],["Assets",[0.36,0.42,0.52]],["Vendored / generated",[0.3,0.35,0.44]]]};
+(function(){
+"use strict";
+const cv=document.getElementById("gl");
+const gl=cv.getContext("webgl2",{antialias:true,alpha:false});
+if(!gl){document.body.innerHTML="<p style='padding:40px'>WebGL2 unavailable.</p>";return;}
+const RM=matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+/* ---------- math ---------- */
+function mul(a,b){const o=new Float32Array(16);
+ for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
+function persp(f,ar,n,fa){const t=1/Math.tan(f/2),o=new Float32Array(16);
+ o[0]=t/ar;o[5]=t;o[10]=(fa+n)/(n-fa);o[11]=-1;o[14]=2*fa*n/(n-fa);return o;}
+function look(e,c,u){
+ let z=[e[0]-c[0],e[1]-c[1],e[2]-c[2]];let l=Math.hypot(z[0],z[1],z[2])||1;z=[z[0]/l,z[1]/l,z[2]/l];
+ let x=[u[1]*z[2]-u[2]*z[1],u[2]*z[0]-u[0]*z[2],u[0]*z[1]-u[1]*z[0]];l=Math.hypot(x[0],x[1],x[2])||1;x=[x[0]/l,x[1]/l,x[2]/l];
+ const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+ return {m:new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
+  -(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]), -(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]), -(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]), 1]),
+  right:x, up:y};}
+
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
+ if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s)+"\n"+src);return s;}
+function prog(v,f){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));
+ gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);
+ if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+ p.u=new Proxy({},{get:(c,k)=>(k in c?c[k]:(c[k]=gl.getUniformLocation(p,k)))});return p;}
+function buf(d,t){const b=gl.createBuffer();t=t||gl.ARRAY_BUFFER;gl.bindBuffer(t,b);
+ gl.bufferData(t,d,gl.STATIC_DRAW);return b;}
+function attr(loc,b,n,div){gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(loc);
+ gl.vertexAttribPointer(loc,n,gl.FLOAT,false,0,0);if(div)gl.vertexAttribDivisor(loc,div);}
+const FOG="vec3(0.051,0.082,0.137)";
+
+/* ---------- geometry ---------- */
+// tapered cylinder: unit circle in XZ, y 0..1
+const SIDES=9, cp=[], cn=[], ci=[];
+for(let r=0;r<2;r++)for(let i=0;i<=SIDES;i++){
+  const a=i/SIDES*Math.PI*2; cp.push(Math.cos(a),r,Math.sin(a)); cn.push(Math.cos(a),0,Math.sin(a));}
+for(let i=0;i<SIDES;i++){const A=i,B=i+1,C=i+SIDES+1,E=i+SIDES+2; ci.push(A,C,E, A,E,B);}
+// unit box: XZ -.5..5, y 0..1
+const F=[[[0,0,1],[[-.5,0,.5],[.5,0,.5],[.5,1,.5],[-.5,1,.5]]],
+         [[0,0,-1],[[.5,0,-.5],[-.5,0,-.5],[-.5,1,-.5],[.5,1,-.5]]],
+         [[1,0,0],[[.5,0,.5],[.5,0,-.5],[.5,1,-.5],[.5,1,.5]]],
+         [[-1,0,0],[[-.5,0,-.5],[-.5,0,.5],[-.5,1,.5],[-.5,1,-.5]]],
+         [[0,1,0],[[-.5,1,.5],[.5,1,.5],[.5,1,-.5],[-.5,1,-.5]]]];
+const bp=[],bn=[],bi=[];
+F.forEach(([n,vs])=>{const o=bp.length/3;vs.forEach(v=>{bp.push(v[0],v[1],v[2]);bn.push(n[0],n[1],n[2]);});
+ bi.push(o,o+1,o+2,o,o+2,o+3);});
+const quad=new Float32Array([-1,-1, 1,-1, 1,1, -1,-1, 1,1, -1,1]);
+
+/* ---------- shaders ---------- */
+const VS_BR=`#version 300 es
+layout(location=0)in vec3 a_p;layout(location=1)in vec3 a_n;
+layout(location=2)in vec3 a_a;layout(location=3)in vec3 a_b;layout(location=4)in vec2 a_r;
+uniform mat4 u_vp;out vec3 v_w;out vec3 v_n;
+void main(){
+  vec3 ax=a_b-a_a; float L=length(ax); vec3 A=ax/max(L,0.0001);
+  vec3 ref=abs(A.y)<0.9?vec3(0.,1.,0.):vec3(1.,0.,0.);
+  vec3 U=normalize(cross(A,ref)); vec3 V=cross(A,U);
+  float r=mix(a_r.x,a_r.y,a_p.y);
+  vec3 w=a_a+A*(L*a_p.y)+(U*a_p.x+V*a_p.z)*r;
+  v_w=w; v_n=normalize(U*a_n.x+V*a_n.z);
+  gl_Position=u_vp*vec4(w,1.0);}`;
+const FS_BR=`#version 300 es
+precision highp float;in vec3 v_w;in vec3 v_n;uniform vec3 u_eye;uniform float u_fk;out vec4 o;
+void main(){
+  vec3 N=normalize(v_n),V=normalize(u_eye-v_w),L=normalize(vec3(0.4,0.75,0.3));
+  float lam=max(dot(N,L),0.0)*0.6+0.4;
+  vec3 bark=mix(vec3(0.072,0.082,0.102),vec3(0.150,0.145,0.152),lam);
+  bark+=vec3(0.16,0.24,0.38)*pow(1.0-max(dot(N,V),0.0),3.0)*0.7;
+  float d=length(u_eye-v_w);
+  o=vec4(mix(bark,${FOG},clamp(1.0-exp(-pow(d*u_fk,2.1)),0.0,0.92)),1.0);}`;
+
+const VS_LF=`#version 300 es
+layout(location=0)in vec2 a_p;
+layout(location=1)in vec3 a_c;layout(location=2)in float a_s;
+layout(location=3)in vec3 a_col;layout(location=4)in vec2 a_m;
+uniform mat4 u_vp;uniform vec3 u_right;uniform vec3 u_up;uniform float u_grow;
+out vec2 v_uv;out vec3 v_col;out vec2 v_m;out vec3 v_w;
+void main(){
+  v_uv=a_p; v_col=a_col; v_m=a_m;
+  vec3 w=a_c+(u_right*a_p.x+u_up*a_p.y)*a_s*u_grow;
+  v_w=w; gl_Position=u_vp*vec4(w,1.0);}`;
+const FS_LF=`#version 300 es
+precision highp float;in vec2 v_uv;in vec3 v_col;in vec2 v_m;in vec3 v_w;
+uniform vec3 u_eye;uniform float u_t;uniform float u_hover;uniform float u_fk;out vec4 o;
+void main(){
+  float r=length(v_uv); if(r>1.0) discard;
+  // The quad spans 2*size, so a wide falloff turns every leaf into a fog blob
+  // larger than the branch holding it. Keep the core tight and the halo tighter.
+  float core=pow(1.0-r,3.2);
+  float glow=exp(-r*5.2);
+  float pulse=0.86+0.14*sin(u_t*1.7+v_m.x*0.9);
+  vec3 c=v_col*(0.55+0.85*v_m.y*pulse)*core + v_col*glow*0.14;
+  c+=mix(v_col,vec3(1.0,0.94,0.80),0.5)*pow(1.0-r,9.0)*(0.10+0.42*v_m.y);
+  if(abs(v_m.x-u_hover)<0.5) c+=vec3(0.60,0.55,0.45)*core;
+  float d=length(u_eye-v_w);
+  c*=exp(-pow(d*u_fk,2.1));
+  o=vec4(c,1.0);}`;
+
+const VS_BX=`#version 300 es
+layout(location=0)in vec3 a_p;layout(location=1)in vec3 a_n;
+layout(location=2)in vec3 a_o;layout(location=3)in vec3 a_s;
+layout(location=4)in vec3 a_col;layout(location=5)in vec2 a_m;
+uniform mat4 u_vp;out vec3 v_w;out vec3 v_n;out vec3 v_col;out vec2 v_m;
+void main(){vec3 w=a_o+a_p*a_s;v_w=w;v_n=a_n;v_col=a_col;v_m=a_m;
+  gl_Position=u_vp*vec4(w,1.0);}`;
+const FS_BX=`#version 300 es
+precision highp float;in vec3 v_w;in vec3 v_n;in vec3 v_col;in vec2 v_m;
+uniform vec3 u_eye;uniform float u_t;uniform float u_hover;uniform float u_fk;out vec4 o;
+void main(){
+  vec3 N=normalize(v_n),V=normalize(u_eye-v_w),L=normalize(vec3(0.4,0.75,0.3));
+  float lam=max(dot(N,L),0.0)*0.55+0.45;
+  vec3 c=v_col*(lam*0.55+0.34);
+  c+=v_col*(0.25+0.75*v_m.y)*0.42*(0.8+0.2*sin(u_t*1.6+v_m.x));
+  c+=mix(vec3(0.2,0.34,0.56),v_col,0.35)*pow(1.0-max(dot(N,V),0.0),3.0)*0.6;
+  if(abs(v_m.x-u_hover)<0.5)c=mix(c,vec3(1.0,0.94,0.84),0.35);
+  float d=length(u_eye-v_w);
+  o=vec4(mix(c,${FOG},clamp(1.0-exp(-pow(d*u_fk,2.1)),0.0,0.92)),1.0);}`;
+
+const VS_LINE=`#version 300 es
+layout(location=0)in vec3 a_p;uniform mat4 u_vp;out vec3 v_w;
+void main(){v_w=a_p;gl_Position=u_vp*vec4(a_p,1.0);}`;
+const FS_LINE=`#version 300 es
+precision highp float;in vec3 v_w;uniform vec3 u_eye;uniform float u_fk;out vec4 o;
+void main(){float d=length(u_eye-v_w);
+  o=vec4(vec3(0.30,0.42,0.62)*exp(-pow(d*u_fk,2.1))*0.85,1.0);}`;
+
+const VS_G=`#version 300 es
+layout(location=0)in vec2 a_p;uniform mat4 u_vp;out vec3 v_w;
+void main(){v_w=vec3(a_p.x,0.,a_p.y);gl_Position=u_vp*vec4(v_w,1.0);}`;
+const FS_G=`#version 300 es
+precision highp float;in vec3 v_w;uniform vec3 u_eye;uniform float u_fk;out vec4 o;
+float grid(vec2 p,float s){vec2 c=p/s;vec2 g=abs(fract(c-0.5)-0.5)/fwidth(c);
+  return 1.0-min(min(g.x,g.y),1.0);}
+void main(){
+  float r=1.0-smoothstep(20.0,150.0,length(v_w.xz));
+  vec3 c=vec3(0.022,0.032,0.050)*(0.3+0.7*r);
+  c+=vec3(0.070,0.100,0.148)*grid(v_w.xz,8.0)*(0.15+0.85*r);
+  c+=vec3(0.125,0.170,0.245)*grid(v_w.xz,40.0)*(0.25+0.75*r);
+  float d=length(u_eye-v_w);
+  o=vec4(mix(c,vec3(0.052,0.082,0.135),clamp(1.0-exp(-pow(d*u_fk*0.92,2.0)),0.,1.)),1.);}`;
+
+const FS_PICK_LF=`#version 300 es
+precision highp float;in vec2 v_uv;in vec3 v_col;in vec2 v_m;in vec3 v_w;out vec4 o;
+void main(){if(length(v_uv)>1.0)discard;float i=v_m.x+1.0;
+  o=vec4(mod(i,256.)/255.,mod(floor(i/256.),256.)/255.,mod(floor(i/65536.),256.)/255.,1.);}`;
+const FS_PICK_BX=`#version 300 es
+precision highp float;in vec3 v_w;in vec3 v_n;in vec3 v_col;in vec2 v_m;out vec4 o;
+void main(){float i=v_m.x+1.0;
+  o=vec4(mod(i,256.)/255.,mod(floor(i/256.),256.)/255.,mod(floor(i/65536.),256.)/255.,1.);}`;
+
+const pBR=prog(VS_BR,FS_BR), pLF=prog(VS_LF,FS_LF), pBX=prog(VS_BX,FS_BX),
+      pLN=prog(VS_LINE,FS_LINE), pG=prog(VS_G,FS_G),
+      pPL=prog(VS_LF,FS_PICK_LF), pPB=prog(VS_BX,FS_PICK_BX);
+
+/* ---------- buffers ---------- */
+const T=D.tree, HX=D.helix;
+const nSeg=T.segs.length, nLeaf=T.leaves.length, nBox=HX.items.length;
+
+const sA=new Float32Array(nSeg*3), sB=new Float32Array(nSeg*3), sR=new Float32Array(nSeg*2);
+T.segs.forEach((s,i)=>{sA.set(s.a,i*3);sB.set(s.b,i*3);sR.set(s.r,i*2);});
+const vaoBR=gl.createVertexArray(); gl.bindVertexArray(vaoBR);
+attr(0,buf(new Float32Array(cp)),3); attr(1,buf(new Float32Array(cn)),3);
+attr(2,buf(sA),3,1); attr(3,buf(sB),3,1); attr(4,buf(sR),2,1);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf(new Uint16Array(ci),gl.ELEMENT_ARRAY_BUFFER));
+
+const lC=new Float32Array(nLeaf*3), lS=new Float32Array(nLeaf), lCol=new Float32Array(nLeaf*3),
+      lM=new Float32Array(nLeaf*2);
+T.leaves.forEach((l,i)=>{lC.set([l.x,l.y,l.z],i*3);lS[i]=l.s;lCol.set(l.c,i*3);lM.set([i,l.g],i*2);});
+const vaoLF=gl.createVertexArray(); gl.bindVertexArray(vaoLF);
+attr(0,buf(quad),2); attr(1,buf(lC),3,1); attr(2,buf(lS),1,1); attr(3,buf(lCol),3,1); attr(4,buf(lM),2,1);
+
+const xO=new Float32Array(nBox*3), xS=new Float32Array(nBox*3), xC=new Float32Array(nBox*3),
+      xM=new Float32Array(nBox*2);
+HX.items.forEach((b,i)=>{xO.set([b.x,b.y,b.z],i*3);xS.set([b.w,b.h,b.w],i*3);
+  xC.set(b.c,i*3);xM.set([i,b.g],i*2);});
+const vaoBX=gl.createVertexArray(); gl.bindVertexArray(vaoBX);
+attr(0,buf(new Float32Array(bp)),3); attr(1,buf(new Float32Array(bn)),3);
+attr(2,buf(xO),3,1); attr(3,buf(xS),3,1); attr(4,buf(xC),3,1); attr(5,buf(xM),2,1);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf(new Uint16Array(bi),gl.ELEMENT_ARRAY_BUFFER));
+
+const vaoLN=gl.createVertexArray(); gl.bindVertexArray(vaoLN);
+attr(0,buf(new Float32Array(HX.ribbon)),3);
+const nRib=HX.ribbon.length/3;
+
+const vaoG=gl.createVertexArray(); gl.bindVertexArray(vaoG);
+attr(0,buf(new Float32Array([-400,-400,400,-400,400,400,-400,-400,400,400,-400,400])),2);
+gl.bindVertexArray(null);
+
+/* ---------- pick target ---------- */
+const fbo=gl.createFramebuffer(),ptex=gl.createTexture(),pdep=gl.createRenderbuffer();
+let pw=0,ph=0;
+function pickSize(w,h){if(w===pw&&h===ph)return;pw=w;ph=h;
+ gl.bindTexture(gl.TEXTURE_2D,ptex);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+ gl.bindRenderbuffer(gl.RENDERBUFFER,pdep);
+ gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+ gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,ptex,0);
+ gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,pdep);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+
+/* ---------- state ---------- */
+let mode="helix", spin=!RM, W=0,H=0,DPR=1,vp=null,eye=[0,0,0],right=[1,0,0],up=[0,1,0];
+let hover=-1, mx=-1,my=-1, needPick=false, lastPick=0, grow=1;
+// Frame each form from its own measured bounds, so a 28-file tree and a
+// 1026-file tree both arrive fitted instead of one filling the screen and the
+// other sitting as a speck.
+function fitFor(rad){const tn=Math.tan(0.43),ar=(W||innerWidth)/(H||innerHeight);
+  return Math.max(rad/tn, rad/(tn*Math.max(ar,0.35)))*1.15;}
+const VIEW={tree:{tx:0,ty:D.tree.cy,tz:0,dist:0,yaw:0.6,pitch:0.22},
+            helix:{tx:0,ty:D.helix.cy||24,tz:0,dist:0,yaw:0.7,pitch:0.30}};
+let cam=Object.assign({},VIEW.helix);
+
+function resize(){DPR=Math.min(devicePixelRatio||1,2);
+ W=Math.floor(innerWidth*DPR);H=Math.floor(innerHeight*DPR);
+ cv.width=W;cv.height=H;pickSize(W,H);}
+addEventListener("resize",resize);resize();
+VIEW.tree.dist=fitFor(D.tree.rad); VIEW.helix.dist=fitFor(D.helix.rad||40);
+cam=Object.assign({},VIEW[mode]);
+
+/* ---------- input ---------- */
+let drag=null;
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);cv.classList.add("drag");
+ drag={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button!==0};spin=false;syncSpin();});
+cv.addEventListener("pointermove",e=>{
+ if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.x=e.clientX;drag.y=e.clientY;
+  if(drag.pan){const s=cam.dist*0.0016,sy=Math.sin(cam.yaw),cy=Math.cos(cam.yaw);
+   cam.tx-=(dx*cy-dy*sy)*s;cam.tz+=(dx*sy+dy*cy)*s;}
+  else{cam.yaw-=dx*0.005;cam.pitch=Math.max(-0.25,Math.min(1.45,cam.pitch+dy*0.004));}}
+ mx=e.clientX;my=e.clientY;needPick=true;});
+cv.addEventListener("pointerup",()=>{drag=null;cv.classList.remove("drag");});
+cv.addEventListener("pointercancel",()=>{drag=null;cv.classList.remove("drag");});
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+cv.addEventListener("wheel",e=>{e.preventDefault();
+ cam.dist=Math.max(14,Math.min(700,cam.dist*Math.exp(e.deltaY*0.0011)));},{passive:false});
+
+/* ---------- ui ---------- */
+const $=id=>document.getElementById(id), nf=n=>n.toLocaleString("en-US");
+$("nm").textContent=D.name;
+$("br").textContent=D.branch;
+$("st").textContent=nf(D.files)+" files  /  "+nf(D.loc)+" lines";
+D.legend.forEach(([n,c])=>{const li=document.createElement("li");
+ li.innerHTML="<i></i><span></span>";
+ li.querySelector("i").style.background="rgb("+c.map(v=>Math.round(v*255)).join(",")+")";
+ li.querySelector("span").textContent=n;$("ll").appendChild(li);});
+
+const NOTE={
+ tree:"<b>Tree.</b> Branches are directories, thickness is total lines beneath. Each leaf is one file: size is lines, colour is language, brightness is how often it changes. Single-child directory chains are collapsed into one limb.",
+ helix:D.helix.flat
+   ? "<b>Helix.</b> Each block is one file. This repo was created in a single burst on "+D.helix.one+", so there is no history to plot: the spiral shows file order, not elapsed time. Height is lines, brightness is how often the file changed since. Try Tree for this one."
+   : "<b>Helix.</b> Each block is one file, placed along the spiral by the commit that first added it, oldest at the bottom. Height is lines, brightness is churn. Clusters are bursts of building; gaps are quiet stretches."};
+function setMode(m){
+  VIEW[mode]=Object.assign({},cam);
+  mode=m; cam=Object.assign({},VIEW[m]);
+  if(!cam.dist) cam.dist=fitFor((m==="tree"?D.tree.rad:D.helix.rad)||40);
+  $("m-tree").setAttribute("aria-pressed",m==="tree");
+  $("m-helix").setAttribute("aria-pressed",m==="helix");
+  $("note").innerHTML=NOTE[m];
+  const ax=$("axis");
+  if(m==="helix"&&HX.span[0]){ax.style.opacity=".9";
+    ax.textContent=HX.flat?("all files added "+HX.one):(HX.span[0]+"  to  "+HX.span[1]);
+    ax.style.left="50%";ax.style.bottom="64px";ax.style.transform="translateX(-50%)";}
+  else ax.style.opacity="0";
+  hover=-1; $("tip").style.opacity=0;
+}
+$("m-tree").addEventListener("click",()=>setMode("tree"));
+$("m-helix").addEventListener("click",()=>setMode("helix"));
+function syncSpin(){$("m-spin").setAttribute("aria-pressed",spin);}
+$("m-spin").addEventListener("click",()=>{spin=!spin;syncSpin();});
+setMode(mode); syncSpin();
+
+/* ---------- picking ---------- */
+function pickAt(cx,cy){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.viewport(0,0,W,H);gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);gl.disable(gl.BLEND);gl.depthMask(true);
+  if(mode==="tree"){
+    gl.useProgram(pPL);gl.uniformMatrix4fv(pPL.u.u_vp,false,vp);
+    gl.uniform3fv(pPL.u.u_right,right);gl.uniform3fv(pPL.u.u_up,up);
+    gl.uniform1f(pPL.u.u_grow,Math.max(grow,0.01));
+    gl.bindVertexArray(vaoLF);gl.drawArraysInstanced(gl.TRIANGLES,0,6,nLeaf);
+  }else{
+    gl.useProgram(pPB);gl.uniformMatrix4fv(pPB.u.u_vp,false,vp);
+    gl.bindVertexArray(vaoBX);
+    gl.drawElementsInstanced(gl.TRIANGLES,bi.length,gl.UNSIGNED_SHORT,0,nBox);
+  }
+  const px=new Uint8Array(4);
+  const gx=Math.floor(cx*DPR),gy=Math.floor(H-cy*DPR);
+  if(gx>=0&&gy>=0&&gx<W&&gy<H)gl.readPixels(gx,gy,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const id=px[0]+px[1]*256+px[2]*65536-1;
+  const n=mode==="tree"?nLeaf:nBox;
+  return (id>=0&&id<n)?id:-1;}
+
+const tip=$("tip");
+function showTip(id){
+  if(id<0){tip.style.opacity=0;return;}
+  const o=mode==="tree"?T.leaves[id]:HX.items[id];
+  const nm=o.p.split("/").pop();
+  tip.innerHTML=nm+" &nbsp;<b>"+(o.l?nf(o.l)+" ln":o.e)+"</b> &nbsp;"+o.k+" commits";
+  const flip=mx>innerWidth-260;
+  tip.style.transform=flip?"translate(calc(-100% - 12px),-50%)":"translate(12px,-50%)";
+  tip.style.left=mx+"px";tip.style.top=my+"px";tip.style.opacity=1;}
+
+/* ---------- frame ---------- */
+function frame(t){
+  t*=0.001;
+  if(spin)cam.yaw+=0.0022;
+  const cp2=Math.cos(cam.pitch);
+  eye=[cam.tx+cam.dist*cp2*Math.sin(cam.yaw),cam.ty+cam.dist*Math.sin(cam.pitch),
+       cam.tz+cam.dist*cp2*Math.cos(cam.yaw)];
+  const rad=(mode==="tree"?D.tree.rad:D.helix.rad)||40;
+  const FK=0.286/Math.max(rad,8);
+  const lk=look(eye,[cam.tx,cam.ty,cam.tz],[0,1,0]);
+  right=lk.right; up=lk.up;
+  vp=mul(persp(0.86,W/H,0.6,2600),lk.m);
+
+  if(needPick&&t-lastPick>0.05&&!drag){lastPick=t;needPick=false;
+    const id=pickAt(mx,my); if(id!==hover){hover=id;showTip(id);} }
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,W,H);
+  gl.clearColor(0.051,0.082,0.137,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);
+
+  gl.useProgram(pG);gl.uniformMatrix4fv(pG.u.u_vp,false,vp);gl.uniform3fv(pG.u.u_eye,eye);gl.uniform1f(pG.u.u_fk,FK);
+  gl.bindVertexArray(vaoG);gl.drawArrays(gl.TRIANGLES,0,6);
+
+  if(mode==="tree"){
+    gl.enable(gl.CULL_FACE);
+    gl.useProgram(pBR);gl.uniformMatrix4fv(pBR.u.u_vp,false,vp);gl.uniform3fv(pBR.u.u_eye,eye);gl.uniform1f(pBR.u.u_fk,FK);
+    gl.bindVertexArray(vaoBR);
+    gl.drawElementsInstanced(gl.TRIANGLES,ci.length,gl.UNSIGNED_SHORT,0,nSeg);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE);gl.depthMask(false);
+    gl.useProgram(pLF);gl.uniformMatrix4fv(pLF.u.u_vp,false,vp);gl.uniform3fv(pLF.u.u_eye,eye);gl.uniform1f(pLF.u.u_fk,FK);
+    gl.uniform3fv(pLF.u.u_right,right);gl.uniform3fv(pLF.u.u_up,up);
+    gl.uniform1f(pLF.u.u_t,t);gl.uniform1f(pLF.u.u_hover,hover);gl.uniform1f(pLF.u.u_grow,grow);
+    gl.bindVertexArray(vaoLF);gl.drawArraysInstanced(gl.TRIANGLES,0,6,nLeaf);
+    gl.depthMask(true);gl.disable(gl.BLEND);
+  }else{
+    gl.useProgram(pLN);gl.uniformMatrix4fv(pLN.u.u_vp,false,vp);gl.uniform3fv(pLN.u.u_eye,eye);gl.uniform1f(pLN.u.u_fk,FK);
+    gl.bindVertexArray(vaoLN);gl.drawArrays(gl.LINE_STRIP,0,nRib);
+    gl.enable(gl.CULL_FACE);
+    gl.useProgram(pBX);gl.uniformMatrix4fv(pBX.u.u_vp,false,vp);gl.uniform3fv(pBX.u.u_eye,eye);gl.uniform1f(pBX.u.u_fk,FK);
+    gl.uniform1f(pBX.u.u_t,t);gl.uniform1f(pBX.u.u_hover,hover);
+    gl.bindVertexArray(vaoBX);
+    gl.drawElementsInstanced(gl.TRIANGLES,bi.length,gl.UNSIGNED_SHORT,0,nBox);
+    gl.disable(gl.CULL_FACE);
+  }
+  gl.bindVertexArray(null);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

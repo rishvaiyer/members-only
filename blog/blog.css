@@ -1,0 +1,15 @@
+.blog-page main { width:min(1120px,calc(100% - 56px)); margin-inline:auto; }
+.blog-title { margin:clamp(68px,10vw,120px) 0 16px; color:var(--accent); font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; text-transform:lowercase; }
+.post-list { border-top:1px solid var(--line); margin-top:0; }
+.post-card { border-bottom:1px solid var(--line); padding:28px 0 34px; max-width:860px; }
+.post-meta { color:var(--muted); font:11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; letter-spacing:.08em; text-transform:lowercase; }
+.post-card h2 { margin:10px 0 14px; max-width:760px; font-size:clamp(26px,4vw,48px); line-height:1.06; }
+.post-card h2 a { color:inherit; text-decoration:none; }
+.post-card h2 a:hover { color:var(--accent); }
+.post-card > p:not(.post-meta) { max-width:680px; color:var(--muted); line-height:1.7; }
+.post-link { display:inline-flex; gap:8px; margin-top:8px; color:var(--accent); font:12px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace; text-decoration:none; }
+.post-link:hover { text-decoration:underline; }
+@media (max-width:760px) {
+  .blog-page main { width:min(100% - 32px,1120px); }
+  .blog-title { margin-top:48px; }
+}

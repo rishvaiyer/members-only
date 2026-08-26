@@ -1,0 +1,342 @@
+{
+  "slug": "wells-fargo",
+  "name": "WELLS FARGO & COMPANY",
+  "display_name": "Wells Fargo",
+  "data_source": "cfpb",
+  "snapshot_date": "2026-08-04",
+  "window": {
+    "min": "2025-02-04",
+    "max": "2026-08-04"
+  },
+  "total_complaints": 2000,
+  "monthly": [
+    {
+      "month": "2025-02",
+      "count": 0
+    },
+    {
+      "month": "2025-03",
+      "count": 0
+    },
+    {
+      "month": "2025-04",
+      "count": 0
+    },
+    {
+      "month": "2025-05",
+      "count": 0
+    },
+    {
+      "month": "2025-06",
+      "count": 0
+    },
+    {
+      "month": "2025-07",
+      "count": 0
+    },
+    {
+      "month": "2025-08",
+      "count": 0
+    },
+    {
+      "month": "2025-09",
+      "count": 0
+    },
+    {
+      "month": "2025-10",
+      "count": 0
+    },
+    {
+      "month": "2025-11",
+      "count": 0
+    },
+    {
+      "month": "2025-12",
+      "count": 0
+    },
+    {
+      "month": "2026-01",
+      "count": 0
+    },
+    {
+      "month": "2026-02",
+      "count": 0
+    },
+    {
+      "month": "2026-03",
+      "count": 0
+    },
+    {
+      "month": "2026-04",
+      "count": 0
+    },
+    {
+      "month": "2026-05",
+      "count": 0
+    },
+    {
+      "month": "2026-06",
+      "count": 0
+    },
+    {
+      "month": "2026-07",
+      "count": 2000
+    },
+    {
+      "month": "2026-08",
+      "count": 0
+    }
+  ],
+  "top_products": [
+    {
+      "name": "Checking or savings account",
+      "count": 780
+    },
+    {
+      "name": "Credit reporting or other personal consumer reports",
+      "count": 360
+    },
+    {
+      "name": "Credit card",
+      "count": 340
+    },
+    {
+      "name": "Money transfer, virtual currency, or money service",
+      "count": 200
+    },
+    {
+      "name": "Debt collection",
+      "count": 160
+    },
+    {
+      "name": "Mortgage",
+      "count": 120
+    },
+    {
+      "name": "Vehicle loan or lease",
+      "count": 20
+    },
+    {
+      "name": "Payday loan, title loan, personal loan, or advance loan",
+      "count": 20
+    }
+  ],
+  "top_issues": [
+    {
+      "name": "Managing an account",
+      "count": 460
+    },
+    {
+      "name": "Incorrect information on your report",
+      "count": 220
+    },
+    {
+      "name": "Problem caused by your funds being low",
+      "count": 180
+    },
+    {
+      "name": "Took or threatened to take negative or legal action",
+      "count": 120
+    },
+    {
+      "name": "Fraud or scam",
+      "count": 100
+    },
+    {
+      "name": "Improper use of your report",
+      "count": 100
+    },
+    {
+      "name": "Problem with a purchase shown on your statement",
+      "count": 80
+    },
+    {
+      "name": "Getting a credit card",
+      "count": 80
+    }
+  ],
+  "top_states": [
+    {
+      "name": "CA",
+      "count": 440
+    },
+    {
+      "name": "FL",
+      "count": 280
+    },
+    {
+      "name": "TX",
+      "count": 220
+    },
+    {
+      "name": "PA",
+      "count": 140
+    },
+    {
+      "name": "CO",
+      "count": 120
+    },
+    {
+      "name": "IL",
+      "count": 120
+    },
+    {
+      "name": "GA",
+      "count": 100
+    },
+    {
+      "name": "NJ",
+      "count": 60
+    },
+    {
+      "name": "MN",
+      "count": 60
+    },
+    {
+      "name": "OR",
+      "count": 40
+    }
+  ],
+  "timely_response_rate": 1,
+  "company_responses": [
+    {
+      "name": "Closed with explanation",
+      "count": 1300
+    },
+    {
+      "name": "In progress",
+      "count": 500
+    },
+    {
+      "name": "Closed with monetary relief",
+      "count": 120
+    },
+    {
+      "name": "Closed with non-monetary relief",
+      "count": 80
+    }
+  ],
+  "narrative_count": 0,
+  "sample_narratives": [],
+  "signal": {
+    "score": 41,
+    "band": "Moderate",
+    "components": [
+      {
+        "key": "timeliness_gap",
+        "label": "Untimely responses",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "0% of cases not answered on time"
+      },
+      {
+        "key": "relief_gap",
+        "label": "Closed without relief",
+        "weight": 0.3,
+        "value": 86.7,
+        "evidence": "86.7% of closed cases ended without monetary or non-monetary relief"
+      },
+      {
+        "key": "issue_concentration",
+        "label": "Issue concentration",
+        "weight": 0.2,
+        "value": 23,
+        "evidence": "23% of complaints share one top issue"
+      },
+      {
+        "key": "trend",
+        "label": "Recent trend",
+        "weight": 0.2,
+        "value": 50,
+        "evidence": "last 3 months avg 666.7/mo vs prior 0/mo"
+      },
+      {
+        "key": "narrative_harm",
+        "label": "Harm language in narratives",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "no consumer narratives available"
+      }
+    ]
+  },
+  "summary": "Between 2025-02-04 and 2026-08-04, the CFPB published 2,000 complaints about Wells Fargo. Volume is steady (last 3 months averaged 667 per month versus 0 before). The most common issue is \"Managing an account\" (23% of complaints), concentrated in checking or savings account. The company responded on time to 100% of cases; 86.7% of closed cases ended without relief. Overall risk signal: Moderate (41/100). This is an exploratory signal from public complaint data, not a regulatory, legal, or investment conclusion.",
+  "regulatory": {
+    "data_source": "live",
+    "fdic": {
+      "cert": 3511,
+      "name": "Wells Fargo Bank, National Association",
+      "city": "Sioux Falls",
+      "state": "SD",
+      "active": true,
+      "asset_thousands": 1852239000,
+      "established": ""
+    },
+    "sec": {
+      "cik": "0000072971",
+      "entity_name": "WELLS FARGO & COMPANY/MN",
+      "recent_filings": [
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "r9890wfc_424b2-25421.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "r9834wfc_424b2-25418.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "r9836wfc_424b2-25390.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "r9837wfc_424b2-25383.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "r9888wfc_424b2-25408.htm"
+        }
+      ]
+    },
+    "lei": {
+      "lei": "984500EB0D67AAL6D588",
+      "legal_name": "WELLS FARGO LTD",
+      "jurisdiction": "GB",
+      "status": "ACTIVE",
+      "registration_status": "LAPSED"
+    },
+    "fed": {
+      "organization": "Wells Fargo & Company, San Francisco, California",
+      "total_actions": 8,
+      "active_actions": 4,
+      "most_recent": {
+        "date": "2023-03-24",
+        "action": "Civil Money Penalty",
+        "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20230330a.htm"
+      }
+    },
+    "sources": [
+      {
+        "label": "FDIC BankFind Suite",
+        "url": "https://banks.data.fdic.gov/bankfind-suite/bankfind"
+      },
+      {
+        "label": "SEC EDGAR",
+        "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+      },
+      {
+        "label": "GLEIF LEI Search",
+        "url": "https://search.gleif.org/"
+      },
+      {
+        "label": "Federal Reserve Enforcement Actions",
+        "url": "https://www.federalreserve.gov/supervisionreg/enforcementactions.htm"
+      }
+    ],
+    "note": "Live public-record cross-reference from FDIC BankFind, SEC EDGAR, GLEIF, and Federal Reserve enforcement actions. Public records only — not a verdict."
+  }
+}

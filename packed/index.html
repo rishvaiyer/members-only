@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Packed for the 1st — Rishva Iyer, RTC member</title>
+  <meta name="description" content="A member packing list for myRTC on September 1. Not a roadmap." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --night: #10141a;
+      --night-2: #181d26;
+      --tube: #e4f3a8;
+      --ballpoint: #8eb7d6;
+      --paper: #f3efe4;
+      --paper-2: #e7e1d2;
+      --ink: #1c1a16;
+      --mute: #5c574c;
+      --rule: #cfc8b6;
+      --stamp: #c45c3a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      background:
+        radial-gradient(1200px 280px at 50% -40px, rgba(228, 243, 168, 0.14), transparent 70%),
+        var(--night);
+      color: #e8e6df;
+      font-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.45;
+    }
+    .page {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 36px 22px 72px;
+    }
+    .mono {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 11px;
+    }
+    header .mono { color: var(--tube); }
+    h1 {
+      font-family: Syne, system-ui, sans-serif;
+      font-weight: 700;
+      font-size: clamp(34px, 5vw, 56px);
+      line-height: 0.95;
+      letter-spacing: -0.03em;
+      margin: 10px 0 14px;
+    }
+    .lede {
+      max-width: 46ch;
+      color: #c5c1b6;
+      margin: 0 0 28px;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+      gap: 36px;
+      align-items: start;
+    }
+    fieldset {
+      border: 0;
+      margin: 0 0 26px;
+      padding: 0;
+    }
+    legend {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--ballpoint);
+      margin-bottom: 10px;
+    }
+    .hint {
+      font-size: 14px;
+      color: #9a958a;
+      margin: -4px 0 10px;
+    }
+    .opts { display: flex; flex-wrap: wrap; gap: 8px; }
+    label.chip {
+      border: 1px solid #3a414c;
+      background: var(--night-2);
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 15px;
+      color: #ddd8cc;
+    }
+    label.chip:has(input:checked) {
+      background: var(--tube);
+      color: var(--night);
+      border-color: var(--tube);
+    }
+    label.chip:focus-within {
+      outline: 2px solid var(--ballpoint);
+      outline-offset: 2px;
+    }
+    label.chip input { position: absolute; opacity: 0; pointer-events: none; }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 8px 0 18px;
+    }
+    button {
+      font-family: inherit;
+      font-size: 15px;
+      border: 0;
+      cursor: pointer;
+      padding: 10px 14px;
+    }
+    .primary { background: var(--tube); color: var(--night); font-weight: 700; }
+    .ghost {
+      background: transparent;
+      color: #ddd8cc;
+      border: 1px solid #3a414c;
+    }
+    button:focus { outline: 2px solid var(--ballpoint); outline-offset: 3px; }
+    .aside { font-size: 14px; color: #9a958a; max-width: 52ch; }
+
+    .card-wrap { position: sticky; top: 18px; }
+    .card {
+      background: var(--paper);
+      color: var(--ink);
+      padding: 28px 26px 22px;
+      min-height: 460px;
+      box-shadow: none;
+      position: relative;
+      transform: rotate(-0.6deg);
+    }
+    .card::after {
+      content: "SEP 1";
+      position: absolute;
+      top: 18px;
+      right: 16px;
+      width: 74px;
+      height: 74px;
+      border: 2px solid var(--stamp);
+      border-radius: 50%;
+      color: var(--stamp);
+      font-family: Syne, sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: 0.08em;
+      display: grid;
+      place-items: center;
+      transform: rotate(12deg);
+    }
+    .card .kicker {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 10px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--mute);
+      margin: 0 0 6px;
+    }
+    .card h2 {
+      font-family: Syne, sans-serif;
+      font-size: 28px;
+      line-height: 1;
+      margin: 0 80px 18px 0;
+      letter-spacing: -0.03em;
+    }
+    .who {
+      font-size: 13px;
+      color: var(--mute);
+      margin: -8px 80px 16px 0;
+    }
+    .block { border-top: 1px solid var(--rule); padding: 12px 0; }
+    .block .lbl {
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--mute);
+      margin-bottom: 6px;
+    }
+    .block .val {
+      font-family: "Atkinson Hyperlegible", sans-serif;
+      font-style: italic;
+      font-size: 18px;
+      line-height: 1.3;
+    }
+    .empty { color: #a39c8c; font-style: italic; }
+    .metric {
+      background: #efe6cf;
+      padding: 10px 12px;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .fine {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--mute);
+      font-family: "IBM Plex Mono", ui-monospace, monospace;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    footer {
+      margin-top: 48px;
+      color: #8b8680;
+      font-size: 14px;
+      max-width: 70ch;
+    }
+    footer a { color: var(--ballpoint); }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+      .card-wrap { position: static; }
+      .card { transform: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .card { transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <p class="mono">RTC member since 2023 · packing, not pitching</p>
+      <h1>Packed for the 1st</h1>
+      <p class="lede">
+        myRTC goes live September 1. I am not sending Rewriting the Code a roadmap.
+        I packed my own bag, against the public launch note, as a member.
+      </p>
+    </header>
+
+    <div class="layout">
+      <form id="form">
+        <fieldset>
+          <legend>1 · Where you are</legend>
+          <div class="opts" id="stages"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>2 · What you are actually bringing</legend>
+          <p class="hint">Up to two. Lurking counts.</p>
+          <div class="opts" id="brings"></div>
+        </fieldset>
+
+        <fieldset>
+          <legend>3 · What “it worked” means on September 2</legend>
+          <p class="hint">One outcome. Not a feature.</p>
+          <div class="opts" id="dones"></div>
+        </fieldset>
+
+        <div class="actions">
+          <button type="button" class="primary" id="mine">This is mine</button>
+          <button type="button" class="ghost" id="clear">Empty the bag</button>
+          <button type="button" class="ghost" id="save">Download the card</button>
+        </div>
+        <p class="aside">
+          Surfaces on the card are only the ones RTC already named for day one:
+          Projects, AI Career Coach, Career Paths, Learning Hub, Mentorship,
+          NVIDIA and IBM SkillsBuild. Nothing here logs into myRTC.
+        </p>
+      </form>
+
+      <aside class="card-wrap">
+        <article class="card" id="card" aria-live="polite">
+          <p class="kicker">Member packing card</p>
+          <h2>Packed for the 1st</h2>
+          <p class="who" id="who">A member · September 1, 2026</p>
+          <div class="block">
+            <div class="lbl">Bringing from teamRTC</div>
+            <div class="val" id="v-bring"><span class="empty">Still on the bed. Pack two things.</span></div>
+          </div>
+          <div class="block">
+            <div class="lbl">Looking first</div>
+            <div class="val" id="v-look"><span class="empty">Fills in when the bag has a where, a bringing, and a done.</span></div>
+          </div>
+          <div class="block">
+            <div class="lbl">It worked if</div>
+            <div class="val" id="v-done"><span class="empty">Pick the September 2 sentence.</span></div>
+          </div>
+          <div class="metric" id="v-metric">The question I would ask about my own day one shows up here. It is about me, not a staff dashboard.</div>
+          <p class="fine">Does not touch myRTC · built from the public launch note · Rishva Iyer</p>
+        </article>
+      </aside>
+    </div>
+
+    <footer>
+      Built by Rishva Iyer the week of August 14, 2026, as an RTC member applying
+      for Senior Product Manager, Member Platform. If day-one already does this
+      for you, the card is still a keepsake. If it is useful as a signal of how
+      I think, even better.
+    </footer>
+  </div>
+
+  <script>
+    const stages = [
+      { id: "explore", label: "Undergrad, still figuring it out" },
+      { id: "graduating", label: "Undergrad, graduating soon" },
+      { id: "early", label: "Early career, finding my feet" },
+      { id: "searching", label: "Early career, looking right now" },
+    ];
+    const brings = [
+      { id: "people", label: "Slack / the feeling I had people" },
+      { id: "missed", label: "Opportunities I would have missed" },
+      { id: "room", label: "Events / being in the room" },
+      { id: "mentors", label: "Someone ahead of me" },
+      { id: "notabs", label: "A place that wasn’t Handshake or LinkedIn" },
+      { id: "lurked", label: "Honestly, I mostly lurked" },
+    ];
+    const dones = [
+      { id: "next", label: "I knew the next step without five tabs" },
+      { id: "person", label: "I had talked to a person, not a feed" },
+      { id: "proof", label: "I started something I can show someone" },
+      { id: "dignity", label: "I felt like a person first, not a resume" },
+      { id: "simpler", label: "My job search got simpler, not louder" },
+    ];
+
+    const surfaces = {
+      mentor: { name: "Mentorship", line: "Find someone ahead of me and book the time." },
+      paths: { name: "Career Paths", line: "Take the next step it names. Not a tour." },
+      coach: { name: "AI Career Coach", line: "Run resume review before I apply again." },
+      projects: { name: "Projects", line: "Start one thing that can become a resume bullet." },
+      hub: { name: "Learning Hub", line: "Put this week in one place. Save one thing." },
+      courses: { name: "NVIDIA / IBM SkillsBuild", line: "Enroll in one course, not a catalog." },
+    };
+
+    function mountChoices() {
+      const stageBox = document.getElementById("stages");
+      stages.forEach((s, i) => {
+        stageBox.appendChild(chip("radio", "stage", s.id, s.label, i === 0 ? false : false));
+      });
+      brings.forEach((s) => {
+        document.getElementById("brings").appendChild(chip("checkbox", "bring", s.id, s.label));
+      });
+      dones.forEach((s) => {
+        document.getElementById("dones").appendChild(chip("radio", "done", s.id, s.label));
+      });
+    }
+
+    function chip(type, name, value, label) {
+      const el = document.createElement("label");
+      el.className = "chip";
+      el.innerHTML = `<input type="${type}" name="${name}" value="${value}" /><span>${label}</span>`;
+      const input = el.querySelector("input");
+      input.addEventListener("change", () => {
+        if (type === "checkbox") limitBrings(input);
+        render();
+      });
+      return el;
+    }
+
+    function limitBrings(just) {
+      const on = [...document.querySelectorAll("input[name=bring]:checked")];
+      if (on.length > 2) {
+        just.checked = false;
+      }
+    }
+
+    function selected(name) {
+      if (name === "bring") {
+        return [...document.querySelectorAll("input[name=bring]:checked")].map((i) => i.value);
+      }
+      const el = document.querySelector(`input[name=${name}]:checked`);
+      return el ? el.value : null;
+    }
+
+    function pack(stage, bring, done) {
+      const labels = bring.map((id) => brings.find((b) => b.id === id).label);
+      let look = surfaces.paths;
+      if (done === "person" || done === "dignity" || bring.includes("mentors") || bring.includes("people")) {
+        look = surfaces.mentor;
+      } else if (done === "proof") {
+        look = surfaces.projects;
+      } else if (done === "simpler" || (stage === "searching" && done !== "next")) {
+        look = surfaces.coach;
+      } else if (bring.includes("lurked") || done === "next") {
+        look = surfaces.paths;
+      } else if (bring.includes("notabs") || bring.includes("room")) {
+        look = surfaces.hub;
+      }
+
+      const doneLabel = dones.find((d) => d.id === done)?.label;
+
+      let metric = "Once the bag is packed, I will write one question about my own day one. Not theirs.";
+      if (done === "person" || bring.includes("people") || bring.includes("mentors")) {
+        metric = "My day-one question: did I book a person within 7 days, or only look at people?";
+      } else if (bring.includes("lurked")) {
+        metric = "My day-one question: did lurking turn into one action, or into a tour and a bounce?";
+      } else if (done === "proof") {
+        metric = "My day-one question: did I start a project, or only save one?";
+      } else if (done === "simpler") {
+        metric = "My day-one question: did resume review happen before my next apply?";
+      } else if (done === "next") {
+        metric = "My day-one question: did I leave with a named next step, or with six open tabs?";
+      } else if (done === "dignity") {
+        metric = "My day-one question: was I spoken to as a person before I was asked for a resume?";
+      }
+
+      return { labels, look, doneLabel, metric, stage };
+    }
+
+    function render() {
+      const stage = selected("stage");
+      const bring = selected("bring");
+      const done = selected("done");
+      const mine = document.body.dataset.mine === "1";
+      document.getElementById("who").textContent = mine
+        ? "Rishva Iyer · member since 2023 · Temple IST · September 1, 2026"
+        : "A member · September 1, 2026";
+
+      const vBring = document.getElementById("v-bring");
+      const vLook = document.getElementById("v-look");
+      const vDone = document.getElementById("v-done");
+      const vMetric = document.getElementById("v-metric");
+
+      if (!bring.length) {
+        vBring.innerHTML = '<span class="empty">Still on the bed. Pack two things.</span>';
+      } else {
+        vBring.textContent = bring.map((id) => brings.find((b) => b.id === id).label).join(" · ");
+      }
+
+      if (!done) {
+        vDone.innerHTML = '<span class="empty">Pick the September 2 sentence.</span>';
+      } else {
+        vDone.textContent = dones.find((d) => d.id === done).label;
+      }
+
+      if (!stage || !bring.length || !done) {
+        vLook.innerHTML = '<span class="empty">Fills in when the bag has a where, a bringing, and a done.</span>';
+        vMetric.textContent = "The question I would ask about my own day one shows up here. It is about me, not a staff dashboard.";
+        return;
+      }
+
+      const p = pack(stage, bring, done);
+      vLook.textContent = p.look.name + " — " + p.look.line;
+      vMetric.textContent = p.metric;
+    }
+
+    function setMine() {
+      document.body.dataset.mine = "1";
+      document.querySelectorAll("input").forEach((i) => { i.checked = false; });
+      document.querySelector('input[name=stage][value=early]').checked = true;
+      document.querySelector('input[name=bring][value=notabs]').checked = true;
+      document.querySelector('input[name=bring][value=people]').checked = true;
+      document.querySelector('input[name=done][value=dignity]').checked = true;
+      render();
+    }
+
+    function clearBag() {
+      document.body.dataset.mine = "0";
+      document.querySelectorAll("input").forEach((i) => { i.checked = false; });
+      render();
+    }
+
+    function downloadCard() {
+      const card = document.getElementById("card");
+      const w = 900, h = 1200;
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const c = canvas.getContext("2d");
+      c.fillStyle = "#f3efe4";
+      c.fillRect(0, 0, w, h);
+      c.strokeStyle = "#c45c3a";
+      c.lineWidth = 3;
+      c.beginPath();
+      c.arc(790, 120, 70, 0, Math.PI * 2);
+      c.stroke();
+      c.fillStyle = "#c45c3a";
+      c.font = "700 22px Syne, sans-serif";
+      c.fillText("SEP 1", 752, 128);
+      c.fillStyle = "#5c574c";
+      c.font = "500 16px 'IBM Plex Mono', monospace";
+      c.fillText("MEMBER PACKING CARD", 64, 80);
+      c.fillStyle = "#1c1a16";
+      c.font = "700 48px Syne, sans-serif";
+      c.fillText("Packed for the 1st", 64, 150);
+      c.font = "16px Atkinson Hyperlegible, sans-serif";
+      c.fillStyle = "#5c574c";
+      wrap(c, document.getElementById("who").textContent, 64, 186, 620);
+      drawBlock(c, "BRINGING FROM TEAMRTC", document.getElementById("v-bring").innerText, 250);
+      drawBlock(c, "LOOKING FIRST", document.getElementById("v-look").innerText, 430);
+      drawBlock(c, "IT WORKED IF", document.getElementById("v-done").innerText, 610);
+      c.fillStyle = "#efe6cf";
+      c.fillRect(64, 790, 772, 160);
+      c.fillStyle = "#1c1a16";
+      c.font = "italic 22px Atkinson Hyperlegible, sans-serif";
+      wrap(c, document.getElementById("v-metric").innerText, 84, 838, 732);
+      c.fillStyle = "#5c574c";
+      c.font = "14px 'IBM Plex Mono', monospace";
+      c.fillText("DOES NOT TOUCH MYRTC  ·  RISHVA IYER", 64, 1120);
+      const a = document.createElement("a");
+      a.href = canvas.toDataURL("image/png");
+      a.download = "packed-for-the-1st.png";
+      a.click();
+    }
+
+    function drawBlock(c, label, text, y) {
+      c.fillStyle = "#cfc8b6";
+      c.fillRect(64, y, 772, 1);
+      c.fillStyle = "#5c574c";
+      c.font = "500 14px 'IBM Plex Mono', monospace";
+      c.fillText(label, 64, y + 36);
+      c.fillStyle = "#1c1a16";
+      c.font = "italic 26px Atkinson Hyperlegible, sans-serif";
+      wrap(c, text, 64, y + 74, 772);
+    }
+
+    function wrap(c, text, x, y, max) {
+      const words = text.split(" ");
+      let line = "", yy = y;
+      for (const word of words) {
+        const test = line + word + " ";
+        if (c.measureText(test).width > max) {
+          c.fillText(line, x, yy);
+          line = word + " ";
+          yy += 32;
+        } else line = test;
+      }
+      c.fillText(line, x, yy);
+    }
+
+    mountChoices();
+    document.getElementById("mine").addEventListener("click", setMine);
+    document.getElementById("clear").addEventListener("click", clearBag);
+    document.getElementById("save").addEventListener("click", downloadCard);
+    render();
+  </script>
+</body>
+</html>

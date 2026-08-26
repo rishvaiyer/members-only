@@ -1,0 +1,223 @@
+{
+  "slug": "experian",
+  "name": "Experian Information Solutions Inc.",
+  "display_name": "Experian",
+  "data_source": "cfpb",
+  "snapshot_date": "2026-08-04",
+  "window": {
+    "min": "2025-02-04",
+    "max": "2026-08-04"
+  },
+  "total_complaints": 2000,
+  "monthly": [
+    {
+      "month": "2025-02",
+      "count": 0
+    },
+    {
+      "month": "2025-03",
+      "count": 0
+    },
+    {
+      "month": "2025-04",
+      "count": 0
+    },
+    {
+      "month": "2025-05",
+      "count": 0
+    },
+    {
+      "month": "2025-06",
+      "count": 0
+    },
+    {
+      "month": "2025-07",
+      "count": 0
+    },
+    {
+      "month": "2025-08",
+      "count": 0
+    },
+    {
+      "month": "2025-09",
+      "count": 0
+    },
+    {
+      "month": "2025-10",
+      "count": 0
+    },
+    {
+      "month": "2025-11",
+      "count": 0
+    },
+    {
+      "month": "2025-12",
+      "count": 0
+    },
+    {
+      "month": "2026-01",
+      "count": 0
+    },
+    {
+      "month": "2026-02",
+      "count": 0
+    },
+    {
+      "month": "2026-03",
+      "count": 0
+    },
+    {
+      "month": "2026-04",
+      "count": 0
+    },
+    {
+      "month": "2026-05",
+      "count": 0
+    },
+    {
+      "month": "2026-06",
+      "count": 0
+    },
+    {
+      "month": "2026-07",
+      "count": 0
+    },
+    {
+      "month": "2026-08",
+      "count": 2000
+    }
+  ],
+  "top_products": [
+    {
+      "name": "Credit reporting or other personal consumer reports",
+      "count": 2000
+    }
+  ],
+  "top_issues": [
+    {
+      "name": "Incorrect information on your report",
+      "count": 1160
+    },
+    {
+      "name": "Problem with a company's investigation into an existing problem",
+      "count": 740
+    },
+    {
+      "name": "Improper use of your report",
+      "count": 100
+    }
+  ],
+  "top_states": [
+    {
+      "name": "TX",
+      "count": 640
+    },
+    {
+      "name": "FL",
+      "count": 280
+    },
+    {
+      "name": "CA",
+      "count": 220
+    },
+    {
+      "name": "OH",
+      "count": 120
+    },
+    {
+      "name": "MS",
+      "count": 120
+    },
+    {
+      "name": "GA",
+      "count": 120
+    },
+    {
+      "name": "IL",
+      "count": 120
+    },
+    {
+      "name": "NV",
+      "count": 60
+    },
+    {
+      "name": "MO",
+      "count": 40
+    },
+    {
+      "name": "PA",
+      "count": 40
+    }
+  ],
+  "timely_response_rate": 1,
+  "company_responses": [
+    {
+      "name": "In progress",
+      "count": 2000
+    }
+  ],
+  "narrative_count": 0,
+  "sample_narratives": [],
+  "signal": {
+    "score": 22,
+    "band": "Low",
+    "components": [
+      {
+        "key": "timeliness_gap",
+        "label": "Untimely responses",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "0% of cases not answered on time"
+      },
+      {
+        "key": "relief_gap",
+        "label": "Closed without relief",
+        "weight": 0.3,
+        "value": 0,
+        "evidence": "0% of closed cases ended without monetary or non-monetary relief"
+      },
+      {
+        "key": "issue_concentration",
+        "label": "Issue concentration",
+        "weight": 0.2,
+        "value": 58,
+        "evidence": "58% of complaints share one top issue"
+      },
+      {
+        "key": "trend",
+        "label": "Recent trend",
+        "weight": 0.2,
+        "value": 50,
+        "evidence": "last 3 months avg 666.7/mo vs prior 0/mo"
+      },
+      {
+        "key": "narrative_harm",
+        "label": "Harm language in narratives",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "no consumer narratives available"
+      }
+    ]
+  },
+  "summary": "Between 2025-02-04 and 2026-08-04, the CFPB published 2,000 complaints about Experian. Volume is steady (last 3 months averaged 667 per month versus 0 before). The most common issue is \"Incorrect information on your report\" (58% of complaints), concentrated in credit reporting or other personal consumer reports. The company responded on time to 100% of cases; 0% of closed cases ended without relief. Overall risk signal: Low (22/100). This is an exploratory signal from public complaint data, not a regulatory, legal, or investment conclusion.",
+  "regulatory": {
+    "data_source": "live",
+    "fdic": null,
+    "sec": null,
+    "lei": {
+      "lei": "6367007Z5ER6VFO56I48",
+      "legal_name": "EXPERIAN AS",
+      "jurisdiction": "NO",
+      "status": "ACTIVE",
+      "registration_status": "ISSUED"
+    },
+    "fed": null,
+    "sources": [
+      {
+        "label": "GLEIF LEI Search",
+        "url": "https://search.gleif.org/"
+      }
+    ],
+    "note": "Live public-record cross-reference from FDIC BankFind, SEC EDGAR, GLEIF, and Federal Reserve enforcement actions. Public records only — not a verdict."
+  }
+}

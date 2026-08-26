@@ -1,0 +1,317 @@
+{
+  "slug": "citibank",
+  "name": "CITIBANK, N.A.",
+  "display_name": "Citibank",
+  "data_source": "cfpb",
+  "snapshot_date": "2026-08-04",
+  "window": {
+    "min": "2025-02-04",
+    "max": "2026-08-04"
+  },
+  "total_complaints": 2000,
+  "monthly": [
+    {
+      "month": "2025-02",
+      "count": 0
+    },
+    {
+      "month": "2025-03",
+      "count": 0
+    },
+    {
+      "month": "2025-04",
+      "count": 0
+    },
+    {
+      "month": "2025-05",
+      "count": 0
+    },
+    {
+      "month": "2025-06",
+      "count": 0
+    },
+    {
+      "month": "2025-07",
+      "count": 0
+    },
+    {
+      "month": "2025-08",
+      "count": 0
+    },
+    {
+      "month": "2025-09",
+      "count": 0
+    },
+    {
+      "month": "2025-10",
+      "count": 0
+    },
+    {
+      "month": "2025-11",
+      "count": 0
+    },
+    {
+      "month": "2025-12",
+      "count": 0
+    },
+    {
+      "month": "2026-01",
+      "count": 0
+    },
+    {
+      "month": "2026-02",
+      "count": 0
+    },
+    {
+      "month": "2026-03",
+      "count": 0
+    },
+    {
+      "month": "2026-04",
+      "count": 0
+    },
+    {
+      "month": "2026-05",
+      "count": 0
+    },
+    {
+      "month": "2026-06",
+      "count": 0
+    },
+    {
+      "month": "2026-07",
+      "count": 2000
+    },
+    {
+      "month": "2026-08",
+      "count": 0
+    }
+  ],
+  "top_products": [
+    {
+      "name": "Credit card",
+      "count": 1060
+    },
+    {
+      "name": "Credit reporting or other personal consumer reports",
+      "count": 400
+    },
+    {
+      "name": "Debt collection",
+      "count": 260
+    },
+    {
+      "name": "Checking or savings account",
+      "count": 240
+    },
+    {
+      "name": "Mortgage",
+      "count": 20
+    },
+    {
+      "name": "Money transfer, virtual currency, or money service",
+      "count": 20
+    }
+  ],
+  "top_issues": [
+    {
+      "name": "Problem with a purchase shown on your statement",
+      "count": 400
+    },
+    {
+      "name": "Incorrect information on your report",
+      "count": 260
+    },
+    {
+      "name": "Fees or interest",
+      "count": 180
+    },
+    {
+      "name": "Took or threatened to take negative or legal action",
+      "count": 140
+    },
+    {
+      "name": "Managing an account",
+      "count": 120
+    },
+    {
+      "name": "Improper use of your report",
+      "count": 120
+    },
+    {
+      "name": "Closing your account",
+      "count": 100
+    },
+    {
+      "name": "Problem with a company's investigation into an existing problem",
+      "count": 100
+    }
+  ],
+  "top_states": [
+    {
+      "name": "CA",
+      "count": 380
+    },
+    {
+      "name": "FL",
+      "count": 280
+    },
+    {
+      "name": "TX",
+      "count": 160
+    },
+    {
+      "name": "IL",
+      "count": 140
+    },
+    {
+      "name": "TN",
+      "count": 100
+    },
+    {
+      "name": "GA",
+      "count": 80
+    },
+    {
+      "name": "NJ",
+      "count": 80
+    },
+    {
+      "name": "PA",
+      "count": 80
+    },
+    {
+      "name": "NY",
+      "count": 60
+    },
+    {
+      "name": "AZ",
+      "count": 60
+    }
+  ],
+  "timely_response_rate": 1,
+  "company_responses": [
+    {
+      "name": "Closed with explanation",
+      "count": 1340
+    },
+    {
+      "name": "Closed with non-monetary relief",
+      "count": 340
+    },
+    {
+      "name": "Closed with monetary relief",
+      "count": 320
+    }
+  ],
+  "narrative_count": 0,
+  "sample_narratives": [],
+  "signal": {
+    "score": 34,
+    "band": "Moderate",
+    "components": [
+      {
+        "key": "timeliness_gap",
+        "label": "Untimely responses",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "0% of cases not answered on time"
+      },
+      {
+        "key": "relief_gap",
+        "label": "Closed without relief",
+        "weight": 0.3,
+        "value": 67,
+        "evidence": "67% of closed cases ended without monetary or non-monetary relief"
+      },
+      {
+        "key": "issue_concentration",
+        "label": "Issue concentration",
+        "weight": 0.2,
+        "value": 20,
+        "evidence": "20% of complaints share one top issue"
+      },
+      {
+        "key": "trend",
+        "label": "Recent trend",
+        "weight": 0.2,
+        "value": 50,
+        "evidence": "last 3 months avg 666.7/mo vs prior 0/mo"
+      },
+      {
+        "key": "narrative_harm",
+        "label": "Harm language in narratives",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "no consumer narratives available"
+      }
+    ]
+  },
+  "summary": "Between 2025-02-04 and 2026-08-04, the CFPB published 2,000 complaints about Citibank. Volume is steady (last 3 months averaged 667 per month versus 0 before). The most common issue is \"Problem with a purchase shown on your statement\" (20% of complaints), concentrated in credit card. The company responded on time to 100% of cases; 67% of closed cases ended without relief. Overall risk signal: Moderate (34/100). This is an exploratory signal from public complaint data, not a regulatory, legal, or investment conclusion.",
+  "regulatory": {
+    "data_source": "live",
+    "fdic": {
+      "cert": 7213,
+      "name": "Citibank, National Association",
+      "city": "Sioux Falls",
+      "state": "SD",
+      "active": true,
+      "asset_thousands": 1933622000,
+      "established": ""
+    },
+    "sec": {
+      "cik": "0001472033",
+      "entity_name": "Citibank,N.A./ADR",
+      "recent_filings": [
+        {
+          "form": "F-6",
+          "date": "2026-08-03",
+          "primary_doc": "e665677_f6-agilyx.htm"
+        },
+        {
+          "form": "F-6 POS",
+          "date": "2026-07-29",
+          "primary_doc": "e665672_f6pos-tpil.htm"
+        },
+        {
+          "form": "F-6EF",
+          "date": "2026-07-23",
+          "primary_doc": "e665669_f6ef-hmpcl.htm"
+        },
+        {
+          "form": "F-6EF",
+          "date": "2026-07-10",
+          "primary_doc": "e665649_f6ef-ct.htm"
+        },
+        {
+          "form": "F-6 POS",
+          "date": "2026-07-10",
+          "primary_doc": "e665647_f6pos-nepi.htm"
+        }
+      ]
+    },
+    "lei": {
+      "lei": "984500E7FX6880WAFF95",
+      "legal_name": "Citibank N.A.",
+      "jurisdiction": "US",
+      "status": "ACTIVE",
+      "registration_status": "ISSUED"
+    },
+    "fed": null,
+    "sources": [
+      {
+        "label": "FDIC BankFind Suite",
+        "url": "https://banks.data.fdic.gov/bankfind-suite/bankfind"
+      },
+      {
+        "label": "SEC EDGAR",
+        "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+      },
+      {
+        "label": "GLEIF LEI Search",
+        "url": "https://search.gleif.org/"
+      }
+    ],
+    "note": "Live public-record cross-reference from FDIC BankFind, SEC EDGAR, GLEIF, and Federal Reserve enforcement actions. Public records only — not a verdict."
+  }
+}

@@ -1,0 +1,326 @@
+{
+  "slug": "capital-one",
+  "name": "CAPITAL ONE FINANCIAL CORPORATION",
+  "display_name": "Capital One",
+  "data_source": "cfpb",
+  "snapshot_date": "2026-08-04",
+  "window": {
+    "min": "2025-02-04",
+    "max": "2026-08-04"
+  },
+  "total_complaints": 2000,
+  "monthly": [
+    {
+      "month": "2025-02",
+      "count": 0
+    },
+    {
+      "month": "2025-03",
+      "count": 0
+    },
+    {
+      "month": "2025-04",
+      "count": 0
+    },
+    {
+      "month": "2025-05",
+      "count": 0
+    },
+    {
+      "month": "2025-06",
+      "count": 0
+    },
+    {
+      "month": "2025-07",
+      "count": 0
+    },
+    {
+      "month": "2025-08",
+      "count": 0
+    },
+    {
+      "month": "2025-09",
+      "count": 0
+    },
+    {
+      "month": "2025-10",
+      "count": 0
+    },
+    {
+      "month": "2025-11",
+      "count": 0
+    },
+    {
+      "month": "2025-12",
+      "count": 0
+    },
+    {
+      "month": "2026-01",
+      "count": 0
+    },
+    {
+      "month": "2026-02",
+      "count": 0
+    },
+    {
+      "month": "2026-03",
+      "count": 0
+    },
+    {
+      "month": "2026-04",
+      "count": 0
+    },
+    {
+      "month": "2026-05",
+      "count": 0
+    },
+    {
+      "month": "2026-06",
+      "count": 0
+    },
+    {
+      "month": "2026-07",
+      "count": 2000
+    },
+    {
+      "month": "2026-08",
+      "count": 0
+    }
+  ],
+  "top_products": [
+    {
+      "name": "Credit card",
+      "count": 940
+    },
+    {
+      "name": "Credit reporting or other personal consumer reports",
+      "count": 600
+    },
+    {
+      "name": "Debt collection",
+      "count": 380
+    },
+    {
+      "name": "Checking or savings account",
+      "count": 60
+    },
+    {
+      "name": "Debt or credit management",
+      "count": 20
+    }
+  ],
+  "top_issues": [
+    {
+      "name": "Incorrect information on your report",
+      "count": 420
+    },
+    {
+      "name": "Problem with a purchase shown on your statement",
+      "count": 260
+    },
+    {
+      "name": "Problem with a company's investigation into an existing problem",
+      "count": 240
+    },
+    {
+      "name": "Took or threatened to take negative or legal action",
+      "count": 180
+    },
+    {
+      "name": "Fees or interest",
+      "count": 140
+    },
+    {
+      "name": "Other features, terms, or problems",
+      "count": 120
+    },
+    {
+      "name": "Improper use of your report",
+      "count": 100
+    },
+    {
+      "name": "Closing your account",
+      "count": 80
+    }
+  ],
+  "top_states": [
+    {
+      "name": "FL",
+      "count": 280
+    },
+    {
+      "name": "TX",
+      "count": 280
+    },
+    {
+      "name": "CA",
+      "count": 260
+    },
+    {
+      "name": "NY",
+      "count": 180
+    },
+    {
+      "name": "MD",
+      "count": 140
+    },
+    {
+      "name": "GA",
+      "count": 100
+    },
+    {
+      "name": "SC",
+      "count": 80
+    },
+    {
+      "name": "TN",
+      "count": 60
+    },
+    {
+      "name": "PA",
+      "count": 60
+    },
+    {
+      "name": "OH",
+      "count": 60
+    }
+  ],
+  "timely_response_rate": 1,
+  "company_responses": [
+    {
+      "name": "Closed with explanation",
+      "count": 1820
+    },
+    {
+      "name": "Closed with non-monetary relief",
+      "count": 120
+    },
+    {
+      "name": "Closed with monetary relief",
+      "count": 60
+    }
+  ],
+  "narrative_count": 0,
+  "sample_narratives": [],
+  "signal": {
+    "score": 42,
+    "band": "Moderate",
+    "components": [
+      {
+        "key": "timeliness_gap",
+        "label": "Untimely responses",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "0% of cases not answered on time"
+      },
+      {
+        "key": "relief_gap",
+        "label": "Closed without relief",
+        "weight": 0.3,
+        "value": 91,
+        "evidence": "91% of closed cases ended without monetary or non-monetary relief"
+      },
+      {
+        "key": "issue_concentration",
+        "label": "Issue concentration",
+        "weight": 0.2,
+        "value": 21,
+        "evidence": "21% of complaints share one top issue"
+      },
+      {
+        "key": "trend",
+        "label": "Recent trend",
+        "weight": 0.2,
+        "value": 50,
+        "evidence": "last 3 months avg 666.7/mo vs prior 0/mo"
+      },
+      {
+        "key": "narrative_harm",
+        "label": "Harm language in narratives",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "no consumer narratives available"
+      }
+    ]
+  },
+  "summary": "Between 2025-02-04 and 2026-08-04, the CFPB published 2,000 complaints about Capital One. Volume is steady (last 3 months averaged 667 per month versus 0 before). The most common issue is \"Incorrect information on your report\" (21% of complaints), concentrated in credit card. The company responded on time to 100% of cases; 91% of closed cases ended without relief. Overall risk signal: Moderate (42/100). This is an exploratory signal from public complaint data, not a regulatory, legal, or investment conclusion.",
+  "regulatory": {
+    "data_source": "live",
+    "fdic": {
+      "cert": 4297,
+      "name": "Capital One, National Association",
+      "city": "Mclean",
+      "state": "VA",
+      "active": true,
+      "asset_thousands": 672010000,
+      "established": ""
+    },
+    "sec": {
+      "cik": "0000927628",
+      "entity_name": "CAPITAL ONE FINANCIAL CORP",
+      "recent_filings": [
+        {
+          "form": "144",
+          "date": "2026-08-03",
+          "primary_doc": "xsl144X01/primary_doc.xml"
+        },
+        {
+          "form": "4",
+          "date": "2026-08-03",
+          "primary_doc": "xslF345X06/wk-form4_1785787808.xml"
+        },
+        {
+          "form": "144",
+          "date": "2026-07-31",
+          "primary_doc": "xsl144X01/primary_doc.xml"
+        },
+        {
+          "form": "4",
+          "date": "2026-07-30",
+          "primary_doc": "xslF345X06/wk-form4_1785444712.xml"
+        },
+        {
+          "form": "144",
+          "date": "2026-07-29",
+          "primary_doc": "xsl144X01/primary_doc.xml"
+        }
+      ]
+    },
+    "lei": {
+      "lei": "549300C70ANM18M14N91",
+      "legal_name": "CAPITAL ONE",
+      "jurisdiction": "BE",
+      "status": "ACTIVE",
+      "registration_status": "ISSUED"
+    },
+    "fed": {
+      "organization": "Capital One Financial Corporation, McLean, Virginia",
+      "total_actions": 1,
+      "active_actions": 0,
+      "most_recent": {
+        "date": "2020-08-04",
+        "action": "Cease and Desist Order",
+        "url": "/newsevents/pressreleases/enforcement20200806a.htm"
+      }
+    },
+    "sources": [
+      {
+        "label": "FDIC BankFind Suite",
+        "url": "https://banks.data.fdic.gov/bankfind-suite/bankfind"
+      },
+      {
+        "label": "SEC EDGAR",
+        "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+      },
+      {
+        "label": "GLEIF LEI Search",
+        "url": "https://search.gleif.org/"
+      },
+      {
+        "label": "Federal Reserve Enforcement Actions",
+        "url": "https://www.federalreserve.gov/supervisionreg/enforcementactions.htm"
+      }
+    ],
+    "note": "Live public-record cross-reference from FDIC BankFind, SEC EDGAR, GLEIF, and Federal Reserve enforcement actions. Public records only — not a verdict."
+  }
+}

@@ -1,0 +1,16 @@
+server {
+    listen ${PORT};
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # ContextSeal is intentionally off the portfolio for now.
+    location = /flagships/contextseal { return 404; }
+    location = /flagships/contextseal/ { return 404; }
+
+    # NB: "$uri/" alone breaks on trailing-slash requests (/about/ -> /about//),
+    # which silently fell through to the catch-all and served the homepage.
+    location / {
+        try_files $uri $uri/index.html $uri/ =404;
+    }
+}

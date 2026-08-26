@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chrysalis</title>
+<style>
+  :root {
+    --ground: #f6f2ea; --surface: #fffdf8; --surface-2: #efe8db;
+    --ink: #241d16; --ink-soft: #5f5648; --hair: #e0d7c6;
+    --gold: #b07d1a; --gold-soft: #eadfc4; --morpho: #1f6f9e; --morpho-soft: #d7ebf5;
+    --good: #1f8a5b; --bad: #c23b3f;
+    --shell: #c79a3e;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #141019; --surface: #1e1826; --surface-2: #271f31;
+      --ink: #efe9f2; --ink-soft: #a99fb4; --hair: #342a40;
+      --gold: #e8b04b; --gold-soft: #3a2f1c; --morpho: #5cc8ff; --morpho-soft: #14303f;
+      --good: #3dd68c; --bad: #e5484d; --shell: #e8b04b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #141019; --surface: #1e1826; --surface-2: #271f31;
+    --ink: #efe9f2; --ink-soft: #a99fb4; --hair: #342a40;
+    --gold: #e8b04b; --gold-soft: #3a2f1c; --morpho: #5cc8ff; --morpho-soft: #14303f;
+    --good: #3dd68c; --bad: #e5484d; --shell: #e8b04b;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: var(--sans);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 24px 96px; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase;
+    color: var(--gold); margin: 0 0 14px; }
+  h1 { font-family: var(--serif); font-weight: 600; font-size: clamp(34px, 6vw, 58px); line-height: 1.05;
+    letter-spacing: -.01em; text-wrap: balance; margin: 0 0 18px; }
+  h2 { font-family: var(--serif); font-weight: 600; font-size: clamp(22px, 3.4vw, 30px); letter-spacing: -.01em;
+    text-wrap: balance; margin: 0 0 12px; }
+  .lede { font-size: 20px; color: var(--ink-soft); max-width: 60ch; margin: 0 0 8px; }
+  header.hero { padding: 84px 0 40px; }
+  section { padding: 40px 0; border-top: 1px solid var(--hair); }
+  p { max-width: 65ch; }
+  .mono { font-family: var(--mono); }
+  /* stage */
+  .stage { background: var(--surface); border: 1px solid var(--hair); border-radius: 14px; overflow: hidden; }
+  .cocoon-wrap { display: grid; place-items: center; padding: 30px 20px 10px; }
+  svg.morph { width: 150px; height: 150px; }
+  .stagebody { padding: 22px; display: grid; gap: 18px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  input[type=text] { flex: 1 1 200px; min-width: 0; font-family: var(--mono); font-size: 14px;
+    background: var(--surface-2); color: var(--ink); border: 1px solid var(--hair); border-radius: 9px; padding: 11px 13px; }
+  input:focus-visible, button:focus-visible { outline: 2px solid var(--morpho); outline-offset: 2px; }
+  button { font-family: var(--sans); font-weight: 600; font-size: 14px; cursor: pointer; border-radius: 9px;
+    padding: 11px 16px; border: 1px solid var(--hair); background: var(--surface-2); color: var(--ink); transition: transform .06s ease; }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--gold); color: #1a1206; border-color: transparent; }
+  button.truth { background: var(--morpho); color: #05121a; border-color: transparent; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  .out { font-family: var(--mono); font-size: 13px; background: var(--surface-2); border: 1px solid var(--hair);
+    border-radius: 10px; padding: 14px; overflow-x: auto; white-space: pre; }
+  .tag { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 999px; display: inline-block; }
+  .tag.decoy { background: var(--gold-soft); color: var(--gold); }
+  .tag.true { background: var(--morpho-soft); color: var(--morpho); }
+  .meta { font-size: 13px; color: var(--ink-soft); }
+  .countbar { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; }
+  .countbar > i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, var(--gold), var(--morpho)); }
+  .attempts { font-family: var(--mono); font-size: 12px; color: var(--ink-soft); }
+  /* finding table */
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft); }
+  td code { font-family: var(--mono); font-size: 13px; }
+  .pill { font-family: var(--mono); font-size: 11px; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pill.block { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+  .pill.allow { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+  .pill.ok { background: color-mix(in srgb, var(--good) 18%, transparent); color: var(--good); }
+  ul.limits { list-style: none; padding: 0; display: grid; gap: 12px; }
+  ul.limits li { padding-left: 20px; position: relative; max-width: 64ch; }
+  ul.limits li::before { content: ""; position: absolute; left: 0; top: 11px; width: 8px; height: 8px;
+    border-radius: 50%; background: var(--gold); }
+  footer { padding: 40px 0 0; border-top: 1px solid var(--hair); color: var(--ink-soft); font-size: 14px; }
+  .steps { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; color: var(--ink-soft); margin-bottom: 8px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  .wing { transform-origin: 75px 75px; }
+  .emerged .shellL { transform: translateX(-26px) rotate(-24deg); opacity: .25; }
+  .emerged .shellR { transform: translateX(26px) rotate(24deg); opacity: .25; }
+  .shellL, .shellR { transition: transform .9s cubic-bezier(.2,.8,.2,1), opacity .9s ease; transform-origin: 75px 75px; }
+  .butterfly { opacity: 0; transition: opacity .8s ease .35s; }
+  .emerged .butterfly { opacity: 1; }
+  .flap .wing { animation: flap 2.6s ease-in-out infinite; }
+  @keyframes flap { 0%,100% { transform: scaleX(1); } 50% { transform: scaleX(.82); } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <p class="eyebrow">penTell / temporally deniable honey encryption</p>
+    <h1>The secret that waits to become itself</h1>
+    <p class="lede">Crack this blob early and you get a convincing decoy. The real secret does not exist yet. It emerges in final form only when a public clock fires, and only for the holder of a separate key. Same bytes, two doors.</p>
+    <p class="meta mono">A chrysalis: what goes in as a caterpillar comes out, at the right time, as a butterfly.</p>
+  </header>
+
+  <section>
+    <h2>Try to steal it</h2>
+    <p>You are the attacker. You have exfiltrated the sealed blob and you are guessing the outer password. Every guess returns a full, valid-looking AWS credential. None of them is the real one, and nothing tells you so.</p>
+    <div class="stage">
+      <div class="cocoon-wrap">
+        <svg class="morph" id="morph" viewBox="0 0 150 150" aria-hidden="true">
+          <g class="butterfly">
+            <g class="wing">
+              <ellipse cx="52" cy="66" rx="22" ry="30" fill="var(--morpho)" opacity="0.9"/>
+              <ellipse cx="98" cy="66" rx="22" ry="30" fill="var(--morpho)" opacity="0.9"/>
+              <ellipse cx="56" cy="96" rx="15" ry="18" fill="var(--morpho)" opacity="0.7"/>
+              <ellipse cx="94" cy="96" rx="15" ry="18" fill="var(--morpho)" opacity="0.7"/>
+            </g>
+            <rect x="72" y="55" width="6" height="52" rx="3" fill="var(--ink)"/>
+          </g>
+          <path class="shellL" d="M75 18 C48 30 44 66 50 96 C54 120 66 132 75 134 C70 110 68 60 75 18 Z" fill="var(--shell)"/>
+          <path class="shellR" d="M75 18 C102 30 106 66 100 96 C96 120 84 132 75 134 C80 110 82 60 75 18 Z" fill="var(--shell)" opacity="0.92"/>
+        </svg>
+      </div>
+      <div class="stagebody">
+        <div class="row">
+          <input id="pw" type="text" placeholder="type any password and crack it" autocomplete="off" spellcheck="false" />
+          <button class="primary" id="crackBtn">Crack the password</button>
+        </div>
+        <div class="out" id="crackOut">Awaiting a guess. Every guess yields a valid credential.</div>
+        <div class="row" style="justify-content: space-between;">
+          <span class="attempts" id="attempts">0 guesses, 0 real secrets recovered</span>
+          <span class="tag decoy">decoy, looks real</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Now wait for the clock</h2>
+    <p>The true secret is timelocked to a future round of a public randomness beacon. Its key does not exist until the round fires, so nobody opens it early, not even the sealer. And even after it fires, opening needs a separate holder shard the thief never had.</p>
+    <div class="stage">
+      <div class="stagebody">
+        <div class="steps" id="clockLabel">round not reached</div>
+        <div class="countbar"><i id="bar"></i></div>
+        <div class="row" style="justify-content: space-between;">
+          <span class="attempts" id="clock">unlocks in 20s</span>
+          <div class="row">
+            <button id="shardBtn">Open with the holder shard</button>
+            <button id="reset">Reseal</button>
+          </div>
+        </div>
+        <div class="out" id="openOut">Before the round, opening with the shard still returns a decoy.</div>
+        <div><span class="tag decoy" id="formTag">decoy</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The same trick beats a real guard</h2>
+    <p>contextSeal is a deny-by-default guard that inspects everything an agent sends and blocks secrets. Wrap the secret in a Chrysalis shell first and the guard sees only gibberish, because the real secret is not there yet. The fix is not smarter reading, it is refusing to forward what you cannot read.</p>
+    <div style="overflow-x:auto;">
+    <table>
+      <thead><tr><th>What the agent sends</th><th>Guard verdict</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>the secret in the clear</td><td><span class="pill block">BLOCKED</span></td><td><code>dlp-block</code>, guard works</td></tr>
+        <tr><td>the secret, Chrysalis-sealed</td><td><span class="pill allow">SMUGGLED</span></td><td><code>allowed=true</code>, true form not there yet</td></tr>
+        <tr><td>sealed, guard hardened</td><td><span class="pill ok">BLOCKED</span></td><td><code>deniable-payload</code>, refuse the unreadable</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p class="meta">Verified against the real contextSeal <code class="mono">authorize()</code>. Break, then fix, then attack the fix. That is what penTell is for.</p>
+  </section>
+
+  <section>
+    <h2>What it is not</h2>
+    <ul class="limits">
+      <li>Strong for tight secrets like keys and tokens. Not for whole free-form documents, where a good fake is hard.</li>
+      <li>No help if the attacker owns your machine at the moment you open the real thing.</li>
+      <li>If the beacon goes dark and never publishes the round, the true secret is unrecoverable, for everyone.</li>
+      <li>The timelock uses pairing crypto that is not post-quantum. It guarantees time, not quantum-proof secrecy.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p><strong>Rishva Iyer</strong> / penTell Lab Notes / 2026-08-18. Built on standardized parts only: honey encryption, an all-or-nothing transform, drand timelock, and ML-DSA signatures. No new cipher. The credentials shown here are fictional.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var B32 = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+  var B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  var REGIONS = ["us-east-1","us-west-2","eu-west-1","ap-south-1","eu-central-1","ap-southeast-2"];
+  function pick(alpha, n) { var s = ""; for (var i = 0; i < n; i++) s += alpha[Math.floor(Math.random() * alpha.length)]; return s; }
+  function decoy() {
+    return { akid: "AKIA" + pick(B32, 16), secret: pick(B64, 40), region: REGIONS[Math.floor(Math.random() * REGIONS.length)] };
+  }
+  function render(c) {
+    return "AWS_ACCESS_KEY_ID=" + c.akid + "\nAWS_SECRET_ACCESS_KEY=" + c.secret + "\nAWS_DEFAULT_REGION=" + c.region;
+  }
+  // The one true (fictional) secret this blob actually protects.
+  var TRUE = { akid: "AKIAZ7QK4RMPX2NLHTUV", secret: "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", region: "us-east-1" };
+
+  var attempts = 0, recovered = 0;
+  var crackOut = document.getElementById("crackOut");
+  var attemptsEl = document.getElementById("attempts");
+  var pw = document.getElementById("pw");
+  function crack() {
+    attempts++;
+    crackOut.textContent = render(decoy());
+    attemptsEl.textContent = attempts + (attempts === 1 ? " guess, " : " guesses, ") + recovered + " real secrets recovered";
+  }
+  document.getElementById("crackBtn").addEventListener("click", crack);
+  pw.addEventListener("keydown", function (e) { if (e.key === "Enter") crack(); });
+
+  // timelock
+  var DURATION = 20000;
+  var start = Date.now(), fired = false;
+  var bar = document.getElementById("bar"), clock = document.getElementById("clock");
+  var clockLabel = document.getElementById("clockLabel");
+  var morph = document.getElementById("morph");
+  var openOut = document.getElementById("openOut");
+  var formTag = document.getElementById("formTag");
+  var shardBtn = document.getElementById("shardBtn");
+
+  function tick() {
+    var elapsed = Date.now() - start;
+    var pct = Math.min(100, elapsed / DURATION * 100);
+    bar.style.width = pct + "%";
+    if (elapsed >= DURATION && !fired) {
+      fired = true;
+      clock.textContent = "round published";
+      clockLabel.textContent = "round fired, holder shard now opens the truth";
+    } else if (!fired) {
+      clock.textContent = "unlocks in " + Math.ceil((DURATION - elapsed) / 1000) + "s";
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  function openWithShard() {
+    if (!fired) {
+      openOut.textContent = render(decoy());
+      formTag.textContent = "decoy, round not reached";
+      formTag.className = "tag decoy";
+      return;
+    }
+    recovered = 1;
+    openOut.textContent = render(TRUE);
+    formTag.textContent = "true, metamorphosis complete";
+    formTag.className = "tag true";
+    morph.parentElement.parentElement.classList.add("emerged", "flap");
+    morph.classList.add("emerged", "flap");
+  }
+  shardBtn.addEventListener("click", openWithShard);
+
+  document.getElementById("reset").addEventListener("click", function () {
+    start = Date.now(); fired = false; recovered = 0;
+    openOut.textContent = "Before the round, opening with the shard still returns a decoy.";
+    formTag.textContent = "decoy"; formTag.className = "tag decoy";
+    clockLabel.textContent = "round not reached";
+    morph.classList.remove("emerged", "flap");
+    morph.parentElement.parentElement.classList.remove("emerged", "flap");
+    attemptsEl.textContent = attempts + " guesses, 0 real secrets recovered";
+  });
+})();
+</script>
+
+</body>
+</html>

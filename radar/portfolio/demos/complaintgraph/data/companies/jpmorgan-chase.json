@@ -1,0 +1,330 @@
+{
+  "slug": "jpmorgan-chase",
+  "name": "JPMORGAN CHASE & CO.",
+  "display_name": "JPMorgan Chase",
+  "data_source": "cfpb",
+  "snapshot_date": "2026-08-04",
+  "window": {
+    "min": "2025-02-04",
+    "max": "2026-08-04"
+  },
+  "total_complaints": 2000,
+  "monthly": [
+    {
+      "month": "2025-02",
+      "count": 0
+    },
+    {
+      "month": "2025-03",
+      "count": 0
+    },
+    {
+      "month": "2025-04",
+      "count": 0
+    },
+    {
+      "month": "2025-05",
+      "count": 0
+    },
+    {
+      "month": "2025-06",
+      "count": 0
+    },
+    {
+      "month": "2025-07",
+      "count": 0
+    },
+    {
+      "month": "2025-08",
+      "count": 0
+    },
+    {
+      "month": "2025-09",
+      "count": 0
+    },
+    {
+      "month": "2025-10",
+      "count": 0
+    },
+    {
+      "month": "2025-11",
+      "count": 0
+    },
+    {
+      "month": "2025-12",
+      "count": 0
+    },
+    {
+      "month": "2026-01",
+      "count": 0
+    },
+    {
+      "month": "2026-02",
+      "count": 0
+    },
+    {
+      "month": "2026-03",
+      "count": 0
+    },
+    {
+      "month": "2026-04",
+      "count": 0
+    },
+    {
+      "month": "2026-05",
+      "count": 0
+    },
+    {
+      "month": "2026-06",
+      "count": 0
+    },
+    {
+      "month": "2026-07",
+      "count": 2000
+    },
+    {
+      "month": "2026-08",
+      "count": 0
+    }
+  ],
+  "top_products": [
+    {
+      "name": "Credit reporting or other personal consumer reports",
+      "count": 680
+    },
+    {
+      "name": "Credit card",
+      "count": 540
+    },
+    {
+      "name": "Checking or savings account",
+      "count": 380
+    },
+    {
+      "name": "Debt collection",
+      "count": 220
+    },
+    {
+      "name": "Money transfer, virtual currency, or money service",
+      "count": 140
+    },
+    {
+      "name": "Mortgage",
+      "count": 40
+    }
+  ],
+  "top_issues": [
+    {
+      "name": "Incorrect information on your report",
+      "count": 460
+    },
+    {
+      "name": "Improper use of your report",
+      "count": 220
+    },
+    {
+      "name": "Other features, terms, or problems",
+      "count": 180
+    },
+    {
+      "name": "Managing an account",
+      "count": 180
+    },
+    {
+      "name": "Took or threatened to take negative or legal action",
+      "count": 100
+    },
+    {
+      "name": "Problem with a company's investigation into an existing problem",
+      "count": 80
+    },
+    {
+      "name": "Fees or interest",
+      "count": 80
+    },
+    {
+      "name": "Problem with a lender or other company charging your account",
+      "count": 80
+    }
+  ],
+  "top_states": [
+    {
+      "name": "CA",
+      "count": 360
+    },
+    {
+      "name": "TX",
+      "count": 300
+    },
+    {
+      "name": "NY",
+      "count": 200
+    },
+    {
+      "name": "FL",
+      "count": 140
+    },
+    {
+      "name": "NJ",
+      "count": 100
+    },
+    {
+      "name": "IL",
+      "count": 100
+    },
+    {
+      "name": "AZ",
+      "count": 80
+    },
+    {
+      "name": "NC",
+      "count": 80
+    },
+    {
+      "name": "KY",
+      "count": 80
+    },
+    {
+      "name": "MD",
+      "count": 80
+    }
+  ],
+  "timely_response_rate": 1,
+  "company_responses": [
+    {
+      "name": "Closed with explanation",
+      "count": 1640
+    },
+    {
+      "name": "Closed with non-monetary relief",
+      "count": 180
+    },
+    {
+      "name": "Closed with monetary relief",
+      "count": 180
+    }
+  ],
+  "narrative_count": 0,
+  "sample_narratives": [],
+  "signal": {
+    "score": 39,
+    "band": "Moderate",
+    "components": [
+      {
+        "key": "timeliness_gap",
+        "label": "Untimely responses",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "0% of cases not answered on time"
+      },
+      {
+        "key": "relief_gap",
+        "label": "Closed without relief",
+        "weight": 0.3,
+        "value": 82,
+        "evidence": "82% of closed cases ended without monetary or non-monetary relief"
+      },
+      {
+        "key": "issue_concentration",
+        "label": "Issue concentration",
+        "weight": 0.2,
+        "value": 23,
+        "evidence": "23% of complaints share one top issue"
+      },
+      {
+        "key": "trend",
+        "label": "Recent trend",
+        "weight": 0.2,
+        "value": 50,
+        "evidence": "last 3 months avg 666.7/mo vs prior 0/mo"
+      },
+      {
+        "key": "narrative_harm",
+        "label": "Harm language in narratives",
+        "weight": 0.15,
+        "value": 0,
+        "evidence": "no consumer narratives available"
+      }
+    ]
+  },
+  "summary": "Between 2025-02-04 and 2026-08-04, the CFPB published 2,000 complaints about JPMorgan Chase. Volume is steady (last 3 months averaged 667 per month versus 0 before). The most common issue is \"Incorrect information on your report\" (23% of complaints), concentrated in credit reporting or other personal consumer reports. The company responded on time to 100% of cases; 82% of closed cases ended without relief. Overall risk signal: Moderate (39/100). This is an exploratory signal from public complaint data, not a regulatory, legal, or investment conclusion.",
+  "regulatory": {
+    "data_source": "live",
+    "fdic": {
+      "cert": 628,
+      "name": "JPMorgan Chase Bank, National Association",
+      "city": "Columbus",
+      "state": "OH",
+      "active": true,
+      "asset_thousands": 4016571000,
+      "established": ""
+    },
+    "sec": {
+      "cik": "0000019617",
+      "entity_name": "JPMORGAN CHASE & CO",
+      "recent_filings": [
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "form424b2.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "form424b2.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "form424b2.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "form424b2.htm"
+        },
+        {
+          "form": "424B2",
+          "date": "2026-08-03",
+          "primary_doc": "form424b2.htm"
+        }
+      ]
+    },
+    "lei": {
+      "lei": "8I5DZWZKVSZI1NUHU748",
+      "legal_name": "JPMORGAN CHASE & CO.",
+      "jurisdiction": "US-DE",
+      "status": "ACTIVE",
+      "registration_status": "ISSUED"
+    },
+    "fed": {
+      "organization": "JPMorgan Chase & Co., New York, New York",
+      "total_actions": 12,
+      "active_actions": 4,
+      "most_recent": {
+        "date": "2024-03-08",
+        "action": "Cease and Desist Order, Civil Money Penalty",
+        "url": "https://www.federalreserve.gov/newsevents/pressreleases/enforcement20240314a.htm"
+      }
+    },
+    "sources": [
+      {
+        "label": "FDIC BankFind Suite",
+        "url": "https://banks.data.fdic.gov/bankfind-suite/bankfind"
+      },
+      {
+        "label": "SEC EDGAR",
+        "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany"
+      },
+      {
+        "label": "GLEIF LEI Search",
+        "url": "https://search.gleif.org/"
+      },
+      {
+        "label": "Federal Reserve Enforcement Actions",
+        "url": "https://www.federalreserve.gov/supervisionreg/enforcementactions.htm"
+      }
+    ],
+    "note": "Live public-record cross-reference from FDIC BankFind, SEC EDGAR, GLEIF, and Federal Reserve enforcement actions. Public records only — not a verdict."
+  }
+}

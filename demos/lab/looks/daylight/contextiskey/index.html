@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="The contextIsKey repository rendered as an explorable 3D city: 129 files, 14,895 lines. Height is lines of code, colour is language, lit windows are commit frequency.">
+<meta name="theme-color" content="#05070c">
+<meta property="og:title" content="contextIsKey Codescape">
+<meta property="og:description" content="A codebase rendered as a city you can fly through. 129 files, 14,895 lines.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305070c'/%3E%3Crect x='5' y='14' width='5' height='13' fill='%23ff6b35'/%3E%3Crect x='12' y='7' width='5' height='20' fill='%23ffb347'/%3E%3Crect x='19' y='17' width='5' height='10' fill='%235cc8fa'/%3E%3C/svg%3E">
+<title>contextIsKey Codescape</title>
+<style>
+:root{
+  --void:#e9e5dc; --haze:#efece4; --ink:#f4f1ea;
+  --panel:rgba(255,255,255,.80); --hair:#cfc9bc; --hair2:#b9b2a2;
+  --txt:#2a2b28; --dim:#6c6d66; --faint:#94958c;
+  --koi:#8a5a2b; --koi-soft:#b07a45; --warm:#7d6a45;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--void); color:var(--txt);
+  font-family:var(--mono); font-size:12px; line-height:1.5;
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+canvas#gl{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:grab}
+canvas#gl.drag{cursor:grabbing}
+#vignette{position:fixed; inset:0; pointer-events:none; z-index:2;
+  background:radial-gradient(ellipse 120% 90% at 50% 45%,transparent 40%,rgba(120,112,96,.20) 100%)}
+
+.panel{position:relative; background:var(--panel); border:1px solid var(--hair); min-height:0;
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px)}
+.lbl{font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---- rails: two fixed flex columns, so panels can never overlap ---- */
+#rail-l,#rail-r{position:fixed; top:0; bottom:0; z-index:5; display:flex; flex-direction:column;
+  gap:1px; pointer-events:none; transition:opacity .25s}
+#rail-l>*,#rail-r>*{pointer-events:auto}
+#rail-l{left:0; width:238px}
+#rail-r{right:0; width:302px}
+#rail-l>.panel{border-left:0}
+#rail-r>.panel{border-right:0}
+#rail-l>.panel:first-child,#rail-r>.panel:first-child{border-top:0}
+#rail-l>.panel:last-child,#rail-r>.panel:last-child{border-bottom:0}
+
+/* ---- back to portfolio ---- */
+#6c6d66k{display:flex; align-items:center; gap:8px; padding:9px 13px; color:var(--dim);
+  text-decoration:none; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase}
+#6c6d66k:hover{color:var(--koi); background:rgba(0,0,0,.045)}
+#6c6d66k:focus-visible{outline:1px solid var(--koi); outline-offset:-2px}
+#6c6d66k .ar{font-size:12px; letter-spacing:0}
+
+/* ---- collapsible panel heads ---- */
+.phead{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
+  background:none; border:0; padding:10px 13px; cursor:pointer; color:var(--faint);
+  font-family:var(--mono); text-align:left}
+.phead:hover{color:var(--dim)}
+.phead:focus-visible{outline:1px solid var(--koi); outline-offset:-2px}
+.chev{width:7px; height:7px; flex:none; border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor; transform:rotate(45deg) translate(-2px,-2px);
+  transition:transform .22s}
+.panel.collapsed .chev{transform:rotate(-135deg) translate(-2px,-2px)}
+.panel.collapsed .pbody{display:none}
+
+/* ---- identity ---- */
+#id .ptitle{font-size:15px; letter-spacing:.30em; font-weight:600; color:#1c1d1a; text-transform:uppercase}
+#id .pbody{padding:0 13px 13px}
+#id .sub{color:var(--koi); letter-spacing:.16em; font-size:9.5px; text-transform:uppercase}
+#id p{margin:10px 0 0; font-family:var(--sans); font-size:11.5px; line-height:1.55; color:var(--dim)}
+#stats{display:flex; gap:16px; margin-top:11px; padding-top:10px; border-top:1px solid var(--hair)}
+#stats b{display:block; font-size:16px; font-weight:600; color:#2f312c; letter-spacing:.01em}
+
+/* ---- controls ---- */
+#ctl{padding:10px 12px; display:flex; gap:7px; align-items:center; flex-wrap:wrap}
+#modes{display:flex; flex:1 1 100%; border:1px solid var(--hair2)}
+#modes:empty{display:none}
+#modes button{flex:1 1 0; background:#dcd7cb; border:0; border-left:1px solid var(--hair2);
+  color:var(--dim); font-family:var(--mono); font-size:9.5px; letter-spacing:.13em;
+  text-transform:uppercase; padding:6px 4px; cursor:pointer}
+#modes button:first-child{border-left:0}
+#modes button:hover{color:var(--txt)}
+#modes button:focus-visible{outline:2px solid var(--koi); outline-offset:-2px}
+#modes button[aria-pressed="true"]{color:var(--void); background:var(--koi)}
+#q{background:#dcd7cb; border:1px solid var(--hair2); color:var(--txt); font-family:var(--mono);
+  font-size:11px; padding:6px 9px; width:132px; min-width:0; flex:1 1 110px; outline:none}
+#q:focus{border-color:var(--koi); box-shadow:0 0 0 1px rgba(138,90,43,.30)}
+#q::placeholder{color:var(--faint)}
+.btn{background:#dcd7cb; border:1px solid var(--hair2); color:var(--dim); font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; padding:6px 9px; cursor:pointer}
+.btn:hover{color:var(--txt); border-color:#a9a294}
+.btn:focus-visible{outline:2px solid var(--koi); outline-offset:1px}
+.btn[aria-pressed="true"]{color:var(--void); background:var(--koi); border-color:var(--koi)}
+
+/* ---- districts: the one panel allowed to grow, and it scrolls ---- */
+#dist{flex:1 1 auto; display:flex; flex-direction:column; min-height:0}
+#dist.collapsed{flex:0 0 auto}
+#dist .pbody{flex:1 1 auto; overflow-y:auto; min-height:0; padding-bottom:6px}
+.drow{display:grid; grid-template-columns:3px 1fr auto; gap:9px; align-items:center;
+  padding:5px 13px 5px 0; cursor:pointer; border:0; background:none; width:100%; text-align:left;
+  font-family:var(--mono); font-size:11px; color:var(--dim)}
+.drow:hover{color:#2f312c; background:rgba(0,0,0,.045)}
+.drow:focus-visible{outline:1px solid var(--koi); outline-offset:-1px}
+.drow .sw{width:3px; height:15px}
+.drow .nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.drow .ct{font-size:10px; color:var(--faint); font-variant-numeric:tabular-nums}
+.drow.on{color:var(--koi)} .drow.on .ct{color:var(--koi-soft)}
+
+/* ---- legend ---- */
+#leg .pbody{padding:0 13px 12px}
+#leg ul{margin:0; padding:0; list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:3px 14px}
+#leg li{display:flex; align-items:center; gap:7px; color:var(--dim); font-size:10.5px}
+#leg i{width:8px; height:8px; flex:none}
+
+/* ---- hint ---- */
+#hint{margin-top:auto; padding:9px 13px; color:var(--faint); font-size:9.5px; letter-spacing:.1em}
+#hint span{color:var(--dim)}
+
+/* ---- inspector ---- */
+#insp{display:flex; flex-direction:column; min-height:0; max-height:62vh;
+  transform:translateX(103%); transition:transform .34s cubic-bezier(.22,1,.36,1)}
+#insp.open{transform:translateX(0)}
+#insp .pbody{overflow-y:auto; min-height:0; padding:0 15px 15px}
+#insp .path{font-size:12.5px; color:#1c1d1a; word-break:break-word; line-height:1.45; margin:0}
+#insp .path em{font-style:normal; color:var(--faint)}
+#insp .dchip{display:inline-flex; align-items:center; gap:6px; margin-top:11px; padding:3px 8px;
+  border:1px solid var(--hair2); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--dim)}
+#insp .dchip i{width:6px; height:6px; flex:none}
+.mrow{display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  padding:7px 0; border-top:1px solid var(--hair)}
+.mrow:first-of-type{margin-top:13px}
+.mrow span{color:var(--faint); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase}
+.mrow b{font-weight:600; font-size:13px; color:#2f312c; font-variant-numeric:tabular-nums}
+.bar{height:2px; background:#e4e0d6; margin-top:12px; overflow:hidden}
+.bar i{display:block; height:100%; background:var(--koi)}
+.barcap{display:flex; justify-content:space-between; margin-top:5px; color:var(--faint);
+  font-size:9px; letter-spacing:.1em; text-transform:uppercase}
+#close{background:none; border:0; color:var(--faint); font-family:var(--mono); font-size:15px;
+  cursor:pointer; padding:2px 6px; line-height:1}
+#close:hover{color:var(--koi)}
+#close:focus-visible{outline:1px solid var(--koi)}
+#insp .phead{cursor:default}
+
+/* ---- transport: the one panel that spans between the rails ---- */
+#play{position:fixed; z-index:5; left:238px; right:302px; bottom:0; border-bottom:0;
+  display:flex; align-items:center; gap:12px; padding:9px 15px; transition:opacity .25s}
+.pbtn{background:#dcd7cb; border:1px solid var(--hair2); color:var(--txt); font-family:var(--mono);
+  font-size:11px; padding:0; cursor:pointer; width:30px; height:26px; flex:none; line-height:1}
+.pbtn:hover{color:var(--koi); border-color:#a9a294}
+.pbtn:focus-visible{outline:2px solid var(--koi); outline-offset:1px}
+#p-go{color:var(--koi)}
+#p-when{flex:none; min-width:88px; font-variant-numeric:tabular-nums; font-size:11.5px; color:#2f312c}
+#p-when em{display:block; font-style:normal; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--faint)}
+#p-live{flex:none; min-width:150px; text-align:right; color:var(--faint); font-size:10.5px;
+  font-variant-numeric:tabular-nums}
+#p-live b{color:var(--dim); font-weight:600}
+#p-live em{font-style:normal}
+body.mode-city #play{display:none}
+#p-spd{width:38px; font-size:10px; color:var(--dim)}
+
+/* the scrubber: drawn from scratch, since the native control ignores the palette */
+#p-scrub{flex:1 1 auto; min-width:60px; -webkit-appearance:none; appearance:none;
+  background:none; height:22px; margin:0; cursor:pointer; outline:none}
+#p-scrub::-webkit-slider-runnable-track{height:2px; background:#e4e0d6}
+#p-scrub::-moz-range-track{height:2px; background:#e4e0d6}
+#p-scrub::-moz-range-progress{height:2px; background:var(--koi)}
+#p-scrub::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:3px; height:14px;
+  background:var(--koi); border:0; border-radius:0; margin-top:-6px}
+#p-scrub::-moz-range-thumb{width:3px; height:14px; background:var(--koi); border:0; border-radius:0}
+#p-scrub:focus-visible{outline:2px solid var(--koi); outline-offset:2px}
+
+/* ---- hide-all ---- */
+body.noui #rail-l,body.noui #labels,body.noui #insp,body.noui #hint{opacity:0; pointer-events:none}
+body.noui #ctl>*:not(#t-ui){display:none}
+body.noui #play{opacity:0; pointer-events:none}
+
+/* ---- 3d labels + tooltip ---- */
+#labels{position:fixed; inset:0; z-index:3; pointer-events:none; transition:opacity .25s}
+.dlab{position:absolute; transform:translate(-50%,-50%); font-size:9px; letter-spacing:.22em;
+  text-transform:uppercase; color:rgba(90,86,74,.42); white-space:nowrap; text-shadow:0 1px 6px #000;
+  transition:opacity .3s}
+#tip{position:fixed; z-index:6; pointer-events:none; background:rgba(255,255,255,.94); border:1px solid var(--hair2);
+  padding:5px 9px; font-size:10.5px; color:var(--txt); white-space:nowrap; opacity:0; transition:opacity .12s;
+  transform:translate(12px,-50%)}
+#tip b{color:var(--koi); font-weight:600}
+
+#fail{position:fixed; inset:0; display:none; place-items:center; z-index:9; padding:32px; text-align:center;
+  font-family:var(--sans); color:var(--dim); background:var(--void)}
+
+/* ---- narrow: one rail at the top, inspector docks above the transport ---- */
+@media (max-width:900px){
+  #rail-l{width:100%; bottom:auto; max-height:100%}
+  #dist{flex:0 0 auto}
+  #dist .pbody{max-height:34vh}
+  /* the transport keeps the floor, so the right rail stops above it rather
+     than stacking the inspector on top of the scrubber */
+  #rail-r{width:100%; left:0; right:0; top:auto; bottom:45px; justify-content:flex-end}
+  #insp{max-height:48vh; transform:translateY(104%); border-right:0; border-left:0; border-bottom:0}
+  #insp.open{transform:translateY(0)}
+  #hint{display:none}
+  #id p{display:none}
+  #leg ul{grid-template-columns:1fr 1fr}
+  #play{left:0; right:0; gap:9px; padding:9px 12px}
+  #p-live{display:none}
+}
+@media (max-width:560px){ #p-when{min-width:74px; font-size:10.5px} }
+@media (max-width:420px){ #leg ul{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ #insp{transition:none} }
+</style>
+</head>
+<body>
+
+
+<canvas id="gl"></canvas>
+<div id="labels"></div>
+<div id="vignette"></div>
+
+<div id="rail-l">
+  <a class="panel" id="back" href="https://rishva.up.railway.app/"><span class="ar" aria-hidden="true">&larr;</span> Rishva Iyer &middot; portfolio</a>
+
+  <header class="panel" id="id">
+    <button class="phead" data-p="id" aria-expanded="true">
+      <span class="ptitle" role="heading" aria-level="1">contextIsKey</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="pbody">
+      <div class="sub" id="sub">Codescape &middot; codex/demo-video</div>
+      <p id="blurb"></p>
+      <div id="stats">
+        <div><b class="num" id="s-f">0</b><div class="lbl" id="s-fl">Files</div></div>
+        <div><b class="num" id="s-l">0</b><div class="lbl" id="s-ll">Lines</div></div>
+        <div><b class="num" id="s-d">0</b><div class="lbl" id="s-dl">Districts</div></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="panel" id="dist">
+    <button class="phead" data-p="dist" aria-expanded="true">
+      <span class="lbl">Districts &middot; by volume</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="pbody" id="dlist"></div>
+  </nav>
+
+  <div class="panel" id="leg">
+    <button class="phead" data-p="leg" aria-expanded="true">
+      <span class="lbl">Reading the light</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="pbody"><ul id="llist"></ul></div>
+  </div>
+</div>
+
+<div id="rail-r">
+  <div class="panel" id="ctl">
+    <div id="modes" role="group" aria-label="View"></div>
+    <input id="q" type="search" placeholder="find a file&hellip;" aria-label="Search files" autocomplete="off">
+    <button class="btn" id="t-vend" aria-pressed="true">Vendored</button>
+    <button class="btn" id="t-orb" aria-pressed="false">Orbit</button>
+    <button class="btn" id="t-rst">Reset</button>
+    <button class="btn" id="t-ui" aria-pressed="false" title="Hide interface (H)">Hide UI</button>
+  </div>
+
+  <aside class="panel" id="insp" aria-live="polite">
+    <div class="phead">
+      <span class="lbl">Inspecting</span>
+      <button id="close" aria-label="Close inspector">&times;</button>
+    </div>
+    <div class="pbody">
+      <div class="path" id="i-path"></div>
+      <div class="dchip" id="i-dist"><i></i><span></span></div>
+      <div class="mrow"><span>Lines</span><b class="num" id="i-loc"></b></div>
+      <div class="mrow"><span>On disk</span><b class="num" id="i-size"></b></div>
+      <div class="mrow"><span>Commits</span><b class="num" id="i-churn"></b></div>
+      <div class="mrow" id="r-cov"><span>Covered</span><b class="num" id="i-cov"></b></div>
+      <div class="mrow" id="r-hits"><span>Run by</span><b class="num" id="i-hits"></b></div>
+      <div class="mrow"><span>Type</span><b id="i-ext"></b></div>
+      <div class="bar"><i id="i-bar"></i></div>
+      <div class="barcap"><span id="i-rank"></span><span id="i-of"></span></div>
+    </div>
+  </aside>
+
+  <div class="panel" id="hint">
+    <span>drag</span> orbit &nbsp;&middot;&nbsp; <span>scroll</span> zoom &nbsp;&middot;&nbsp;
+    <span>space</span> play &nbsp;&middot;&nbsp; <span>&larr; &rarr;</span> step &nbsp;&middot;&nbsp;
+    <span>click</span> inspect &nbsp;&middot;&nbsp; <span>h</span> hide UI
+  </div>
+</div>
+
+<div class="panel" id="play">
+  <button class="pbtn" id="p-go" aria-label="Play" title="Play / pause (space)">&#9654;</button>
+  <div id="p-when"><b class="num" id="p-date">&nbsp;</b><em id="p-of">&nbsp;</em></div>
+  <input id="p-scrub" type="range" min="0" value="0" step="1" aria-label="Scrub through this view">
+  <div id="p-live"><b class="num" id="p-nf">0</b> <em id="p-nfl">lit</em> &nbsp;<b class="num" id="p-nl">0</b> <em id="p-nll">stmt</em></div>
+  <button class="pbtn" id="p-spd" title="Playback speed">1x</button>
+</div>
+
+<div id="tip"></div>
+<div id="fail"><div><strong>WebGL2 unavailable.</strong><br>This city needs a WebGL2 context to render.</div></div>
+
+<script>
+const CITY = {"files":129,"loc":14895,"maxloc":591,"maxchurn":14,"hm":120.914,"h0":2.386,"hx":0.52,"hv":0.4,"districts":[{"y":136.0,"n":"src/changeproof","x":-48.95,"z":-46.4,"w":116.58,"d":121.68,"c":[1.0,0.45,0.22],"f":33,"l":5427},{"y":107.2,"n":"tests","x":-48.95,"z":63.52,"w":116.58,"d":87.44,"c":[0.36,0.8,1.0],"f":26,"l":3617},{"y":136.0,"n":"docs/superpowers","x":60.97,"z":-63.33,"w":92.55,"d":87.83,"c":[0.6,0.95,0.62],"f":18,"l":3311},{"y":126.5,"n":"scripts","x":43.84,"z":11.55,"w":58.3,"d":51.21,"c":[0.78,0.58,1.0],"f":12,"l":1083},{"y":104.6,"n":"(root)","x":92.8,"z":11.55,"w":28.89,"d":51.21,"c":[1.0,0.78,0.3],"f":9,"l":344},{"y":80.7,"n":"docs","x":36.66,"z":58.47,"w":43.93,"d":31.91,"c":[0.32,0.9,0.82],"f":5,"l":482},{"y":64.6,"n":"docs/demo-video","x":36.66,"z":93.52,"w":43.93,"d":27.45,"c":[1.0,0.52,0.66],"f":6,"l":344},{"y":63.9,"n":"demo","x":85.61,"z":52.53,"w":43.26,"d":20.02,"c":[0.62,0.7,0.86],"f":9,"l":176},{"y":68.0,"n":"docs/screenshots","x":74.56,"z":87.57,"w":21.17,"d":39.35,"c":[0.5,0.86,1.0],"f":4,"l":0},{"y":44.9,"n":".superpowers","x":98.87,"z":75.42,"w":16.74,"d":15.06,"c":[0.92,0.66,0.38],"f":2,"l":78},{"y":28.8,"n":"docs/examples","x":98.87,"z":93.92,"w":16.74,"d":11.23,"c":[0.7,0.8,1.0],"f":4,"l":9},{"y":38.0,"n":"misc","x":98.87,"z":106.07,"w":16.74,"d":2.35,"c":[0.85,0.9,0.55],"f":1,"l":24}],"b":[{"p":"src/changeproof/app.py","x":-91.12,"z":-91.75,"w":31.57,"d":30.31,"h":123.3,"c":[0.33,0.86,0.52],"l":591,"s":23911,"k":8,"e":".py","g":0,"v":0,"lm":1},{"p":"docs/superpowers/plans/2026-08-09-enterprise-impact-center.md","x":29.72,"z":-89.57,"w":29.37,"d":34.65,"h":123.3,"c":[0.6,0.66,0.76],"l":688,"s":30408,"k":1,"e":".md","g":2,"v":0,"lm":1},{"p":"scripts/seed_datahub.py","x":27.5,"z":2.08,"w":24.93,"d":31.57,"h":113.81,"c":[0.33,0.86,0.52],"l":505,"s":16896,"k":5,"e":".py","g":3,"v":0,"lm":1},{"p":"src/changeproof/planner.py","x":-60.37,"z":-91.75,"w":28.55,"d":30.31,"h":113.12,"c":[0.33,0.86,0.52],"l":499,"s":17812,"k":2,"e":".py","g":0,"v":0,"lm":1},{"p":"docs/superpowers/specs/2026-08-09-enterprise-impact-center-design.md","x":29.72,"z":-57.52,"w":29.37,"d":28.1,"h":111.26,"c":[0.6,0.66,0.76],"l":483,"s":17998,"k":1,"e":".md","g":2,"v":0,"lm":1},{"p":"src/changeproof/static/styles.css","x":-31.51,"z":-91.75,"w":27.8,"d":30.31,"h":110.55,"c":[0.96,0.45,0.72],"l":477,"s":59676,"k":7,"e":".css","g":0,"v":0,"lm":1},{"p":"src/changeproof/mcp_client.py","x":-3.97,"z":-91.75,"w":25.92,"d":30.31,"h":104.12,"c":[0.33,0.86,0.52],"l":424,"s":15291,"k":4,"e":".py","g":0,"v":0,"lm":1},{"p":"src/changeproof/triage.py","x":-94.88,"z":-59.8,"w":24.03,"d":32.22,"h":102.87,"c":[0.33,0.86,0.52],"l":414,"s":14744,"k":1,"e":".py","g":0,"v":0,"lm":1},{"p":"tests/conftest.py","x":-94.88,"z":34.47,"w":24.04,"d":28.66,"h":94.47,"c":[0.33,0.86,0.52],"l":350,"s":11632,"k":1,"e":".py","g":1,"v":0,"lm":1},{"p":"docs/superpowers/plans/2026-08-05-railway-dashboard.md","x":29.72,"z":-31.27,"w":29.37,"d":23.03,"h":93.92,"c":[0.6,0.66,0.76],"l":346,"s":12611,"k":1,"e":".md","g":2,"v":0,"lm":1},{"p":"tests/unit/test_mcp_client.py","x":-94.88,"z":63.69,"w":24.04,"d":28.41,"h":93.78,"c":[0.33,0.86,0.52],"l":345,"s":11590,"k":4,"e":".py","g":1,"v":0,"lm":1},{"p":"tests/integration/test_web.py","x":-94.88,"z":92.74,"w":24.04,"d":28.32,"h":93.5,"c":[0.33,0.86,0.52],"l":343,"s":11149,"k":9,"e":".py","g":1,"v":0,"lm":1},{"p":"src/changeproof/writeback.py","x":-94.88,"z":-28.8,"w":24.03,"d":28.41,"h":92.39,"c":[0.33,0.86,0.52],"l":335,"s":11961,"k":3,"e":".py","g":0,"v":0},{"p":"README.md","x":92.8,"z":-3.74,"w":28.2,"d":19.93,"h":91.83,"c":[0.6,0.66,0.76],"l":331,"s":17454,"k":14,"e":".md","g":4,"v":0},{"p":"src/changeproof/demo.py","x":-94.88,"z":0.09,"w":24.03,"d":28.01,"h":91.27,"c":[0.33,0.86,0.52],"l":327,"s":10481,"k":5,"e":".py","g":0,"v":0},{"p":"tests/integration/test_enterprise_web.py","x":-68.43,"z":32.14,"w":27.48,"d":23.99,"h":90.99,"c":[0.33,0.86,0.52],"l":325,"s":11298,"k":2,"e":".py","g":1,"v":0},{"p":"docs/superpowers/plans/2026-08-06-live-demo.md","x":60.39,"z":-97.0,"w":30.59,"d":19.81,"h":85.59,"c":[0.6,0.66,0.76],"l":288,"s":11737,"k":1,"e":".md","g":2,"v":0},{"p":"docs/superpowers/plans/2026-08-09-contextiskey-demo-video.md","x":91.64,"z":-97.0,"w":30.53,"d":19.81,"h":85.44,"c":[0.6,0.66,0.76],"l":287,"s":12653,"k":3,"e":".md","g":2,"v":0},{"p":"tests/integration/test_live_demo_scripts.py","x":-68.43,"z":55.49,"w":27.48,"d":21.34,"h":82.38,"c":[0.33,0.86,0.52],"l":267,"s":8493,"k":2,"e":".py","g":1,"v":0},{"p":"uv.lock","x":92.8,"z":13.15,"w":28.2,"d":12.48,"h":77.69,"c":[0.36,0.42,0.52],"l":0,"s":213951,"k":3,"e":".lock","g":4,"v":0},{"p":"tests/unit/test_seed_datahub.py","x":-68.43,"z":76.7,"w":27.48,"d":19.71,"h":77.07,"c":[0.33,0.86,0.52],"l":234,"s":8479,"k":4,"e":".py","g":1,"v":0},{"p":"tests/unit/test_writeback.py","x":-68.43,"z":97.07,"w":27.48,"d":19.66,"h":76.91,"c":[0.33,0.86,0.52],"l":233,"s":8240,"k":3,"e":".py","g":1,"v":0},{"p":"src/changeproof/templates/index.html","x":-71.11,"z":-63.69,"w":22.16,"d":24.43,"h":75.9,"c":[0.98,0.45,0.44],"l":227,"s":10318,"k":8,"e":".html","g":0,"v":0},{"p":"docs/superpowers/plans/2026-08-09-document-context-bridge.md","x":56.62,"z":-75.6,"w":23.05,"d":21.61,"h":72.46,"c":[0.6,0.66,0.76],"l":207,"s":11469,"k":1,"e":".md","g":2,"v":0},{"p":"scripts/demo_video/record_user_flow.mjs","x":27.5,"z":27.68,"w":24.93,"d":18.27,"h":71.57,"c":[1.0,0.74,0.34],"l":202,"s":7636,"k":1,"e":".mjs","g":3,"v":0},{"p":"src/changeproof/sql_impact.py","x":-71.11,"z":-39.7,"w":22.16,"d":22.18,"h":69.95,"c":[0.33,0.86,0.52],"l":193,"s":6314,"k":1,"e":".py","g":0,"v":0},{"p":"src/changeproof/models.py","x":-71.11,"z":-16.94,"w":22.16,"d":21.97,"h":69.41,"c":[0.33,0.86,0.52],"l":190,"s":4893,"k":4,"e":".py","g":0,"v":0},{"p":"docs/submission-prep.md","x":26.39,"z":51.51,"w":22.7,"d":17.31,"h":67.92,"c":[0.6,0.66,0.76],"l":182,"s":7800,"k":2,"e":".md","g":5,"v":0},{"p":"tests/unit/test_demo.py","x":-43.38,"z":30.26,"w":21.25,"d":20.25,"h":63.48,"c":[0.33,0.86,0.52],"l":159,"s":5529,"k":5,"e":".py","g":1,"v":0},{"p":"src/changeproof/triage_ai.py","x":-71.11,"z":4.41,"w":22.16,"d":19.37,"h":62.47,"c":[0.33,0.86,0.52],"l":154,"s":5224,"k":1,"e":".py","g":0,"v":0},{"p":"docs/superpowers/plans/2026-08-05-hackathon-readme.md","x":78.37,"z":-75.6,"w":19.08,"d":21.61,"h":61.86,"c":[0.6,0.66,0.76],"l":151,"s":6132,"k":2,"e":".md","g":2,"v":0},{"p":"tests/unit/test_triage_ai.py","x":-21.81,"z":30.26,"w":20.52,"d":20.25,"h":61.65,"c":[0.33,0.86,0.52],"l":150,"s":4712,"k":1,"e":".py","g":1,"v":0},{"p":"src/changeproof/artifacts.py","x":-47.47,"z":-67.09,"w":23.74,"d":17.64,"h":61.24,"c":[0.33,0.86,0.52],"l":148,"s":5301,"k":1,"e":".py","g":0,"v":0},{"p":"tests/unit/test_triage.py","x":-0.94,"z":30.26,"w":19.86,"d":20.25,"h":59.99,"c":[0.33,0.86,0.52],"l":142,"s":5666,"k":1,"e":".py","g":1,"v":0},{"p":"docs/superpowers/plans/2026-08-09-triage-composer.md","x":97.74,"z":-75.6,"w":18.31,"d":21.61,"h":59.78,"c":[0.6,0.66,0.76],"l":141,"s":9460,"k":1,"e":".md","g":2,"v":0},{"p":"tests/unit/test_regions.py","x":-42.85,"z":49.96,"w":22.32,"d":17.78,"h":59.35,"c":[0.33,0.86,0.52],"l":139,"s":4227,"k":1,"e":".py","g":1,"v":0},{"p":"src/changeproof/ai_review.py","x":-23.77,"z":-67.09,"w":22.28,"d":17.64,"h":58.06,"c":[0.33,0.86,0.52],"l":133,"s":4694,"k":1,"e":".py","g":0,"v":0},{"p":"tests/unit/test_planner.py","x":-20.28,"z":49.96,"w":21.44,"d":17.78,"h":57.4,"c":[0.33,0.86,0.52],"l":130,"s":4699,"k":2,"e":".py","g":1,"v":0},{"p":"scripts/demo_video/mcp-proof-cutaway.html","x":48.54,"z":-3.04,"w":15.78,"d":21.33,"h":55.62,"c":[0.98,0.45,0.44],"l":122,"s":7241,"k":1,"e":".html","g":3,"v":0},{"p":"docs/screenshots/contextiskey-triage.jpg","x":74.56,"z":73.47,"w":20.48,"d":10.46,"h":55.29,"c":[0.36,0.42,0.52],"l":0,"s":108510,"k":1,"e":".jpg","g":8,"v":0},{"p":"src/changeproof/exports.py","x":-1.48,"z":-67.09,"w":20.95,"d":17.64,"h":55.16,"c":[0.33,0.86,0.52],"l":120,"s":3562,"k":1,"e":".py","g":0,"v":0},{"p":"docs/superpowers/plans/2026-08-09-contextiskey-thumbnail.md","x":52.95,"z":-52.75,"w":15.72,"d":22.72,"h":54.93,"c":[0.6,0.66,0.76],"l":119,"s":5534,"k":1,"e":".md","g":2,"v":0},{"p":"scripts/live_demo.sh","x":64.88,"z":-3.04,"w":15.54,"d":21.33,"h":54.93,"c":[0.18,0.83,0.75],"l":119,"s":4122,"k":3,"e":".sh","g":3,"v":0},{"p":"docs/devpost-draft.md","x":26.39,"z":67.47,"w":22.7,"d":13.24,"h":54.47,"c":[0.6,0.66,0.76],"l":117,"s":5387,"k":5,"e":".md","g":5,"v":0},{"p":"src/changeproof/regions.py","x":-50.75,"z":-47.15,"w":17.17,"d":20.87,"h":53.77,"c":[0.33,0.86,0.52],"l":114,"s":3862,"k":1,"e":".py","g":0,"v":0},{"p":"src/changeproof/document_ingest.py","x":-33.08,"z":-47.15,"w":16.81,"d":20.87,"h":52.83,"c":[0.33,0.86,0.52],"l":110,"s":3696,"k":1,"e":".py","g":0,"v":0},{"p":"docs/demo-video/shot-manifest.json","x":25.11,"z":87.0,"w":20.15,"d":13.74,"h":51.86,"c":[0.66,0.53,0.98],"l":106,"s":4739,"k":3,"e":".json","g":6,"v":0},{"p":"docs/superpowers/plans/2026-08-09-readability-palette-refresh.md","x":52.95,"z":-30.23,"w":15.72,"d":20.96,"h":51.38,"c":[0.6,0.66,0.76],"l":104,"s":4714,"k":1,"e":".md","g":2,"v":0},{"p":"src/changeproof/classifier.py","x":-15.92,"z":-47.15,"w":16.15,"d":20.87,"h":51.13,"c":[0.33,0.86,0.52],"l":103,"s":3379,"k":1,"e":".py","g":0,"v":0},{"p":"src/changeproof/triage_context.py","x":0.92,"z":-47.15,"w":16.15,"d":20.87,"h":51.13,"c":[0.33,0.86,0.52],"l":103,"s":3498,"k":1,"e":".py","g":0,"v":0},{"p":"demo/sonicledger/models/schema.yml","x":70.93,"z":52.53,"w":13.21,"d":19.33,"h":51.13,"c":[0.72,0.6,1.0],"l":103,"s":3048,"k":1,"e":".yml","g":7,"v":0},{"p":"docs/screenshots/contextiskey-fixes.jpg","x":69.51,"z":88.66,"w":10.37,"d":18.56,"h":50.59,"c":[0.36,0.42,0.52],"l":0,"s":90738,"k":1,"e":".jpg","g":8,"v":0},{"p":"tests/unit/test_document_ingest.py","x":0.06,"z":49.96,"w":17.87,"d":17.78,"h":49.38,"c":[0.33,0.86,0.52],"l":96,"s":3015,"k":1,"e":".py","g":1,"v":0},{"p":"docs/superpowers/specs/2026-08-09-contextiskey-demo-video-design.md","x":71.71,"z":-56.52,"w":20.42,"d":15.17,"h":48.87,"c":[0.6,0.66,0.76],"l":94,"s":5873,"k":2,"e":".md","g":2,"v":0},{"p":"src/changeproof/impact.py","x":-49.91,"z":-27.74,"w":18.87,"d":16.59,"h":48.09,"c":[0.33,0.86,0.52],"l":91,"s":3232,"k":1,"e":".py","g":0,"v":0},{"p":"tests/unit/test_impact.py","x":-44.22,"z":67.35,"w":19.57,"d":15.61,"h":47.83,"c":[0.33,0.86,0.52],"l":90,"s":2914,"k":2,"e":".py","g":1,"v":0},{"p":"docs/demo-video/elevenlabs-cue-sheet.md","x":25.11,"z":100.73,"w":20.15,"d":12.35,"h":47.57,"c":[0.6,0.66,0.76],"l":89,"s":4384,"k":3,"e":".md","g":6,"v":0},{"p":"src/changeproof/templates/triage.html","x":-49.91,"z":-10.69,"w":18.87,"d":16.14,"h":47.03,"c":[0.98,0.45,0.44],"l":87,"s":12124,"k":1,"e":".html","g":0,"v":0},{"p":"tests/unit/test_classifier.py","x":-44.22,"z":83.49,"w":19.57,"d":15.3,"h":47.03,"c":[0.33,0.86,0.52],"l":87,"s":3287,"k":1,"e":".py","g":1,"v":0},{"p":"docs/superpowers/specs/2026-08-06-live-demo-design.md","x":71.71,"z":-41.01,"w":20.42,"d":14.48,"h":47.03,"c":[0.6,0.66,0.76],"l":87,"s":4277,"k":1,"e":".md","g":2,"v":0},{"p":"docs/screenshots/contextiskey-impact.jpg","x":80.09,"z":88.66,"w":9.43,"d":18.56,"h":46.9,"c":[0.36,0.42,0.52],"l":0,"s":77857,"k":1,"e":".jpg","g":8,"v":0},{"p":"src/changeproof/document_ai.py","x":-49.91,"z":6.08,"w":18.87,"d":16.03,"h":46.77,"c":[0.33,0.86,0.52],"l":86,"s":3575,"k":1,"e":".py","g":0,"v":0},{"p":"tests/unit/test_document_ai.py","x":-44.22,"z":99.36,"w":19.57,"d":15.08,"h":46.5,"c":[0.33,0.86,0.52],"l":85,"s":2771,"k":1,"e":".py","g":1,"v":0},{"p":"docs/screenshots/contextiskey-regions.jpg","x":74.56,"z":102.76,"w":20.48,"d":8.27,"h":45.87,"c":[0.36,0.42,0.52],"l":0,"s":74413,"k":1,"e":".jpg","g":8,"v":0},{"p":"tests/unit/test_triage_context.py","x":-26.6,"z":69.64,"w":14.3,"d":20.19,"h":45.68,"c":[0.33,0.86,0.52],"l":82,"s":3131,"k":1,"e":".py","g":1,"v":0},{"p":"docs/judging-positioning.md","x":48.35,"z":48.97,"w":19.86,"d":12.21,"h":45.68,"c":[0.6,0.66,0.76],"l":82,"s":3653,"k":4,"e":".md","g":5,"v":0},{"p":"src/changeproof/templates/analyze.html","x":-31.44,"z":-27.42,"w":16.7,"d":17.21,"h":44.85,"c":[0.98,0.45,0.44],"l":79,"s":5665,"k":2,"e":".html","g":0,"v":0},{"p":"src/changeproof/templates/base.html","x":-14.19,"z":-27.42,"w":16.44,"d":17.21,"h":44.29,"c":[0.98,0.45,0.44],"l":77,"s":4967,"k":1,"e":".html","g":0,"v":0},{"p":"tests/unit/test_ai_review.py","x":-11.89,"z":69.64,"w":13.76,"d":20.19,"h":44.29,"c":[0.33,0.86,0.52],"l":77,"s":2431,"k":1,"e":".py","g":1,"v":0},{"p":"docs/superpowers/specs/2026-08-09-triage-composer-design.md","x":71.71,"z":-26.42,"w":20.42,"d":13.34,"h":44.0,"c":[0.6,0.66,0.76],"l":76,"s":5668,"k":1,"e":".md","g":2,"v":0},{"p":"tests/unit/test_sql_impact.py","x":2.33,"z":69.64,"w":13.32,"d":20.19,"h":43.14,"c":[0.33,0.86,0.52],"l":73,"s":2575,"k":1,"e":".py","g":1,"v":0},{"p":"docs/demo-video-script.md","x":44.54,"z":64.92,"w":12.23,"d":18.33,"h":42.85,"c":[0.6,0.66,0.76],"l":72,"s":4286,"k":5,"e":".md","g":5,"v":0},{"p":"docs/demo-video/voiceover.md","x":41.54,"z":89.45,"w":11.34,"d":18.63,"h":41.66,"c":[0.6,0.66,0.76],"l":68,"s":4219,"k":3,"e":".md","g":6,"v":0},{"p":"docs/superpowers/specs/2026-08-09-document-context-bridge-design.md","x":88.83,"z":-53.98,"w":12.45,"d":20.25,"h":41.36,"c":[0.6,0.66,0.76],"l":67,"s":3653,"k":1,"e":".md","g":2,"v":0},{"p":"src/changeproof/templates/regions.html","x":1.86,"z":-27.42,"w":14.28,"d":17.21,"h":39.51,"c":[0.98,0.45,0.44],"l":61,"s":4398,"k":1,"e":".html","g":0,"v":0},{"p":"docs/demo-video/recording-qa.md","x":53.08,"z":89.45,"w":10.39,"d":18.63,"h":38.87,"c":[0.6,0.66,0.76],"l":59,"s":3104,"k":5,"e":".md","g":6,"v":0},{"p":"tests/unit/test_models.py","x":-25.17,"z":87.24,"w":17.17,"d":13.64,"h":38.55,"c":[0.33,0.86,0.52],"l":58,"s":1852,"k":2,"e":".py","g":1,"v":0},{"p":"docs/superpowers/specs/2026-08-05-railway-dashboard-design.md","x":101.32,"z":-53.98,"w":11.16,"d":20.25,"h":37.89,"c":[0.6,0.66,0.76],"l":56,"s":3289,"k":1,"e":".md","g":2,"v":0},{"p":"src/changeproof/templates/impact.html","x":-32.93,"z":-9.71,"w":13.71,"d":16.83,"h":37.56,"c":[0.98,0.45,0.44],"l":55,"s":4947,"k":1,"e":".html","g":0,"v":0},{"p":"scripts/stop_live_demo.sh","x":48.0,"z":15.3,"w":14.71,"d":13.99,"h":37.23,"c":[0.18,0.83,0.75],"l":54,"s":1880,"k":2,"e":".sh","g":3,"v":0},{"p":"scripts/check_datahub.py","x":48.0,"z":29.9,"w":14.71,"d":13.83,"h":36.89,"c":[0.33,0.86,0.52],"l":53,"s":1549,"k":1,"e":".py","g":3,"v":0},{"p":"tests/unit/test_artifacts.py","x":-25.17,"z":100.82,"w":17.17,"d":12.15,"h":35.16,"c":[0.33,0.86,0.52],"l":48,"s":1823,"k":1,"e":".py","g":1,"v":0},{"p":"docs/superpowers/specs/2026-08-09-contextiskey-thumbnail-design.md","x":90.84,"z":-37.15,"w":16.46,"d":12.05,"h":34.08,"c":[0.6,0.66,0.76],"l":45,"s":2070,"k":1,"e":".md","g":2,"v":0},{"p":"src/changeproof/templates/fixes.html","x":-32.93,"z":6.74,"w":13.71,"d":14.71,"h":33.71,"c":[0.98,0.45,0.44],"l":44,"s":4792,"k":1,"e":".html","g":0,"v":0},{"p":"src/changeproof/__init__.py","x":-19.27,"z":-10.24,"w":12.24,"d":15.77,"h":32.58,"c":[0.33,0.86,0.52],"l":41,"s":893,"k":3,"e":".py","g":0,"v":0},{"p":"src/changeproof/templates/datahub.html","x":-19.27,"z":6.21,"w":12.24,"d":15.77,"h":32.58,"c":[0.98,0.45,0.44],"l":41,"s":3511,"k":1,"e":".html","g":0,"v":0},{"p":".superpowers/sdd/2026-08-09-triage-composer/task-3-report.md","x":94.75,"z":75.42,"w":7.81,"d":14.38,"h":32.19,"c":[0.6,0.66,0.76],"l":40,"s":2838,"k":1,"e":".md","g":9,"v":0},{"p":".superpowers/sdd/2026-08-09-triage-composer/task-2-report.md","x":103.12,"z":75.42,"w":7.56,"d":14.38,"h":31.41,"c":[0.6,0.66,0.76],"l":38,"s":2484,"k":1,"e":".md","g":9,"v":0},{"p":"docs/superpowers/specs/2026-08-05-hackathon-readme-design.md","x":90.84,"z":-25.09,"w":16.46,"d":10.68,"h":31.01,"c":[0.6,0.66,0.76],"l":37,"s":2412,"k":1,"e":".md","g":2,"v":0},{"p":"docs/superpowers/specs/2026-08-06-devpost-submission-design.md","x":103.33,"z":-31.46,"w":7.15,"d":23.42,"h":30.19,"c":[0.6,0.66,0.76],"l":35,"s":1512,"k":2,"e":".md","g":2,"v":0},{"p":"src/changeproof/templates/rollout.html","x":-7.22,"z":-10.38,"w":10.49,"d":15.49,"h":28.49,"c":[0.98,0.45,0.44],"l":31,"s":3431,"k":1,"e":".html","g":0,"v":0},{"p":"src/changeproof/config.py","x":3.85,"z":-10.38,"w":10.28,"d":15.49,"h":28.05,"c":[0.33,0.86,0.52],"l":30,"s":930,"k":4,"e":".py","g":0,"v":0},{"p":"docs/contextiskey-resume-entry.md","x":54.81,"z":64.92,"w":6.94,"d":18.33,"h":27.6,"c":[0.6,0.66,0.76],"l":29,"s":2146,"k":1,"e":".md","g":5,"v":0},{"p":"tests/integration/test_datahub_context.py","x":-9.7,"z":86.35,"w":12.39,"d":11.87,"h":26.68,"c":[0.33,0.86,0.52],"l":27,"s":851,"k":3,"e":".py","g":1,"v":0},{"p":"demo/sonicledger/dbt_project.yml","x":82.87,"z":48.92,"w":9.3,"d":12.13,"h":26.68,"c":[0.72,0.6,1.0],"l":27,"s":355,"k":1,"e":".yml","g":7,"v":0},{"p":"tests/integration/test_demo_dbt.py","x":3.08,"z":86.35,"w":11.82,"d":11.87,"h":25.73,"c":[0.33,0.86,0.52],"l":25,"s":555,"k":2,"e":".py","g":1,"v":0},{"p":"tests/unit/test_enterprise.py","x":-10.87,"z":99.94,"w":10.06,"d":13.92,"h":25.73,"c":[0.33,0.86,0.52],"l":25,"s":920,"k":1,"e":".py","g":1,"v":0},{"p":"examples/input/rename_artist_id.json","x":98.87,"z":106.07,"w":16.05,"d":1.66,"h":25.24,"c":[0.66,0.53,0.98],"l":24,"s":529,"k":1,"e":".json","g":11,"v":0},{"p":"src/changeproof/enterprise.py","x":-8.27,"z":6.07,"w":8.4,"d":16.05,"h":24.74,"c":[0.33,0.86,0.52],"l":23,"s":820,"k":1,"e":".py","g":0,"v":0},{"p":"docs/demo-video/mcp-proof-manifest.json","x":42.95,"z":103.18,"w":14.15,"d":7.45,"h":24.23,"c":[0.66,0.53,0.98],"l":22,"s":618,"k":2,"e":".json","g":6,"v":0},{"p":"src/changeproof/live.py","x":2.81,"z":2.92,"w":12.38,"d":9.74,"h":22.63,"c":[0.33,0.86,0.52],"l":19,"s":744,"k":3,"e":".py","g":0,"v":0},{"p":"tests/unit/test_triage_packaging.py","x":-1.05,"z":99.94,"w":8.2,"d":13.92,"h":22.06,"c":[0.33,0.86,0.52],"l":18,"s":615,"k":1,"e":".py","g":1,"v":0},{"p":"scripts/stop_datahub.sh","x":60.75,"z":13.87,"w":9.42,"d":11.13,"h":22.06,"c":[0.18,0.83,0.75],"l":18,"s":657,"k":2,"e":".sh","g":3,"v":0},{"p":"scripts/demo_video/render_demo.swift","x":60.08,"z":24.16,"w":8.08,"d":8.06,"h":19.03,"c":[0.36,0.42,0.52],"l":0,"s":11741,"k":3,"e":".swift","g":3,"v":0},{"p":"railway.json","x":82.94,"z":24.7,"w":8.49,"d":9.25,"h":19.0,"c":[0.66,0.53,0.98],"l":13,"s":339,"k":1,"e":".json","g":4,"v":0},{"p":"LICENSE","x":98.37,"z":25.54,"w":5.23,"d":10.93,"h":17.44,"c":[0.36,0.42,0.52],"l":0,"s":9674,"k":0,"e":"-","g":4,"v":0},{"p":"scripts/start_datahub.sh","x":69.4,"z":13.87,"w":6.5,"d":11.13,"h":16.88,"c":[0.18,0.83,0.75],"l":10,"s":326,"k":2,"e":".sh","g":3,"v":0},{"p":"demo/sonicledger/models/marts/finance_royalty_dashboard.sql","x":82.87,"z":58.93,"w":9.3,"d":6.52,"h":16.88,"c":[0.9,0.8,0.4],"l":10,"s":264,"k":1,"e":".sql","g":7,"v":0},{"p":"tests/unit/test_config.py","x":6.36,"z":99.94,"w":5.26,"d":13.92,"h":16.11,"c":[0.33,0.86,0.52],"l":9,"s":274,"k":1,"e":".py","g":1,"v":0},{"p":"demo/sonicledger/models/marts/fct_royalties.sql","x":92.7,"z":46.01,"w":9.01,"d":6.29,"h":16.11,"c":[0.9,0.8,0.4],"l":9,"s":159,"k":1,"e":".sql","g":7,"v":0},{"p":"demo/sonicledger/models/staging/stg_streams.sql","x":102.4,"z":46.01,"w":9.01,"d":6.29,"h":16.11,"c":[0.9,0.8,0.4],"l":9,"s":421,"k":1,"e":".sql","g":7,"v":0},{"p":"docs/examples/README.md","x":94.76,"z":91.21,"w":7.83,"d":5.12,"h":16.11,"c":[0.6,0.66,0.76],"l":9,"s":639,"k":1,"e":".md","g":10,"v":0},{"p":"demo/sonicledger/profiles.yml","x":92.7,"z":59.27,"w":9.01,"d":5.83,"h":14.43,"c":[0.72,0.6,1.0],"l":7,"s":138,"k":1,"e":".yml","g":7,"v":0},{"p":"demo/sonicledger/models/marts/artist_payouts.sql","x":92.7,"z":52.76,"w":9.01,"d":5.83,"h":13.5,"c":[0.9,0.8,0.4],"l":6,"s":177,"k":1,"e":".sql","g":7,"v":0},{"p":"demo/sonicledger/tests/generic/is_positive.sql","x":102.4,"z":59.27,"w":9.01,"d":5.83,"h":12.5,"c":[0.9,0.8,0.4],"l":5,"s":112,"k":1,"e":".sql","g":7,"v":0},{"p":"scripts/demo_video/make_contact_sheet.swift","x":68.73,"z":24.16,"w":7.84,"d":8.06,"h":11.98,"c":[0.36,0.42,0.52],"l":0,"s":4070,"k":3,"e":".swift","g":3,"v":0},{"p":"scripts/demo_video/splice_demo.swift","x":60.02,"z":32.84,"w":7.96,"d":7.94,"h":11.2,"c":[0.36,0.42,0.52],"l":0,"s":3455,"k":1,"e":".swift","g":3,"v":0},{"p":"docs/demo-video/elevenlabs-voiceover.txt","x":54.49,"z":103.18,"w":7.57,"d":7.45,"h":9.91,"c":[0.36,0.42,0.52],"l":0,"s":2548,"k":3,"e":".txt","g":6,"v":0},{"p":"scripts/demo_video/verify_demo.swift","x":68.67,"z":32.84,"w":7.96,"d":7.94,"h":9.51,"c":[0.36,0.42,0.52],"l":0,"s":2297,"k":1,"e":".swift","g":3,"v":0},{"p":"pyproject.toml","x":101.33,"z":34.25,"w":11.15,"d":5.12,"h":6.95,"c":[0.36,0.42,0.52],"l":0,"s":975,"k":3,"e":".toml","g":4,"v":0},{"p":"docs/examples/astervale-customer-id-migration-srs.txt","x":103.13,"z":91.12,"w":7.54,"d":4.93,"h":6.46,"c":[0.36,0.42,0.52],"l":0,"s":782,"k":1,"e":".txt","g":10,"v":0},{"p":"docs/examples/astervale-regional-returns-reconciliation-srs.txt","x":103.13,"z":96.73,"w":7.54,"d":4.93,"h":6.4,"c":[0.36,0.42,0.52],"l":0,"s":762,"k":1,"e":".txt","g":10,"v":0},{"p":"src/changeproof/static/astervale-ar-incident-srs.txt","x":2.81,"z":11.28,"w":12.38,"d":5.63,"h":6.36,"c":[0.36,0.42,0.52],"l":0,"s":747,"k":1,"e":".txt","g":0,"v":0},{"p":"docs/examples/astervale-ar-incident-srs.txt","x":94.76,"z":96.83,"w":7.83,"d":4.74,"h":6.36,"c":[0.36,0.42,0.52],"l":0,"s":747,"k":1,"e":".txt","g":10,"v":0},{"p":"demo/sonicledger/seeds/raw_dsp_streams.csv","x":102.4,"z":52.76,"w":9.01,"d":5.83,"h":5.36,"c":[0.36,0.42,0.52],"l":0,"s":429,"k":1,"e":".csv","g":7,"v":0},{"p":"Makefile","x":104.28,"z":25.54,"w":5.23,"d":10.93,"h":5.21,"c":[0.36,0.42,0.52],"l":0,"s":386,"k":0,"e":"-","g":4,"v":0},{"p":".gitignore","x":91.47,"z":24.09,"w":7.2,"d":8.03,"h":4.47,"c":[0.36,0.42,0.52],"l":0,"s":215,"k":4,"e":"-","g":4,"v":0},{"p":".env.example","x":82.94,"z":33.41,"w":8.49,"d":6.81,"h":3.85,"c":[0.36,0.42,0.52],"l":0,"s":110,"k":1,"e":".example","g":4,"v":0},{"p":".python-version","x":91.47,"z":32.8,"w":7.2,"d":8.03,"h":2.74,"c":[0.36,0.42,0.52],"l":0,"s":7,"k":1,"e":"-","g":4,"v":0}],"legend":[["JavaScript",[1.0,0.66,0.22]],["TypeScript",[0.25,0.72,0.98]],["Python",[0.33,0.86,0.52]],["Hyperfy .hyp",[1.0,0.42,0.2]],["JSON / YAML",[0.66,0.53,0.98]],["Markdown",[0.6,0.66,0.76]],["CSS",[0.96,0.45,0.72]],["HTML",[0.98,0.45,0.44]],["Shell",[0.18,0.83,0.75]],["Assets",[0.36,0.42,0.52]],["Vendored / generated",[0.3,0.35,0.44]]],"tl":{"labels":["816acaef 2026-08-05","b3fdf4fe 2026-08-06","6f423e9a 2026-08-06","b4bcd3dd 2026-08-06","b921ea4b 2026-08-06","d36124fa 2026-08-06","edc904a8 2026-08-06","f89c77ef 2026-08-06","ff8c07d0 2026-08-08","3f4f2d8d 2026-08-08","acdc9f0a 2026-08-08","9732fa64 2026-08-08","cb5eaec8 2026-08-08","597a07df 2026-08-08","fae53ab2 2026-08-09","cfa22d3a 2026-08-09","e1bfac06 2026-08-09","0ac7561f 2026-08-09","39b970c6 2026-08-09","39a5fea0 2026-08-09","3ba46d8d 2026-08-09","f0c4201a 2026-08-09","6dccf258 2026-08-09","eee493f8 2026-08-09","742d2eb3 2026-08-09","57c2bd90 2026-08-09","a93ef98d 2026-08-09","8eb9d2be 2026-08-09","d02f2f25 2026-08-09","c5aa8974 2026-08-09","9f84a183 2026-08-09"],"steps":[[[127,-1],[126,-1],[128,-1],[105,-1],[125,-1],[13,168],[94,27],[113,6],[109,9],[107,10],[50,103],[110,9],[112,7],[124,-1],[114,5],[30,151],[9,346],[88,37],[77,56],[97,24],[119,-1],[104,13],[80,53],[2,474],[106,10],[102,18],[84,41],[0,64],[48,103],[91,20],[14,83],[54,91],[6,297],[26,117],[3,499],[5,102],[22,138],[8,350],[93,27],[95,26],[11,43],[58,87],[108,9],[28,23],[55,90],[10,270],[76,24],[37,130],[20,208],[19,-1]],[[59,87]],[[16,288]],[[14,98],[28,62]],[[0,104],[100,16],[22,138],[11,97]],[[126,-1],[125,-1],[13,182],[42,77],[79,38],[18,165],[28,63]],[[13,182],[42,118],[79,54],[0,106],[14,102],[18,267],[11,139]],[[89,36]],[[65,104]],[[13,185],[71,147],[43,184],[65,131],[0,172],[26,136],[5,123],[22,185],[12,253],[11,192],[21,139]],[[71,156],[43,184],[5,154],[22,188]],[[0,186],[11,209]],[[13,185],[71,159],[43,186],[65,135],[0,188],[91,24],[26,137],[5,158],[22,193],[12,298],[11,248],[21,203]],[[0,189],[14,247],[100,17],[5,174],[22,227],[11,311],[28,127]],[[87,38],[86,40],[13,316],[71,72],[43,117],[65,82],[51,-1],[60,-1],[63,-1],[39,-1],[30,151],[23,207],[1,688],[47,104],[34,141],[89,35],[73,67],[4,483],[69,76],[119,-1],[42,119],[2,505],[36,133],[0,591],[32,148],[91,30],[14,327],[61,86],[45,110],[98,23],[40,120],[100,19],[6,424],[26,190],[44,114],[25,193],[122,-1],[5,477],[66,79],[67,77],[85,41],[83,44],[78,55],[22,227],[74,61],[90,31],[57,87],[7,414],[29,154],[49,103],[12,335],[95,25],[15,325],[11,343],[68,77],[81,48],[28,159],[62,85],[52,96],[96,25],[10,345],[76,58],[35,139],[20,234],[70,73],[33,142],[31,150],[64,82],[101,18],[21,233],[19,-1]],[[13,323],[43,117],[27,182],[5,477],[66,79],[15,325]],[[13,325],[71,72],[111,9],[123,-1],[120,-1],[121,-1],[27,182]],[[13,338]],[[13,331]],[[53,90]],[[17,278]],[[126,-1],[56,89],[117,-1],[46,106],[72,68],[17,282]],[[103,-1],[118,-1]],[[75,44],[115,-1]],[[75,47],[17,287],[53,94],[115,-1],[24,202]],[[56,89],[117,-1],[99,22],[75,49],[46,106],[72,68],[115,-1],[38,122],[103,-1],[116,-1]],[[99,22],[75,50],[103,-1]],[[56,89],[117,-1],[75,59],[46,106],[72,68]],[[82,45]],[[41,119]],[[0,591],[1,688],[2,505],[3,499],[4,483],[5,477],[6,424],[7,414],[8,350],[9,346],[10,345],[11,343],[12,335],[13,331],[14,327],[15,325],[16,288],[17,287],[18,267],[19,-1],[20,234],[21,233],[22,227],[23,207],[24,202],[25,193],[26,190],[27,182],[28,159],[29,154],[30,151],[31,150],[32,148],[33,142],[34,141],[35,139],[36,133],[37,130],[38,122],[39,-1],[40,120],[41,119],[42,119],[43,117],[44,114],[45,110],[46,106],[47,104],[48,103],[49,103],[50,103],[51,-1],[52,96],[53,94],[54,91],[55,90],[56,89],[57,87],[58,87],[59,87],[60,-1],[61,86],[62,85],[63,-1],[64,82],[65,82],[66,79],[67,77],[68,77],[69,76],[70,73],[71,72],[72,68],[73,67],[74,61],[75,59],[76,58],[77,56],[78,55],[79,54],[80,53],[81,48],[82,45],[83,44],[84,41],[85,41],[86,40],[87,38],[88,37],[89,35],[90,31],[91,30],[92,29],[93,27],[94,27],[95,25],[96,25],[97,24],[98,23],[99,22],[100,19],[101,18],[102,18],[103,-1],[104,13],[105,-1],[106,10],[107,10],[108,9],[109,9],[110,9],[111,9],[112,7],[113,6],[114,5],[115,-1],[116,-1],[117,-1],[118,-1],[119,-1],[120,-1],[121,-1],[122,-1],[123,-1],[124,-1],[125,-1],[126,-1],[127,-1],[128,-1]]],"step":"commit","never":[]},"tr":{"labels":["import time","test_demo_dbt.test_sonicledger_baseline_builds","test_enterprise_web.test_enterprise_pages_share_navigation_and_context","test_enterprise_web.test_triage_page_shows_sample_mapping_complex_sql_and_datahub_trail","test_enterprise_web.test_triage_accepts_uploaded_txt_document_and_shows_receipt","test_enterprise_web.test_triage_accepts_uploaded_docx_document","test_enterprise_web.test_triage_rejects_invalid_uploaded_documents","test_enterprise_web.test_triage_accepts_requirements_and_flags_unknown_rules","test_enterprise_web.test_triage_exports","test_enterprise_web.test_triage_without_mappings_hides_evidence_controls","test_enterprise_web.test_triage_ai_review_discloses_it_receives_extracted_mappings","test_enterprise_web.test_triage_rejects_unknown_export_format_before_generation","test_enterprise_web.test_impact_page_shows_datahub_and_hidden_sql_evidence","test_enterprise_web.test_regions_page_shows_all_regions_and_unknown_metadata","test_enterprise_web.test_artifacts_are_downloadable","test_enterprise_web.test_artifact_downloads_are_allowlisted","test_enterprise_web.test_every_artifact_can_be_exported_as_text_or_pdf","test_enterprise_web.test_all_results_bundle_can_be_exported_as_text_or_pdf","test_enterprise_web.test_pages_expose_a_clear_export_center","test_enterprise_web.test_impact_report_download_is_valid_json","test_enterprise_web.test_ai_review_is_explicit_and_explains_missing_key","test_enterprise_web.test_ai_key_status_never_exposes_the_secret","test_enterprise_web.test_ai_review_rejects_a_missing_analysis_token","test_enterprise_web.test_navigation_preserves_a_validated_non_default_scenario","test_enterprise_web.test_invalid_artifact_name_does_not_invoke_provider","test_live_demo_scripts.test_start_runs_live_pipeline_in_order","test_live_demo_scripts.test_start_reuses_healthy_recorded_dashboard","test_live_demo_scripts.test_start_stops_after_failed_baseline","test_live_demo_scripts.test_start_rejects_occupied_port_before_uvicorn","test_live_demo_scripts.test_start_does_not_signal_process_when_identity_cannot_be_recorded","test_live_demo_scripts.test_stop_terminates_recorded_pid_and_stops_datahub","test_live_demo_scripts.test_stop_removes_stale_pid_without_signaling","test_live_demo_scripts.test_stop_does_not_signal_reused_pid","test_web.test_healthz","test_web.test_dashboard_labels_demo_evidence","test_web.test_analyze_renders_downstream_impact_and_safe_fix","test_web.test_analyze_returns_validation_message","test_web.test_dashboard_displays_injected_live_evidence_label","test_web.test_live_provider_failure_returns_503_without_demo_fallback","test_web.test_mcp_value_error_is_service_failure_not_input_error","test_web.test_post_runs_sync_mcp_style_provider_outside_async_event_loop","test_web.test_provider_from_env_defaults_to_bundled","test_web.test_provider_from_env_selects_datahub","test_web.test_provider_from_env_rejects_unknown_mode","test_web.test_dashboard_shows_writeback_drafts_and_the_approval_gate","test_web.test_writeback_requires_selecting_a_proposal","test_web.test_writeback_refuses_when_no_datahub_is_reachable","test_web.test_writeback_ignores_forged_change_values","test_web.test_writeback_rejects_missing_or_tampered_analysis_token","test_web.test_static_assets_must_revalidate","test_web.test_html_responses_are_not_marked_no_cache","test_web.test_simulated_mode_labels_the_flow_and_completes_it","test_web.test_simulated_mode_never_claims_a_datahub_write","test_web.test_every_catalog_scenario_renders_without_error","test_web.test_zero_downstream_scenario_renders_the_empty_state","test_web.test_dashboard_offers_the_other_catalog_columns","test_web.test_source_card_reflects_the_analyzed_column_not_a_hardcoded_one","test_web.test_payout_scenario_shows_its_own_source_table","test_ai_review.test_review_requires_a_configured_key","test_ai_review.test_review_returns_structured_bounded_analysis","test_ai_review.test_review_rejects_an_identifier_absent_from_the_evidence","test_artifacts.test_artifact_bundle_contains_json_sql_and_sarif","test_artifacts.test_artifacts_are_deterministic","test_artifacts.test_validation_sql_uses_the_validated_proposed_type","test_classifier.test_classify_schema_change_detects_single_column_rename","test_classifier.test_classify_schema_change_detects_single_column_removal","test_classifier.test_classify_schema_change_detects_single_type_change","test_classifier.test_classify_schema_change_marks_multiple_changes_as_unsupported","test_config.test_settings_from_env_reads_change_proof_model","test_demo.test_analyze_demo_type_change_returns_impact_and_safe_plan","test_demo.test_customer_id_is_the_astervale_enterprise_scenario","test_demo.test_analyze_demo_rejects_unknown_column","test_demo.test_build_demo_request_validates_and_classifies_type_change","test_demo.test_build_demo_request_rejects_an_unprepared_transition","test_demo.test_compose_analysis_uses_supplied_evidence","test_demo.test_catalog_scenarios_produce_a_real_spread_of_confidence","test_demo.test_scenarios_have_distinct_blast_radii","test_demo.test_low_confidence_scenarios_explain_themselves","test_demo.test_each_scenario_uses_its_own_source_table","test_document_ai.test_interpret_document_requires_an_api_key","test_document_ai.test_interpret_document_returns_structured_rules_without_sending_binary_data","test_document_ai.test_interpret_document_rejects_more_than_twenty_returned_rules","test_document_ai.test_interpret_document_converts_provider_errors","test_document_ingest.test_extract_document_preserves_text_formats","test_document_ingest.test_extract_document_reads_pdf_text","test_document_ingest.test_extract_document_reads_docx_text","test_document_ingest.test_extract_document_rejects_unsafe_or_empty_inputs","test_document_ingest.test_extract_document_rejects_invalid_pdf","test_enterprise.test_enterprise_analysis_composes_datahub_sql_and_regions","test_enterprise.test_enterprise_provider_keeps_legacy_scenario_compatible","test_impact.test_fresh_column_lineage_with_owners_is_high_confidence","test_impact.test_table_lineage_without_owner_coverage_is_medium_confidence","test_impact.test_owner_coverage_gap_with_fresh_column_lineage_is_medium_confidence","test_impact.test_stale_or_missing_column_lineage_lowers_confidence","test_impact.test_missing_downstream_lineage_is_low_confidence","test_mcp_client.test_get_downstream_context_normalizes_fake_mcp_content_blocks","test_mcp_client.test_get_downstream_context_keeps_table_lineage_when_column_lineage_is_missing","test_mcp_client.test_get_downstream_context_bounds_official_three_plus_degree_as_hop_three","test_mcp_client.test_get_downstream_context_rejects_missing_required_tools","test_mcp_client.test_get_asset_context_reads_multiple_datahub_context_surfaces","test_models.test_change_request_and_remediation_plan_round_trip","test_models.test_enterprise_evidence_models_preserve_review_state","test_planner.test_rename_plan_contains_rollout_rollback_and_actions","test_planner.test_rename_plan_stays_review_required_when_evidence_is_not_high_confidence","test_planner.test_removal_plan_is_specific_but_requires_approval","test_planner.test_type_change_plan_uses_parallel_field_strategy","test_planner.test_unsupported_plan_calls_for_manual_review","test_planner.test_unsupported_plan_with_complete_evidence_does_not_claim_missing_metadata","test_planner.test_source_only_fallback_action_propagates_reviewer_owner","test_regions.test_regions_include_national_operating_areas_and_unknown","test_regions.test_west_customer_data_exposure_is_high_risk","test_regions.test_unknown_dynamic_sql_requires_review","test_regions.test_region_without_critical_customer_data_is_managed_exposure","test_regions.test_unknown_is_omitted_when_every_dependency_is_mapped","test_regions.test_missing_region_owner_requires_review","test_seed_datahub.test_validate_expected_downstream_lineage_accepts_complete_seeded_chain","test_seed_datahub.test_validate_expected_downstream_lineage_raises_for_missing_seeded_lineage","test_seed_datahub.test_verify_emitted_urns_accepts_schema_field_readback_via_dataset_schema","test_seed_datahub.test_fetch_downstream_lineage_uses_supplied_dataset_urns_without_search","test_seed_datahub.test_emit_datasets_batches_schema_metadata_for_seed_fixture","test_sql_impact.test_discovery_query_is_read_only_and_searches_system_modules","test_sql_impact.test_static_convert_generates_a_bigint_fix","test_sql_impact.test_dynamic_sql_is_flagged_for_manual_review","test_sql_impact.test_join_without_a_semantic_rewrite_is_manual_review","test_sql_impact.test_unrelated_column_has_no_hidden_dependencies","test_sql_impact.test_qualified_convert_is_rewritten_and_reparsed","test_triage.test_sample_srs_maps_cross_domain_rules_and_builds_complex_sql","test_triage.test_unknown_rule_is_flagged_instead_of_inventing_an_asset","test_triage.test_input_limits_are_enforced","test_triage.test_payment_settlement_rule_uses_most_specific_catalog_match","test_triage.test_fully_unmapped_input_has_no_asset_referencing_outputs","test_triage.test_evidence_mode_identifies_bundled_synthetic_metadata","test_triage.test_running_balance_includes_the_full_timeline_but_sums_only_financial_events","test_triage.test_order_comparison_uses_order_id_and_feeds_final_mismatch_results","test_triage.test_commerce_only_triage_emits_only_commerce_evidence_previews","test_triage.test_hosted_steps_identify_bundled_lookups_not_live_retrievals","test_triage.test_triage_text_export_uses_contextiskey_branding_and_project_lineage","test_triage.test_more_than_twenty_rules_is_rejected","test_triage_ai.test_review_requires_a_configured_key","test_triage_ai.test_review_returns_structured_grounded_output_from_bounded_evidence","test_triage_ai.test_review_does_not_retain_a_previous_incident_response","test_triage_ai.test_review_rejects_an_identifier_absent_from_mapped_assets_columns_or_domains","test_triage_ai.test_review_allows_a_backticked_numeric_step_reference","test_triage_ai.test_review_rejects_an_unclosed_unsupported_identifier","test_triage_context.test_enrich_triage_context_keeps_bundled_mode_by_default","test_triage_context.test_enrich_triage_context_uses_live_schema_lineage_and_query_context","test_triage_context.test_enrich_triage_context_falls_back_when_mcp_fails","test_triage_packaging.test_installed_package_exposes_declared_triage_static_srs_asset","test_writeback.test_proposals_cover_incident_docs_and_every_critical_asset","test_writeback.test_proposal_ids_are_unique_and_stable","test_writeback.test_incident_body_carries_the_observed_blast_radius","test_writeback.test_enterprise_incident_includes_sql_regions_and_evidence_limits","test_writeback.test_tag_proposal_targets_the_pending_change_tag","test_writeback.test_apply_posts_a_graphql_mutation_and_reports_success","test_writeback.test_apply_surfaces_graphql_errors_without_claiming_success","test_writeback.test_apply_approved_refuses_when_datahub_is_unreachable","test_writeback.test_apply_approved_only_applies_selected_ids","test_writeback.test_apply_approved_ignores_unknown_ids","test_writeback.test_simulated_client_records_without_network","test_writeback.test_simulated_client_still_honours_the_approval_gate","test_writeback.test_mode_selects_the_client","test_writeback.test_real_writeback_requires_an_explicit_runtime_enable","test_writeback.test_unknown_mode_is_rejected","test_writeback.test_default_mode_is_datahub_not_simulated","test_writeback.test_real_client_results_are_never_marked_simulated"],"steps":[[[2,57],[84,7],[36,16],[0,121],[32,37],[48,34],[91,17],[14,81],[61,14],[45,24],[98,12],[40,13],[54,29],[100,4],[6,48],[26,147],[3,38],[44,45],[25,55],[7,58],[29,18],[49,11],[12,58],[8,47],[93,8],[95,5],[15,62],[18,18],[11,34],[68,19],[81,7],[58,10],[108,2],[28,14],[62,19],[52,15],[96,3],[55,9],[10,28],[76,4],[37,14],[35,10],[20,36],[70,8],[33,14],[31,34],[64,12],[101,5],[21,28]],[[95,7]],[[0,138],[7,101],[49,17],[15,63]],[[15,79]],[[0,156],[45,42],[7,110],[15,85]],[[45,55],[15,95]],[[0,159],[45,57],[15,98]],[[15,101]],[[0,171],[40,23],[7,118],[15,110]],[[15,115]],[[15,120]],[[0,172],[15,124]],[[15,131]],[[15,136]],[[0,178],[40,25],[15,140]],[[0,179],[15,142]],[[0,191],[15,147]],[[0,193],[40,29],[15,154]],[[15,155]],[[15,157]],[[15,159]],[[15,161]],[[0,195],[15,163]],[[0,196],[98,13],[12,59],[15,168]],[[15,171]],[[18,45]],[[18,64]],[[18,72]],[[18,78]],[[18,90]],[[18,106]],[[18,115]],[[18,131]],[[0,197],[11,37]],[[11,42]],[[0,203],[11,47]],[[0,205],[14,83],[11,50]],[[11,62]],[[0,207],[11,68]],[[0,209],[11,76]],[[11,84]],[[11,86]],[[0,211],[11,88]],[[0,212],[11,93]],[[11,99]],[[0,219],[11,106]],[[0,223],[12,66],[11,110]],[[0,224],[12,74],[11,115]],[[11,120]],[[0,225],[11,124]],[[11,127]],[[11,135]],[[11,139]],[[54,35],[3,41],[12,75],[11,143]],[[11,147]],[[11,151]],[[11,156]],[[11,159]],[[68,22]],[[36,38],[68,33]],[[36,39],[68,36]],[[81,22]],[[81,25]],[[81,29]],[[48,36],[58,18]],[[48,37],[58,24]],[[58,30]],[[48,38],[58,36]],[[108,5]],[[28,24]],[[28,31]],[[28,33]],[[28,37]],[[14,84],[28,39]],[[8,49],[28,46]],[[28,58]],[[28,67]],[[28,72]],[[28,80]],[[61,17],[62,21]],[[61,30],[62,38]],[[61,31],[62,42]],[[61,33],[62,46]],[[52,19]],[[45,63],[52,27]],[[52,35]],[[45,65],[52,37]],[[45,68],[52,39]],[[96,10]],[[96,15]],[[55,14]],[[54,36],[55,19]],[[55,25]],[[8,51],[55,28]],[[55,33]],[[6,141],[10,55]],[[6,145],[10,61]],[[6,149],[10,65]],[[6,150],[10,68]],[[6,172],[10,76]],[[76,8]],[[76,13]],[[3,54],[8,63],[37,24]],[[3,56],[37,30]],[[3,61],[8,66],[37,36]],[[37,43]],[[3,68],[37,51]],[[37,54]],[[3,69],[37,59]],[[35,14]],[[35,19]],[[35,23]],[[35,26]],[[44,46],[35,30]],[[44,49],[35,35]],[[2,59],[20,38]],[[2,62],[20,41]],[[2,70],[20,49]],[[2,96],[20,63]],[[2,117],[20,77]],[[70,13]],[[70,18]],[[70,23]],[[70,28]],[[25,56],[70,29]],[[70,34]],[[33,30]],[[33,34]],[[7,119],[33,36]],[[33,39]],[[33,43]],[[33,45]],[[33,54]],[[33,65]],[[33,75]],[[33,79]],[[33,83]],[[7,120],[33,86]],[[29,21],[31,37]],[[29,45],[31,51]],[[31,60]],[[29,46],[31,63]],[[31,66]],[[29,47],[31,69]],[[64,18]],[[49,37],[64,35]],[[49,39],[64,47]],[[101,11]],[[21,36]],[[21,41]],[[21,46]],[[21,54]],[[21,56]],[[12,98],[21,69]],[[12,101],[21,77]],[[12,107],[21,82]],[[12,111],[21,92]],[[21,97]],[[21,103]],[[21,108]],[[12,112],[21,114]],[[21,119]],[[12,113],[21,123]],[[21,126]],[[0,225],[2,117],[3,69],[6,172],[7,120],[8,66],[10,76],[11,159],[12,113],[14,84],[15,171],[18,131],[20,77],[21,132],[25,56],[26,147],[28,80],[29,47],[31,69],[32,37],[33,86],[35,35],[36,39],[37,59],[40,29],[44,49],[45,68],[48,39],[49,39],[52,39],[54,36],[55,33],[58,36],[61,33],[62,46],[64,47],[68,36],[70,34],[76,13],[81,29],[84,7],[91,17],[93,8],[95,7],[96,15],[98,13],[100,4],[101,11],[108,5]]],"stmts":[271,-1,189,74,-1,-1,225,121,114,-1,76,160,117,-1,85,173,-1,-1,133,-1,81,136,-1,-1,-1,64,147,-1,80,51,-1,69,38,86,-1,35,43,59,-1,-1,30,-1,-1,-1,49,75,-1,-1,47,40,-1,-1,39,-1,36,33,-1,-1,36,-1,-1,39,46,-1,47,-1,-1,-1,36,-1,34,-1,-1,-1,-1,-1,13,-1,-1,-1,-1,29,-1,-1,7,-1,-1,-1,-1,-1,-1,17,-1,13,-1,7,15,-1,13,-1,8,11,-1,-1,-1,-1,-1,-1,5,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],"total":3352,"covered":3060,"pct":91.29,"measured":49,"dark":[]}};
+const BRANCH = "codex/demo-video";
+(function(){
+"use strict";
+const cv=document.getElementById("gl");
+const gl=cv.getContext("webgl2",{antialias:true,alpha:false,powerPreference:"high-performance"});
+if(!gl){document.getElementById("fail").style.display="grid";return;}
+const RM=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const FIT=122.7, TY=13.5;
+
+/* ---------- math ---------- */
+function mul(a,b){const o=new Float32Array(16);
+ for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
+function persp(f,ar,n,fa){const t=1/Math.tan(f/2),o=new Float32Array(16);
+ o[0]=t/ar;o[5]=t;o[10]=(fa+n)/(n-fa);o[11]=-1;o[14]=2*fa*n/(n-fa);return o;}
+function look(e,c,u){
+ let z=[e[0]-c[0],e[1]-c[1],e[2]-c[2]];let l=Math.hypot(z[0],z[1],z[2])||1;z=[z[0]/l,z[1]/l,z[2]/l];
+ let x=[u[1]*z[2]-u[2]*z[1],u[2]*z[0]-u[0]*z[2],u[0]*z[1]-u[1]*z[0]];l=Math.hypot(x[0],x[1],x[2])||1;x=[x[0]/l,x[1]/l,x[2]/l];
+ const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+ return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
+  -(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]), -(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]), -(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]), 1]);}
+
+/* ---------- gl helpers ---------- */
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
+ if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s)+"\n"+src);return s;}
+function prog(v,f){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));
+ gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);
+ if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+ p.u=new Proxy({},{get:(c,k)=>(k in c?c[k]:(c[k]=gl.getUniformLocation(p,k)))});return p;}
+function buf(data,tgt){const b=gl.createBuffer();tgt=tgt||gl.ARRAY_BUFFER;
+ gl.bindBuffer(tgt,b);gl.bufferData(tgt,data,gl.STATIC_DRAW);return b;}
+function attr(loc,b,n,div){gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(loc);
+ gl.vertexAttribPointer(loc,n,gl.FLOAT,false,0,0);if(div)gl.vertexAttribDivisor(loc,div);}
+
+const FOG="vec3(0.898,0.882,0.851)";
+
+/* ---------- geometry ---------- */
+const F=[[[0,0,1],[[-.5,0,.5],[.5,0,.5],[.5,1,.5],[-.5,1,.5]]],
+         [[0,0,-1],[[.5,0,-.5],[-.5,0,-.5],[-.5,1,-.5],[.5,1,-.5]]],
+         [[1,0,0],[[.5,0,.5],[.5,0,-.5],[.5,1,-.5],[.5,1,.5]]],
+         [[-1,0,0],[[-.5,0,-.5],[-.5,0,.5],[-.5,1,.5],[-.5,1,-.5]]],
+         [[0,1,0],[[-.5,1,.5],[.5,1,.5],[.5,1,-.5],[-.5,1,-.5]]]];
+const bp=[],bn=[],bi=[];
+F.forEach(([n,vs])=>{const o=bp.length/3;vs.forEach(v=>{bp.push(v[0],v[1],v[2]);bn.push(n[0],n[1],n[2]);});
+ bi.push(o,o+1,o+2,o,o+2,o+3);});
+
+/* ---------- instance data ---------- */
+const B=CITY.b, NB=B.length, D=CITY.districts;
+const iOff=new Float32Array(NB*3), iScl=new Float32Array(NB*3),
+      iCol=new Float32Array(NB*3), iMeta=new Float32Array(NB*3), iMark=new Float32Array(NB);
+const maxChurn=Math.max(1,CITY.maxchurn);
+B.forEach((b,i)=>{
+  iOff.set([b.x,0,b.z],i*3); iScl.set([b.w,b.h,b.d],i*3); iCol.set(b.c,i*3);
+  iMeta.set([i, Math.pow(Math.min(b.k/maxChurn,1),0.42), b.v],i*3);
+  iMark[i]=1;
+});
+
+/* Three dynamic per-building channels, one per thing a mode animates: height
+   for the timelapse, coverage for the trace, and a decaying flare for whatever
+   the current step touched. Footprints, colours and district assignment are
+   uploaded once and never touched, in every mode. */
+const iCov=new Float32Array(NB), iHot=new Float32Array(NB);
+const vaoB=gl.createVertexArray(); gl.bindVertexArray(vaoB);
+attr(0,buf(new Float32Array(bp)),3); attr(1,buf(new Float32Array(bn)),3);
+attr(2,buf(iOff),3,1);
+const sclBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,sclBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iScl,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3,3,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(3,1);
+attr(4,buf(iCol),3,1); attr(5,buf(iMeta),3,1);
+const markBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,markBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iMark,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(6,1);
+const covBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,covBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iCov,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(7,1);
+const hotBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,hotBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iHot,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(8,1);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf(new Uint16Array(bi),gl.ELEMENT_ARRAY_BUFFER));
+gl.bindVertexArray(null);
+
+/* ---------- shaders ---------- */
+const VS_B=`#version 300 es
+layout(location=0)in vec3 a_pos;layout(location=1)in vec3 a_norm;
+layout(location=2)in vec3 a_off;layout(location=3)in vec3 a_scale;
+layout(location=4)in vec3 a_col;layout(location=5)in vec3 a_meta;layout(location=6)in float a_mark;
+layout(location=7)in float a_cov;layout(location=8)in float a_hot;
+uniform mat4 u_vp;uniform float u_vend;
+out vec3 v_w;out vec3 v_n;out vec3 v_c;out vec3 v_m;out float v_k;
+out float v_cov;out float v_hot;
+void main(){
+  vec3 s=a_scale; if(a_meta.z>0.5) s*=u_vend;
+  /* A file that does not exist yet has height 0, and a zero-height box is a
+     flat quad lying exactly on the district plate: it z-fights instead of
+     disappearing. Collapse the whole instance outside the clip volume. Inert
+     outside the timelapse, where every height is well above this. */
+  if(s.y<0.02){ v_w=vec3(0.0);v_n=vec3(0.0,1.0,0.0);v_c=vec3(0.0);
+    v_m=vec3(-9.0,0.0,0.0);v_k=0.0;v_cov=0.0;v_hot=0.0;
+    gl_Position=vec4(2.0,2.0,2.0,1.0); return; }
+  vec3 w=a_off+a_pos*s;
+  v_w=w;v_n=a_norm;v_c=a_col;v_m=a_meta;v_k=a_mark;v_cov=a_cov;v_hot=a_hot;
+  gl_Position=u_vp*vec4(w,1.0);}`;
+
+const FS_B=`#version 300 es
+precision highp float;
+in vec3 v_w;in vec3 v_n;in vec3 v_c;in vec3 v_m;in float v_k;in float v_cov;in float v_hot;
+uniform vec3 u_eye;uniform float u_hover;uniform float u_sel;uniform float u_srch;uniform float u_t;
+uniform float u_trace;
+out vec4 o;
+float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
+void main(){
+  vec3 N=normalize(v_n), V=normalize(u_eye-v_w), L=normalize(vec3(0.42,0.74,0.30));
+  float lam=max(dot(N,L),0.0)*0.80+0.20;
+  float amb=0.62+0.30*max(N.y,0.0);
+
+  /* Outside the coverage trace a building is its language, lit by how often it
+     changes. Inside it, colour and light both mean coverage: c < 0 is a file
+     coverage cannot measure and stays a neutral slate, drawn only so the city
+     keeps its shape; c == 0 is measurable code the suite never reached and gets
+     a rust cast so it reads as debt rather than scenery; above that the language
+     colour returns in proportion to how much of the file has run.
+
+     u_trace is a continuous 0..1 blend rather than a branch, so switching views
+     cross-fades the whole skyline instead of snapping. That also removes the
+     need to gate the windows: at full trace with c == 0 the lit threshold sits
+     at 1.02, above anything the hash can return, so not one window can light. */
+  float c=v_cov;
+  vec3 dead=vec3(0.128,0.146,0.180);
+  vec3 cold=vec3(0.150,0.098,0.082);
+  vec3 traceCol = c<0.0 ? dead : mix(cold,v_c,clamp(c,0.0,1.0)*0.88+0.12);
+  vec3 base = mix(mix(vec3(0.855,0.842,0.815),v_c,0.20),traceCol,u_trace);
+  vec3 col=base*(lam*0.66+amb*0.46)*mix(1.0,(c<0.0?0.88:1.0),u_trace);
+  col*=mix(1.0,0.66,v_m.z); col*=mix(0.70,1.0,clamp(v_w.y/16.0,0.0,1.0));
+
+  float win=0.0;
+  float dens = mix(v_m.y, max(c,0.0), u_trace);
+  if(abs(N.y)<0.5 && v_w.y>1.15){
+    float u=abs(N.x)>0.5?v_w.z:v_w.x;
+    vec2 cel=vec2(floor(u/2.30),floor(v_w.y/2.85));
+    vec2 f=vec2(fract(u/2.30),fract(v_w.y/2.85));
+    float sd=v_m.x*0.1373;
+    float r=h21(cel+vec2(sd,sd*1.71));
+    float lit=step(mix(mix(0.82,1.02,u_trace),mix(0.26,0.14,u_trace),clamp(dens,0.0,1.0)),r);
+    float pane=step(0.20,f.x)*step(f.x,0.80)*step(0.24,f.y)*step(f.y,0.76);
+    float fl=1.0-0.30*step(0.975,r)*(0.5+0.5*sin(u_t*2.7+sd*37.0));
+    win=lit*pane*fl*(1.0-v_m.z*0.72);
+  }
+  col*=1.0-win*0.26;
+  if(N.y>0.5)col+=base*0.14+vec3(0.045,0.045,0.040);
+  float rim=pow(1.0-max(dot(N,V),0.0),3.0);
+  col+=mix(vec3(0.62,0.66,0.72),base,0.30)*rim*0.16;
+  /* Whatever this step touched glows and cools off over the next few steps, so
+     the eye can find the work even when the height change is a line or two. */
+  col=mix(col,vec3(0.92,0.42,0.14),clamp(v_hot,0.0,1.0)*0.72);
+  if(u_srch>0.5)col=mix(mix(col,vec3(0.898,0.882,0.851),0.80),col,clamp(v_k,0.0,1.0));
+  if(abs(v_m.x-u_hover)<0.5)col=mix(col,vec3(0.20,0.24,0.30),0.26);
+  if(abs(v_m.x-u_sel)<0.5)col=mix(col,vec3(0.86,0.36,0.10),0.55);
+  float d=length(u_eye-v_w);
+  col=mix(col,${FOG},clamp(1.0-exp(-pow(d*0.00108,2.15)),0.0,0.86));
+  o=vec4(col,1.0);}`;
+
+const FS_PICK=`#version 300 es
+precision highp float;
+in vec3 v_w;in vec3 v_n;in vec3 v_c;in vec3 v_m;in float v_k;in float v_cov;in float v_hot;
+out vec4 o;
+void main(){float i=v_m.x+1.0;
+  o=vec4(mod(i,256.0)/255.0,mod(floor(i/256.0),256.0)/255.0,mod(floor(i/65536.0),256.0)/255.0,1.0);}`;
+
+const VS_Q=`#version 300 es
+layout(location=0)in vec2 a_p;layout(location=1)in vec3 a_off;layout(location=2)in vec2 a_s;layout(location=3)in vec3 a_c;
+uniform mat4 u_vp;out vec2 v_uv;out vec3 v_c;out vec2 v_s;out vec3 v_w;
+void main(){v_uv=a_p+0.5;v_c=a_c;v_s=a_s;
+  vec3 w=a_off+vec3(a_p.x*a_s.x,0.0,a_p.y*a_s.y);v_w=w;gl_Position=u_vp*vec4(w,1.0);}`;
+
+const FS_PLATE=`#version 300 es
+precision highp float;in vec2 v_uv;in vec3 v_c;in vec2 v_s;in vec3 v_w;
+uniform vec3 u_eye;out vec4 o;
+void main(){
+  vec2 e=min(v_uv,1.0-v_uv)*v_s;
+  float d=min(e.x,e.y);
+  float edge=1.0-smoothstep(0.0,2.6,d);
+  float a=0.030+edge*0.30;
+  float f=exp(-pow(length(u_eye-v_w)*0.00132,2.15));
+  o=vec4(v_c*a*f,1.0);}`;
+
+const VS_G=`#version 300 es
+layout(location=0)in vec2 a_p;uniform mat4 u_vp;out vec3 v_w;
+void main(){v_w=vec3(a_p.x,0.0,a_p.y);gl_Position=u_vp*vec4(v_w,1.0);}`;
+
+const FS_G=`#version 300 es
+precision highp float;in vec3 v_w;uniform vec3 u_eye;out vec4 o;
+float grid(vec2 p,float s){vec2 c=p/s;vec2 g=abs(fract(c-0.5)-0.5)/fwidth(c);
+  return 1.0-min(min(g.x,g.y),1.0);}
+void main(){
+  float m=grid(v_w.xz,26.0), M=grid(v_w.xz,130.0);
+  float r=1.0-smoothstep(120.0,760.0,length(v_w.xz));
+  vec3 col=vec3(0.874,0.858,0.826)*(0.94+0.06*r);
+  col-=vec3(0.070,0.074,0.082)*m*(0.20+0.80*r);
+  col-=vec3(0.120,0.126,0.134)*M*(0.30+0.70*r);
+  float d=length(u_eye-v_w);
+  col=mix(col,vec3(0.898,0.882,0.851),clamp(1.0-exp(-pow(d*0.00108,2.0)),0.0,1.0));
+  o=vec4(col,1.0);}`;
+
+const pB=prog(VS_B,FS_B), pP=prog(VS_B,FS_PICK), pL=prog(VS_Q,FS_PLATE), pG=prog(VS_G,FS_G);
+
+/* plates + ground vaos */
+const qp=new Float32Array([-.5,-.5, .5,-.5, .5,.5, -.5,-.5, .5,.5, -.5,.5]);
+const pOff=new Float32Array(D.length*3), pScl=new Float32Array(D.length*2), pCol=new Float32Array(D.length*3);
+D.forEach((d,i)=>{pOff.set([d.x,0.05,d.z],i*3);pScl.set([d.w,d.d],i*2);pCol.set(d.c,i*3);});
+const vaoP=gl.createVertexArray(); gl.bindVertexArray(vaoP);
+attr(0,buf(qp),2); attr(1,buf(pOff),3,1); attr(2,buf(pScl),2,1); attr(3,buf(pCol),3,1);
+const vaoG=gl.createVertexArray(); gl.bindVertexArray(vaoG);
+attr(0,buf(new Float32Array(qp.map(v=>v*1900))),2);
+gl.bindVertexArray(null);
+
+/* ---------- pick target ---------- */
+let fbo=gl.createFramebuffer(), ptex=gl.createTexture(), pdep=gl.createRenderbuffer(), pw=0,ph=0;
+function pickSize(w,h){ if(w===pw&&h===ph)return; pw=w;ph=h;
+  gl.bindTexture(gl.TEXTURE_2D,ptex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.bindRenderbuffer(gl.RENDERBUFFER,pdep);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,ptex,0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,pdep);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+}
+
+/* ---------- camera ---------- */
+const cam={tx:0,ty:TY,tz:0,dist:900,yaw:0.72,pitch:RM?0.50:0.95};
+const goal={...cam}; let anim=RM?0:1;
+let vend=1, showVend=true, orbit=false, hoverId=-1, selId=-1, srch=0;
+let W=0,H=0,DPR=1,vp=null,eye=[0,0,0];
+let lastFit=null;
+
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);
+  W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR);
+  cv.width=W; cv.height=H; pickSize(W,H);
+  // keep the framing the viewport earned: rescale zoom by how the fit distance moved,
+  // otherwise a resize or a phone rotation leaves the camera buried in the city
+  const f=fitDist(FIT);
+  if(lastFit){ const r=f/lastFit; cam.dist*=r; goal.dist*=r; }
+  lastFit=f;
+}
+addEventListener("resize",resize); resize();
+function fitDist(half){const t=Math.tan(0.43),ar=W/H;return Math.max(half/t,half/(t*ar))*1.00;}
+function home(){return fitDist(FIT);}
+cam.dist=RM?home():home()*1.15; goal.dist=home(); goal.pitch=0.50; goal.ty=TY;
+
+function camEye(){
+  const cp=Math.cos(cam.pitch);
+  return [cam.tx+cam.dist*cp*Math.sin(cam.yaw), cam.ty+cam.dist*Math.sin(cam.pitch), cam.tz+cam.dist*cp*Math.cos(cam.yaw)];
+}
+
+/* ---------- input ---------- */
+let drag=null;
+cv.addEventListener("pointerdown",e=>{
+  cv.setPointerCapture(e.pointerId); cv.classList.add("drag");
+  drag={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===1||e.button===2,moved:0}; anim=0; orbit=false; syncOrb();
+});
+cv.addEventListener("pointermove",e=>{
+  if(drag){
+    const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY;
+    drag.moved+=Math.abs(dx)+Math.abs(dy);
+    if(drag.pan){
+      const s=cam.dist*0.0016, sy=Math.sin(cam.yaw), cy=Math.cos(cam.yaw);
+      cam.tx-=(dx*cy-dy*sy)*s; cam.tz+=(dx*sy+dy*cy)*s;
+    }else{
+      cam.yaw-=dx*0.005; cam.pitch=Math.max(0.06,Math.min(1.50,cam.pitch+dy*0.004));
+    }
+    goal.tx=cam.tx;goal.tz=cam.tz;goal.ty=cam.ty;goal.yaw=cam.yaw;goal.pitch=cam.pitch;
+  }
+  mx=e.clientX; my=e.clientY; needPick=true;
+});
+function endDrag(e){ if(!drag)return; const d=drag; drag=null; cv.classList.remove("drag");
+  if(d.moved<5) doClick(e.clientX,e.clientY); }
+cv.addEventListener("pointerup",endDrag);
+cv.addEventListener("pointercancel",()=>{drag=null;cv.classList.remove("drag");});
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+cv.addEventListener("wheel",e=>{e.preventDefault();
+  cam.dist=Math.max(28,Math.min(2200,cam.dist*Math.exp(e.deltaY*0.0011))); goal.dist=cam.dist; anim=0;
+},{passive:false});
+let pinch=0;
+cv.addEventListener("touchmove",e=>{
+  if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    if(pinch)cam.dist=Math.max(28,Math.min(2200,cam.dist*pinch/d));
+    pinch=d; goal.dist=cam.dist; drag=null;
+  }
+},{passive:true});
+cv.addEventListener("touchend",()=>{pinch=0;});
+
+/* ---------- picking ---------- */
+let mx=-1,my=-1,needPick=false,lastPick=0;
+function pickAt(cx,cy){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.viewport(0,0,W,H); gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.disable(gl.BLEND);
+  gl.useProgram(pP); gl.uniformMatrix4fv(pP.u.u_vp,false,vp); gl.uniform1f(pP.u.u_vend,vend);
+  gl.bindVertexArray(vaoB);
+  gl.drawElementsInstanced(gl.TRIANGLES,bi.length,gl.UNSIGNED_SHORT,0,NB);
+  const px=new Uint8Array(4);
+  const gx=Math.floor(cx*DPR), gy=Math.floor(H-cy*DPR);
+  if(gx>=0&&gy>=0&&gx<W&&gy<H) gl.readPixels(gx,gy,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const id=px[0]+px[1]*256+px[2]*65536-1;
+  return (id>=0&&id<NB)?id:-1;
+}
+function doClick(cx,cy){ const id=pickAt(cx,cy); select(id); }
+
+/* ---------- render ---------- */
+const tip=document.getElementById("tip");
+function frame(t){
+  t*=0.001;
+  tick(t);
+  if(anim||orbit){
+    if(anim){ cam.dist+=(goal.dist-cam.dist)*0.045; cam.pitch+=(goal.pitch-cam.pitch)*0.045;
+      cam.tx+=(goal.tx-cam.tx)*0.055; cam.tz+=(goal.tz-cam.tz)*0.055; cam.ty+=(goal.ty-cam.ty)*0.055;
+      cam.yaw+=(goal.yaw-cam.yaw)*0.045;
+      if(Math.abs(goal.dist-cam.dist)<0.6&&Math.abs(goal.tx-cam.tx)<0.6&&Math.abs(goal.tz-cam.tz)<0.6)anim=0; }
+    if(orbit){ cam.yaw+=0.0013; goal.yaw=cam.yaw; }
+  }
+  vend+=((showVend?1:0)-vend)*0.14;
+  eye=camEye();
+  vp=mul(persp(0.86,W/H,1.2,5200),look(eye,[cam.tx,cam.ty,cam.tz],[0,1,0]));
+
+  if(needPick&&t-lastPick>0.045&&!drag){ lastPick=t; needPick=false;
+    const id=pickAt(mx,my); if(id!==hoverId){hoverId=id;showTip(id);} }
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,W,H);
+  gl.clearColor(0.898,0.882,0.851,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+
+  gl.useProgram(pG); gl.uniformMatrix4fv(pG.u.u_vp,false,vp); gl.uniform3fv(pG.u.u_eye,eye);
+  gl.bindVertexArray(vaoG); gl.drawArrays(gl.TRIANGLES,0,6);
+
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE); gl.depthMask(false);
+  gl.useProgram(pL); gl.uniformMatrix4fv(pL.u.u_vp,false,vp); gl.uniform3fv(pL.u.u_eye,eye);
+  gl.bindVertexArray(vaoP); gl.drawArraysInstanced(gl.TRIANGLES,0,6,D.length);
+  gl.depthMask(true); gl.disable(gl.BLEND);
+
+  gl.enable(gl.CULL_FACE);
+  gl.useProgram(pB);
+  gl.uniformMatrix4fv(pB.u.u_vp,false,vp); gl.uniform3fv(pB.u.u_eye,eye);
+  gl.uniform1f(pB.u.u_hover,hoverId); gl.uniform1f(pB.u.u_sel,selId);
+  gl.uniform1f(pB.u.u_srch,srch); gl.uniform1f(pB.u.u_t,t); gl.uniform1f(pB.u.u_vend,vend);
+  gl.uniform1f(pB.u.u_trace,traceLit);
+  gl.bindVertexArray(vaoB);
+  gl.drawElementsInstanced(gl.TRIANGLES,bi.length,gl.UNSIGNED_SHORT,0,NB);
+  gl.bindVertexArray(null);
+
+  placeLabels();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- labels ---------- */
+const lbox=document.getElementById("labels"), labs=D.map(d=>{
+  const e=document.createElement("div"); e.className="dlab"; e.textContent=d.n; lbox.appendChild(e); return e;});
+function placeLabels(){
+  for(let i=0;i<D.length;i++){
+    const d=D[i], e=labs[i];
+    const ly=d.y;
+    const x=vp[0]*d.x+vp[4]*ly+vp[8]*d.z+vp[12], y=vp[1]*d.x+vp[5]*ly+vp[9]*d.z+vp[13],
+          w=vp[3]*d.x+vp[7]*ly+vp[11]*d.z+vp[15];
+    if(w<=0.1){e.style.opacity=0;continue;}
+    const sx=(x/w*0.5+0.5)*innerWidth, sy=(1-(y/w*0.5+0.5))*innerHeight;
+    const dd=Math.hypot(eye[0]-d.x,eye[1]-d.y,eye[2]-d.z);
+    e.style.opacity=Math.max(0,Math.min(0.95,(2100-dd)/1200))*(srch?0.25:1);
+    e.style.left=sx+"px"; e.style.top=sy+"px";
+  }
+}
+
+/* ---------- ui ---------- */
+const $=id=>document.getElementById(id);
+const nf=n=>n.toLocaleString("en-US");
+$("s-d").textContent=D.length;
+
+function buildLegend(){
+  $("llist").innerHTML="";
+  /* In the trace the colour is saying coverage, not language, so reading a
+     building as "green means Python" there would be a mistake. The spectrum
+     stays underneath it because the hue is still the language. */
+  const head = mode==="trace"
+    ? [["Executed by the suite",[1.00,0.855,0.628]],
+       ["Reached, partly covered",[0.62,0.50,0.38]],
+       ["Code nothing ran",[0.150,0.098,0.082]],
+       ["Not measurable",[0.128,0.146,0.180]]]
+    : [];
+  $("leg").querySelector(".lbl").textContent =
+    mode==="trace" ? "Reading the light" : "Spectrum";
+  head.concat(CITY.legend).forEach(([n,c])=>{
+    const li=document.createElement("li");
+    li.innerHTML='<i></i><span></span>';
+    li.querySelector("i").style.background=`rgb(${c.map(v=>Math.round(v*255)).join(",")})`;
+    li.querySelector("span").textContent=n; $("llist").appendChild(li);});
+}
+
+const rows=D.map((d,i)=>{
+  const b=document.createElement("button"); b.className="drow"; b.type="button";
+  b.innerHTML='<span class="sw"></span><span class="nm"></span><span class="ct"></span>';
+  b.querySelector(".sw").style.background=`rgb(${d.c.map(v=>Math.round(v*255)).join(",")})`;
+  b.querySelector(".nm").textContent=d.n;
+  b.querySelector(".ct").textContent=nf(d.l);
+  b.addEventListener("click",()=>flyTo(d,i));
+  $("dlist").appendChild(b); return b;});
+
+function flyTo(d,i){
+  goal.tx=d.x; goal.tz=d.z; goal.ty=d.y*0.42; goal.dist=fitDist(Math.max(d.w,d.d)*0.60)+d.y*0.5; goal.pitch=0.44; anim=1; orbit=false; syncOrb();
+  rows.forEach((r,j)=>r.classList.toggle("on",j===i));
+}
+
+const sortedRank=B.map((b,i)=>i).sort((a,c)=>B[c].l-B[a].l);
+const rankOf=new Int32Array(NB); sortedRank.forEach((id,r)=>rankOf[id]=r+1);
+const maxLoc=Math.max(...B.map(b=>b.l));
+
+function select(id){
+  selId=id;
+  const p=$("insp");
+  if(id<0){p.classList.remove("open"); rows.forEach(r=>r.classList.remove("on")); return;}
+  const b=B[id], d=D[b.g];
+  const parts=b.p.split("/"), file=parts.pop();
+  $("i-path").innerHTML=`<em>${parts.length?parts.join("/")+"/":""}</em>${file}`;
+  $("i-dist").querySelector("i").style.background=`rgb(${d.c.map(v=>Math.round(v*255)).join(",")})`;
+  $("i-dist").querySelector("span").textContent=d.n;
+  /* Everything that can change with the scrubber is reported as of the step on
+     screen, not as of the final commit or the end of the run. An inspector that
+     quoted today's numbers while you watch 2025 would make the scrubber a lie. */
+  const st=TR?TR.stmts[id]:-1, got=TR?covAt[id]:0;
+  const v=locAt[id], born=v!==-2&&v!==0;
+  $("i-loc").textContent = mode==="time" ? (!born?"not built yet":(v>0?nf(v):"\u2014"))
+                                         : (b.l?nf(b.l):"\u2014");
+  $("i-size").textContent=b.s<1024?b.s+" B":(b.s<1048576?(b.s/1024).toFixed(1)+" KB":(b.s/1048576).toFixed(1)+" MB");
+  $("i-churn").textContent=nf(b.k);
+  $("i-ext").textContent=(b.v?"vendored ":"")+b.e;
+  if(mode==="trace"){
+    $("i-cov").textContent=st<0?"not measurable":`${nf(got)} of ${nf(st)} stmt`;
+    $("i-hits").textContent=st<0?"\u2014":(hits[id]?nf(hits[id])+(hits[id]===1?" test":" tests"):"nothing yet");
+    $("i-bar").style.width=(st>0?Math.max(1.5,(got/st)*100):0)+"%";
+    $("i-rank").textContent=st<0?"outside the suite's reach"
+      :(got===0?"never executed":Math.round(got/st*100)+"% covered so far");
+    $("i-of").textContent=st<0?"":`${nf(TR.measured)} files measured`;
+  } else if(mode==="time"){
+    $("i-bar").style.width=(born&&v>0?Math.max(1.5,(v/maxLoc)*100):0)+"%";
+    $("i-rank").textContent=!born?"absent on this "+TL.step
+      :(b.l?`#${rankOf[id]} by size at the end`:"binary asset");
+    $("i-of").textContent=`of ${nf(NB)}`;
+  } else {
+    $("i-bar").style.width=Math.max(1.5,(b.l/maxLoc)*100)+"%";
+    $("i-rank").textContent=b.l?`#${rankOf[id]} by size`:"binary asset";
+    $("i-of").textContent=`of ${nf(NB)}`;
+  }
+  p.classList.add("open");
+  rows.forEach((r,j)=>r.classList.toggle("on",j===b.g));
+}
+$("close").addEventListener("click",()=>select(-1));
+
+function showTip(id){
+  if(id<0){tip.style.opacity=0;return;}
+  const b=B[id];
+  let badge;
+  if(mode==="trace"){ const st=TR.stmts[id];
+    badge = st<0 ? b.e : (covAt[id]===0?"dark":Math.round(covAt[id]/st*100)+"%"); }
+  else { const v = mode==="time" ? locAt[id] : b.l;
+    badge = v>0 ? nf(v)+" ln" : b.e; }
+  tip.innerHTML=`${b.p.split("/").pop()} &nbsp;<b>${badge}</b>`;
+  const flip=mx>innerWidth-250;
+  tip.style.transform=flip?"translate(calc(-100% - 12px),-50%)":"translate(12px,-50%)";
+  tip.style.left=mx+"px"; tip.style.top=my+"px"; tip.style.opacity=1;
+}
+
+const q=$("q");
+q.addEventListener("input",()=>{
+  const v=q.value.trim().toLowerCase();
+  srch=v?1:0;
+  for(let i=0;i<NB;i++) iMark[i]=(!v||B[i].p.toLowerCase().includes(v))?1:0;
+  gl.bindBuffer(gl.ARRAY_BUFFER,markBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iMark);
+});
+addEventListener("keydown",e=>{
+  if(e.key==="/"&&document.activeElement!==q){e.preventDefault();q.focus();}
+  if(e.key==="Escape"){ if(document.activeElement===q&&q.value){q.value="";q.dispatchEvent(new Event("input"));}
+    else select(-1); }
+});
+
+const tv=$("t-vend"), to=$("t-orb");
+tv.addEventListener("click",()=>{showVend=!showVend; tv.setAttribute("aria-pressed",showVend);});
+function syncOrb(){to.setAttribute("aria-pressed",orbit);}
+to.addEventListener("click",()=>{orbit=!orbit; if(orbit)anim=0; syncOrb();});
+$("t-rst").addEventListener("click",()=>{
+  goal.tx=0;goal.tz=0;goal.ty=TY;goal.dist=home();goal.pitch=0.50;goal.yaw=0.72;anim=1;orbit=false;syncOrb();
+  select(-1); q.value=""; q.dispatchEvent(new Event("input"));
+});
+
+/* ---------- panel collapse, hide-all, narrow relayout ---------- */
+function setPanel(el,open,save){
+  if(!el) return;
+  el.classList.toggle("collapsed",!open);
+  const h=el.querySelector(".phead[data-p]");
+  if(h) h.setAttribute("aria-expanded",open?"true":"false");
+  if(save){ try{ localStorage.setItem("cs:"+el.id,open?"1":"0"); }catch(e){} }
+}
+document.querySelectorAll(".phead[data-p]").forEach(h=>{
+  h.addEventListener("click",()=>{
+    const el=h.closest(".panel");
+    setPanel(el,el.classList.contains("collapsed"),true);
+  });
+});
+const narrow=()=>innerWidth<=900;
+["id","dist","leg"].forEach(id=>{
+  let st=null; try{ st=localStorage.getItem("cs:"+id); }catch(e){}
+  const dflt = narrow() ? (id==="id") : (innerHeight<640 ? id!=="leg" : true);
+  setPanel($(id), st===null?dflt:st==="1", false);
+});
+
+let uiOn=true;
+function setUI(v){
+  uiOn=v;
+  document.body.classList.toggle("noui",!v);
+  const b=$("t-ui");
+  b.textContent=v?"Hide UI":"Show UI";
+  b.setAttribute("aria-pressed",v?"false":"true");
+}
+$("t-ui").addEventListener("click",()=>setUI(!uiOn));
+addEventListener("keydown",e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if((e.key==="h"||e.key==="H") && document.activeElement!==q){ e.preventDefault(); setUI(!uiOn); }
+});
+
+/* the search + buttons belong to the top rail on narrow screens, the right rail otherwise,
+   so the two rails never fight for the same corner */
+let wasNarrow=null;
+function relayout(){
+  const n=narrow();
+  if(n===wasNarrow) return;
+  wasNarrow=n;
+  const ctl=$("ctl");
+  if(n) $("rail-l").insertBefore(ctl,$("id"));
+  else  $("rail-r").insertBefore(ctl,$("rail-r").firstChild);
+}
+relayout();
+addEventListener("resize",relayout);
+
+/* ---------- views ----------
+   One city, three readings of it. The geometry is identical in all three and is
+   uploaded once; what changes is which channel the transport drives.
+
+     city    the repository as it stands. Height is lines, colour is language,
+             windows are churn. No transport.
+     time    height is driven by history. locAt[i] is what building i knew at
+             the current step: -2 not built yet, -1 an asset with no line
+             history at its final height, otherwise a line count.
+     trace   height is final, light is driven by the test suite. covAt[i] is how
+             many statements of building i have executed so far, against
+             TR.stmts[i] total, or -1 where coverage cannot speak.
+
+   Both tracks keep their own position, so switching views and switching back
+   lands where you left off rather than rewinding.                            */
+const TL=CITY.tl||null, TR=CITY.tr||null;
+const HM=CITY.hm, H0=CITY.h0, HX=CITY.hx, HV=CITY.hv, MX=Math.max(1,CITY.maxloc);
+
+const locAt=new Int32Array(NB), covAt=new Int32Array(NB), hits=new Int32Array(NB);
+const tgtH=new Float32Array(NB), curH=new Float32Array(NB);
+const tgtC=new Float32Array(NB), curC=new Float32Array(NB);
+const finalH=new Float32Array(NB);
+const dOff=new Float32Array(D.length), dMax=new Float32Array(D.length), dFin=new Float32Array(D.length);
+B.forEach((b,i)=>{ finalH[i]=b.h; if(b.h>dFin[b.g]) dFin[b.g]=b.h; });
+D.forEach((d,i)=>dOff[i]=d.y-dFin[i]);
+curH.set(finalH); tgtH.set(finalH); tgtC.fill(-1); curC.fill(-1);
+
+const TRACKS={};
+if(TL) TRACKS.time ={labels:TL.labels, steps:TL.steps, unit:TL.step};
+if(TR) TRACKS.trace={labels:TR.labels, steps:TR.steps, unit:"test"};
+const atOf={time:-1, trace:-1};
+let mode="city", traceLit=0;
+
+function heightOf(i){
+  const v=locAt[i];
+  if(v===-2||v===0) return 0;
+  if(v===-1) return finalH[i];
+  const h=H0+HM*Math.pow(Math.min(v,MX)/MX,HX);
+  return B[i].v?h*HV:h;
+}
+
+function resetTrack(m){
+  if(m==="time"){ locAt.fill(-2); for(let j=0;j<TL.never.length;j++) locAt[TL.never[j]]=-1; }
+  else { covAt.fill(0); hits.fill(0); }
+  atOf[m]=-1;
+}
+function applyStep(m,st,heat){
+  for(let j=0;j<st.length;j++){
+    const e=st[j];
+    if(m==="time") locAt[e[0]]=e[1]; else { covAt[e[0]]=e[1]; hits[e[0]]++; }
+    if(heat) iHot[e[0]]=1;
+  }
+}
+
+function refresh(){
+  let a=0,b=0;
+  if(mode==="trace"){
+    dMax.set(dFin);
+    for(let j=0;j<NB;j++){
+      const st=TR.stmts[j];
+      tgtH[j]=finalH[j];
+      /* -1 rides through to the shader untouched: a file coverage cannot
+         measure must not render as one the suite failed to reach. */
+      tgtC[j]= st<0 ? -1 : (st===0 ? 0 : covAt[j]/st);
+      if(st>0&&covAt[j]>0){ a++; b+=covAt[j]; }
+    }
+    $("s-d").textContent=(TR.total?(b/TR.total*100).toFixed(1):"0")+"%";
+  } else if(mode==="time"){
+    /* tgtC is deliberately left alone outside the trace. Resetting it to -1
+       makes every building the unmeasurable slate, and since u_trace fades out
+       over half a second rather than switching, the whole skyline would wash
+       through grey on the way back to the city. */
+    dMax.fill(0);
+    for(let j=0;j<NB;j++){
+      const h=heightOf(j); tgtH[j]=h;
+      if(h>0){ a++; if(locAt[j]>0) b+=locAt[j]; if(h>dMax[B[j].g]) dMax[B[j].g]=h; }
+    }
+    $("s-d").textContent=D.length;
+  } else {
+    dMax.set(dFin);
+    tgtH.set(finalH);
+    a=CITY.files; b=CITY.loc; $("s-d").textContent=D.length;
+  }
+  $("s-f").textContent=nf(a); $("s-l").textContent=nf(b);
+  if(mode!=="city"){
+    const T=TRACKS[mode], i=atOf[mode];
+    $("p-date").textContent = mode==="time" ? T.labels[i].slice(-10) : T.labels[i];
+    $("p-of").textContent = (mode==="time"?T.unit:"test")+" "+(i+1)+" of "+T.steps.length;
+    $("p-nf").textContent=nf(a); $("p-nl").textContent=nf(b);
+    if(scrub.value!=i) scrub.value=i;
+  }
+  if(selId>=0) select(selId);
+}
+
+function seek(i,heat){
+  if(mode==="city") return;
+  const m=mode, T=TRACKS[m], NS=T.steps.length;
+  i=Math.max(0,Math.min(NS-1,i|0));
+  if(i<atOf[m]) resetTrack(m);
+  for(let s=atOf[m]+1;s<=i;s++) applyStep(m,T.steps[s],heat&&s===i);
+  atOf[m]=i;
+  refresh();
+}
+
+/* ---------- transport ---------- */
+const scrub=$("p-scrub"), go=$("p-go");
+let playing=false, acc=0, last=0, BASE=200;
+const SPD=[1,2,4,0.5];
+let spd=0;
+
+function setPlay(v){
+  playing=v&&mode!=="city";
+  go.innerHTML=playing?"&#9646;&#9646;":"&#9654;";
+  go.setAttribute("aria-label",playing?"Pause":"Play");
+}
+go.addEventListener("click",()=>{
+  if(mode==="city") return;
+  /* Replaying from the end restarts: from the empty lot, or the dark city. */
+  if(!playing&&atOf[mode]>=TRACKS[mode].steps.length-1) seek(0,false);
+  setPlay(!playing); acc=0;
+});
+scrub.addEventListener("input",()=>{ setPlay(false); seek(+scrub.value,false); });
+$("p-spd").addEventListener("click",()=>{
+  spd=(spd+1)%SPD.length; $("p-spd").textContent=SPD[spd]+"x";
+});
+
+/* ---------- mode switch ---------- */
+const BLURB={
+  city:"The repository rendered as a city. Every building is one tracked file: height is lines of code, colour is language, lit windows are how often it changes. Districts are subsystems.",
+  time:"The same city built one __UNIT__ at a time. The streets never move, so what you are watching is the city you already know being constructed. Height rises with each file's line count.",
+  trace:"The same city lit by its own test suite. Geometry is unchanged; the light is what the tests actually executed, and window density is how much of a file has run. Whatever stays dark is code nothing ran."
+};
+const mbox=$("modes"), mbtn={};
+[["city","City"],["time","Timelapse"],["trace","Coverage"]].forEach(([k,label])=>{
+  if(k!=="city"&&!TRACKS[k]) return;
+  const btn=document.createElement("button");
+  btn.type="button"; btn.textContent=label; btn.setAttribute("aria-pressed","false");
+  btn.addEventListener("click",()=>setMode(k));
+  mbox.appendChild(btn); mbtn[k]=btn;
+});
+
+function setMode(m){
+  if(m!=="city"&&!TRACKS[m]) return;
+  mode=m;
+  document.body.classList.toggle("mode-city",m==="city");
+  for(const k in mbtn) mbtn[k].setAttribute("aria-pressed",k===m?"true":"false");
+  setPlay(false);
+
+  $("sub").textContent = (m==="city"?"Codescape":m==="time"?"Timelapse":"Coverage trace")
+    + " \u00b7 " + BRANCH;
+  $("blurb").textContent = BLURB[m].replace("__UNIT__", TL?TL.step:"step");
+  $("s-fl").textContent = m==="trace"?"Reached":"Files";
+  $("s-ll").textContent = m==="trace"?"Covered":"Lines";
+  $("s-dl").textContent = m==="trace"?"Percent":"Districts";
+  $("r-cov").style.display=$("r-hits").style.display = m==="trace"?"":"none";
+  if(m!=="city"){
+    const T=TRACKS[m];
+    $("p-nfl").textContent = m==="trace"?"lit":"files";
+    $("p-nll").textContent = m==="trace"?"stmt":"lines";
+    scrub.max=T.steps.length-1;
+    BASE=Math.max(90,Math.min(420,24000/T.steps.length));
+    /* First visit lands on the finished state, so switching in shows the real
+       city or the completed run rather than an empty lot. Play rewinds. */
+    if(atOf[m]<0){ resetTrack(m); seek(T.steps.length-1,false); }
+  }
+  buildLegend();
+  refresh();
+  if(m!=="city"){ curC.set(tgtC); curH.set(tgtH); }
+}
+
+function tick(t){
+  if(!last) last=t;
+  const dt=Math.min(0.25,t-last); last=t;
+  if(playing){
+    acc+=dt*1000*SPD[spd];
+    const NS=TRACKS[mode].steps.length;
+    while(acc>=BASE){
+      acc-=BASE;
+      if(atOf[mode]>=NS-1){ setPlay(false); acc=0; break; }
+      seek(atOf[mode]+1,true);
+    }
+  }
+  /* Ease every channel so a step reads as construction or as a light coming on
+     rather than a jump cut, and let the flare fade over about a second. */
+  const k=1-Math.pow(0.001,dt*1.7), kh=1-Math.pow(0.001,dt*0.55);
+  traceLit+=((mode==="trace"?1:0)-traceLit)*k;
+  if(traceLit<0.0015) traceLit=0; if(traceLit>0.9985) traceLit=1;
+  for(let i=0;i<NB;i++){
+    curH[i]+=(tgtH[i]-curH[i])*k;
+    if(Math.abs(tgtH[i]-curH[i])<0.01) curH[i]=tgtH[i];
+    iScl[i*3+1]=curH[i];
+    if(tgtC[i]<0) curC[i]=-1;
+    else{
+      if(curC[i]<0) curC[i]=0;
+      curC[i]+=(tgtC[i]-curC[i])*k;
+      if(Math.abs(tgtC[i]-curC[i])<0.002) curC[i]=tgtC[i];
+    }
+    iCov[i]=curC[i];
+    if(iHot[i]>0){ iHot[i]-=iHot[i]*kh; if(iHot[i]<0.004) iHot[i]=0; }
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER,sclBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iScl);
+  gl.bindBuffer(gl.ARRAY_BUFFER,covBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iCov);
+  gl.bindBuffer(gl.ARRAY_BUFFER,hotBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iHot);
+}
+
+addEventListener("keydown",e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey||document.activeElement===q) return;
+  const el=document.activeElement, tag=el?el.tagName:"";
+  if(tag==="BUTTON"||tag==="INPUT") return;
+  if(e.key==="1") setMode("city");
+  else if(e.key==="2") setMode("time");
+  else if(e.key==="3") setMode("trace");
+  else if(mode==="city") return;
+  else if(e.key===" "){ e.preventDefault(); go.click(); }
+  else if(e.key==="ArrowRight"){ e.preventDefault(); setPlay(false); seek(atOf[mode]+1,true); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); setPlay(false); seek(atOf[mode]-1,false); }
+  else if(e.key==="Home"){ e.preventDefault(); setPlay(false); seek(0,false); }
+  else if(e.key==="End"){ e.preventDefault(); setPlay(false); seek(TRACKS[mode].steps.length-1,false); }
+});
+
+/* Open on the city itself. The other two views are readings of it, and neither
+   makes sense until you have seen the thing being read. */
+setMode("city");
+iCov.set(curC);
+gl.bindBuffer(gl.ARRAY_BUFFER,covBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iCov);
+gl.bindBuffer(gl.ARRAY_BUFFER,sclBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iScl);
+
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

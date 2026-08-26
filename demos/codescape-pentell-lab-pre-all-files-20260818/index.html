@@ -1,0 +1,1084 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="The penTell Lab repository rendered as an explorable 3D city: 15 files, 4,448 lines. Height is lines of code, colour is language, lit windows are commit frequency.">
+<meta name="theme-color" content="#05070c">
+<meta property="og:title" content="penTell Lab Codescape">
+<meta property="og:description" content="A codebase rendered as a city you can fly through. 15 files, 4,448 lines.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305070c'/%3E%3Crect x='5' y='14' width='5' height='13' fill='%23ff6b35'/%3E%3Crect x='12' y='7' width='5' height='20' fill='%23ffb347'/%3E%3Crect x='19' y='17' width='5' height='10' fill='%235cc8fa'/%3E%3C/svg%3E">
+<title>penTell Lab Codescape</title>
+<style>
+:root{
+  --void:#05070c; --haze:#0d1524; --ink:#0a0e16;
+  --panel:rgba(9,13,21,.82); --hair:#1b2434; --hair2:#27354b;
+  --txt:#c9d4e4; --dim:#75849b; --faint:#4b586c;
+  --koi:#ff6b35; --koi-soft:#ffa06b; --warm:#ffd9a0;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; background:var(--void); color:var(--txt);
+  font-family:var(--mono); font-size:12px; line-height:1.5;
+  overflow:hidden; -webkit-font-smoothing:antialiased;
+}
+canvas#gl{position:fixed; inset:0; width:100%; height:100%; display:block; touch-action:none; cursor:grab}
+canvas#gl.drag{cursor:grabbing}
+#vignette{position:fixed; inset:0; pointer-events:none; z-index:2;
+  background:radial-gradient(ellipse 120% 90% at 50% 45%,transparent 40%,rgba(2,4,8,.62) 100%)}
+
+.panel{position:relative; background:var(--panel); border:1px solid var(--hair); min-height:0;
+  backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px)}
+.lbl{font-size:9.5px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint)}
+.num{font-variant-numeric:tabular-nums}
+
+/* ---- rails: two fixed flex columns, so panels can never overlap ---- */
+#rail-l,#rail-r{position:fixed; top:0; bottom:0; z-index:5; display:flex; flex-direction:column;
+  gap:1px; pointer-events:none; transition:opacity .25s}
+#rail-l>*,#rail-r>*{pointer-events:auto}
+#rail-l{left:0; width:238px}
+#rail-r{right:0; width:302px}
+#rail-l>.panel{border-left:0}
+#rail-r>.panel{border-right:0}
+#rail-l>.panel:first-child,#rail-r>.panel:first-child{border-top:0}
+#rail-l>.panel:last-child,#rail-r>.panel:last-child{border-bottom:0}
+
+/* ---- back to portfolio ---- */
+#back{display:flex; align-items:center; gap:8px; padding:9px 13px; color:var(--dim);
+  text-decoration:none; font-size:9.5px; letter-spacing:.18em; text-transform:uppercase}
+#back:hover{color:var(--koi); background:rgba(255,255,255,.035)}
+#back:focus-visible{outline:1px solid var(--koi); outline-offset:-2px}
+#back .ar{font-size:12px; letter-spacing:0}
+
+/* ---- collapsible panel heads ---- */
+.phead{display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%;
+  background:none; border:0; padding:10px 13px; cursor:pointer; color:var(--faint);
+  font-family:var(--mono); text-align:left}
+.phead:hover{color:var(--dim)}
+.phead:focus-visible{outline:1px solid var(--koi); outline-offset:-2px}
+.chev{width:7px; height:7px; flex:none; border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor; transform:rotate(45deg) translate(-2px,-2px);
+  transition:transform .22s}
+.panel.collapsed .chev{transform:rotate(-135deg) translate(-2px,-2px)}
+.panel.collapsed .pbody{display:none}
+
+/* ---- identity ---- */
+#id .ptitle{font-size:15px; letter-spacing:.30em; font-weight:600; color:#eaf0fa; text-transform:uppercase}
+#id .pbody{padding:0 13px 13px}
+#id .sub{color:var(--koi); letter-spacing:.16em; font-size:9.5px; text-transform:uppercase}
+#id p{margin:10px 0 0; font-family:var(--sans); font-size:11.5px; line-height:1.55; color:var(--dim)}
+#stats{display:flex; gap:16px; margin-top:11px; padding-top:10px; border-top:1px solid var(--hair)}
+#stats b{display:block; font-size:16px; font-weight:600; color:#e6edf8; letter-spacing:.01em}
+
+/* ---- controls ---- */
+#ctl{padding:10px 12px; display:flex; gap:7px; align-items:center; flex-wrap:wrap}
+#modes{display:flex; flex:1 1 100%; border:1px solid var(--hair2)}
+#modes:empty{display:none}
+#modes button{flex:1 1 0; background:#070b12; border:0; border-left:1px solid var(--hair2);
+  color:var(--dim); font-family:var(--mono); font-size:9.5px; letter-spacing:.13em;
+  text-transform:uppercase; padding:6px 4px; cursor:pointer}
+#modes button:first-child{border-left:0}
+#modes button:hover{color:var(--txt)}
+#modes button:focus-visible{outline:2px solid var(--koi); outline-offset:-2px}
+#modes button[aria-pressed="true"]{color:var(--void); background:var(--koi)}
+#q{background:#070b12; border:1px solid var(--hair2); color:var(--txt); font-family:var(--mono);
+  font-size:11px; padding:6px 9px; width:132px; min-width:0; flex:1 1 110px; outline:none}
+#q:focus{border-color:var(--koi); box-shadow:0 0 0 1px rgba(255,107,53,.28)}
+#q::placeholder{color:var(--faint)}
+.btn{background:#070b12; border:1px solid var(--hair2); color:var(--dim); font-family:var(--mono);
+  font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; padding:6px 9px; cursor:pointer}
+.btn:hover{color:var(--txt); border-color:#3a4a63}
+.btn:focus-visible{outline:2px solid var(--koi); outline-offset:1px}
+.btn[aria-pressed="true"]{color:var(--void); background:var(--koi); border-color:var(--koi)}
+
+/* ---- districts: the one panel allowed to grow, and it scrolls ---- */
+#dist{flex:1 1 auto; display:flex; flex-direction:column; min-height:0}
+#dist.collapsed{flex:0 0 auto}
+#dist .pbody{flex:1 1 auto; overflow-y:auto; min-height:0; padding-bottom:6px}
+.drow{display:grid; grid-template-columns:3px 1fr auto; gap:9px; align-items:center;
+  padding:5px 13px 5px 0; cursor:pointer; border:0; background:none; width:100%; text-align:left;
+  font-family:var(--mono); font-size:11px; color:var(--dim)}
+.drow:hover{color:#e6edf8; background:rgba(255,255,255,.035)}
+.drow:focus-visible{outline:1px solid var(--koi); outline-offset:-1px}
+.drow .sw{width:3px; height:15px}
+.drow .nm{overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.drow .ct{font-size:10px; color:var(--faint); font-variant-numeric:tabular-nums}
+.drow.on{color:var(--koi)} .drow.on .ct{color:var(--koi-soft)}
+
+/* ---- legend ---- */
+#leg .pbody{padding:0 13px 12px}
+#leg ul{margin:0; padding:0; list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:3px 14px}
+#leg li{display:flex; align-items:center; gap:7px; color:var(--dim); font-size:10.5px}
+#leg i{width:8px; height:8px; flex:none}
+
+/* ---- hint ---- */
+#hint{margin-top:auto; padding:9px 13px; color:var(--faint); font-size:9.5px; letter-spacing:.1em}
+#hint span{color:var(--dim)}
+
+/* ---- inspector ---- */
+#insp{display:flex; flex-direction:column; min-height:0; max-height:62vh;
+  transform:translateX(103%); transition:transform .34s cubic-bezier(.22,1,.36,1)}
+#insp.open{transform:translateX(0)}
+#insp .pbody{overflow-y:auto; min-height:0; padding:0 15px 15px}
+#insp .path{font-size:12.5px; color:#eaf0fa; word-break:break-word; line-height:1.45; margin:0}
+#insp .path em{font-style:normal; color:var(--faint)}
+#insp .dchip{display:inline-flex; align-items:center; gap:6px; margin-top:11px; padding:3px 8px;
+  border:1px solid var(--hair2); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--dim)}
+#insp .dchip i{width:6px; height:6px; flex:none}
+.mrow{display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+  padding:7px 0; border-top:1px solid var(--hair)}
+.mrow:first-of-type{margin-top:13px}
+.mrow span{color:var(--faint); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase}
+.mrow b{font-weight:600; font-size:13px; color:#e6edf8; font-variant-numeric:tabular-nums}
+.bar{height:2px; background:#141c2a; margin-top:12px; overflow:hidden}
+.bar i{display:block; height:100%; background:var(--koi)}
+.barcap{display:flex; justify-content:space-between; margin-top:5px; color:var(--faint);
+  font-size:9px; letter-spacing:.1em; text-transform:uppercase}
+#close{background:none; border:0; color:var(--faint); font-family:var(--mono); font-size:15px;
+  cursor:pointer; padding:2px 6px; line-height:1}
+#close:hover{color:var(--koi)}
+#close:focus-visible{outline:1px solid var(--koi)}
+#insp .phead{cursor:default}
+
+/* ---- transport: the one panel that spans between the rails ---- */
+#play{position:fixed; z-index:5; left:238px; right:302px; bottom:0; border-bottom:0;
+  display:flex; align-items:center; gap:12px; padding:9px 15px; transition:opacity .25s}
+.pbtn{background:#070b12; border:1px solid var(--hair2); color:var(--txt); font-family:var(--mono);
+  font-size:11px; padding:0; cursor:pointer; width:30px; height:26px; flex:none; line-height:1}
+.pbtn:hover{color:var(--koi); border-color:#3a4a63}
+.pbtn:focus-visible{outline:2px solid var(--koi); outline-offset:1px}
+#p-go{color:var(--koi)}
+#p-when{flex:none; min-width:88px; font-variant-numeric:tabular-nums; font-size:11.5px; color:#e6edf8}
+#p-when em{display:block; font-style:normal; font-size:9px; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--faint)}
+#p-live{flex:none; min-width:150px; text-align:right; color:var(--faint); font-size:10.5px;
+  font-variant-numeric:tabular-nums}
+#p-live b{color:var(--dim); font-weight:600}
+#p-live em{font-style:normal}
+body.mode-city #play{display:none}
+#p-spd{width:38px; font-size:10px; color:var(--dim)}
+
+/* the scrubber: drawn from scratch, since the native control ignores the palette */
+#p-scrub{flex:1 1 auto; min-width:60px; -webkit-appearance:none; appearance:none;
+  background:none; height:22px; margin:0; cursor:pointer; outline:none}
+#p-scrub::-webkit-slider-runnable-track{height:2px; background:#141c2a}
+#p-scrub::-moz-range-track{height:2px; background:#141c2a}
+#p-scrub::-moz-range-progress{height:2px; background:var(--koi)}
+#p-scrub::-webkit-slider-thumb{-webkit-appearance:none; appearance:none; width:3px; height:14px;
+  background:var(--koi); border:0; border-radius:0; margin-top:-6px}
+#p-scrub::-moz-range-thumb{width:3px; height:14px; background:var(--koi); border:0; border-radius:0}
+#p-scrub:focus-visible{outline:2px solid var(--koi); outline-offset:2px}
+
+/* ---- hide-all ---- */
+body.noui #rail-l,body.noui #labels,body.noui #insp,body.noui #hint{opacity:0; pointer-events:none}
+body.noui #ctl>*:not(#t-ui){display:none}
+body.noui #play{opacity:0; pointer-events:none}
+
+/* ---- 3d labels + tooltip ---- */
+#labels{position:fixed; inset:0; z-index:3; pointer-events:none; transition:opacity .25s}
+.dlab{position:absolute; transform:translate(-50%,-50%); font-size:9px; letter-spacing:.22em;
+  text-transform:uppercase; color:rgba(200,214,235,.42); white-space:nowrap; text-shadow:0 1px 6px #000;
+  transition:opacity .3s}
+#tip{position:fixed; z-index:6; pointer-events:none; background:rgba(6,9,15,.94); border:1px solid var(--hair2);
+  padding:5px 9px; font-size:10.5px; color:var(--txt); white-space:nowrap; opacity:0; transition:opacity .12s;
+  transform:translate(12px,-50%)}
+#tip b{color:var(--koi); font-weight:600}
+
+#fail{position:fixed; inset:0; display:none; place-items:center; z-index:9; padding:32px; text-align:center;
+  font-family:var(--sans); color:var(--dim); background:var(--void)}
+
+/* ---- narrow: one rail at the top, inspector docks above the transport ---- */
+@media (max-width:900px){
+  #rail-l{width:100%; bottom:auto; max-height:100%}
+  #dist{flex:0 0 auto}
+  #dist .pbody{max-height:34vh}
+  /* the transport keeps the floor, so the right rail stops above it rather
+     than stacking the inspector on top of the scrubber */
+  #rail-r{width:100%; left:0; right:0; top:auto; bottom:45px; justify-content:flex-end}
+  #insp{max-height:48vh; transform:translateY(104%); border-right:0; border-left:0; border-bottom:0}
+  #insp.open{transform:translateY(0)}
+  #hint{display:none}
+  #id p{display:none}
+  #leg ul{grid-template-columns:1fr 1fr}
+  #play{left:0; right:0; gap:9px; padding:9px 12px}
+  #p-live{display:none}
+}
+@media (max-width:560px){ #p-when{min-width:74px; font-size:10.5px} }
+@media (max-width:420px){ #leg ul{grid-template-columns:1fr} }
+@media (prefers-reduced-motion:reduce){ #insp{transition:none} }
+</style>
+</head>
+<body>
+
+
+<canvas id="gl"></canvas>
+<div id="labels"></div>
+<div id="vignette"></div>
+
+<div id="rail-l">
+  <a class="panel" id="back" href="https://rishva.up.railway.app/"><span class="ar" aria-hidden="true">&larr;</span> Rishva Iyer &middot; portfolio</a>
+
+  <header class="panel" id="id">
+    <button class="phead" data-p="id" aria-expanded="true">
+      <span class="ptitle" role="heading" aria-level="1">penTell Lab</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="pbody">
+      <div class="sub" id="sub">Codescape &middot; HEAD</div>
+      <p id="blurb"></p>
+      <div id="stats">
+        <div><b class="num" id="s-f">0</b><div class="lbl" id="s-fl">Files</div></div>
+        <div><b class="num" id="s-l">0</b><div class="lbl" id="s-ll">Lines</div></div>
+        <div><b class="num" id="s-d">0</b><div class="lbl" id="s-dl">Districts</div></div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="panel" id="dist">
+    <button class="phead" data-p="dist" aria-expanded="true">
+      <span class="lbl">Districts &middot; by volume</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="pbody" id="dlist"></div>
+  </nav>
+
+  <div class="panel" id="leg">
+    <button class="phead" data-p="leg" aria-expanded="true">
+      <span class="lbl">Reading the light</span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="pbody"><ul id="llist"></ul></div>
+  </div>
+</div>
+
+<div id="rail-r">
+  <div class="panel" id="ctl">
+    <div id="modes" role="group" aria-label="View"></div>
+    <input id="q" type="search" placeholder="find a file&hellip;" aria-label="Search files" autocomplete="off">
+    <button class="btn" id="t-vend" aria-pressed="true">Vendored</button>
+    <button class="btn" id="t-orb" aria-pressed="false">Orbit</button>
+    <button class="btn" id="t-rst">Reset</button>
+    <button class="btn" id="t-ui" aria-pressed="false" title="Hide interface (H)">Hide UI</button>
+  </div>
+
+  <aside class="panel" id="insp" aria-live="polite">
+    <div class="phead">
+      <span class="lbl">Inspecting</span>
+      <button id="close" aria-label="Close inspector">&times;</button>
+    </div>
+    <div class="pbody">
+      <div class="path" id="i-path"></div>
+      <div class="dchip" id="i-dist"><i></i><span></span></div>
+      <div class="mrow"><span>Lines</span><b class="num" id="i-loc"></b></div>
+      <div class="mrow"><span>On disk</span><b class="num" id="i-size"></b></div>
+      <div class="mrow"><span>Commits</span><b class="num" id="i-churn"></b></div>
+      <div class="mrow" id="r-cov"><span>Covered</span><b class="num" id="i-cov"></b></div>
+      <div class="mrow" id="r-hits"><span>Run by</span><b class="num" id="i-hits"></b></div>
+      <div class="mrow"><span>Type</span><b id="i-ext"></b></div>
+      <div class="bar"><i id="i-bar"></i></div>
+      <div class="barcap"><span id="i-rank"></span><span id="i-of"></span></div>
+    </div>
+  </aside>
+
+  <div class="panel" id="hint">
+    <span>drag</span> orbit &nbsp;&middot;&nbsp; <span>scroll</span> zoom &nbsp;&middot;&nbsp;
+    <span>space</span> play &nbsp;&middot;&nbsp; <span>&larr; &rarr;</span> step &nbsp;&middot;&nbsp;
+    <span>click</span> inspect &nbsp;&middot;&nbsp; <span>h</span> hide UI
+  </div>
+</div>
+
+<div class="panel" id="play">
+  <button class="pbtn" id="p-go" aria-label="Play" title="Play / pause (space)">&#9654;</button>
+  <div id="p-when"><b class="num" id="p-date">&nbsp;</b><em id="p-of">&nbsp;</em></div>
+  <input id="p-scrub" type="range" min="0" value="0" step="1" aria-label="Scrub through this view">
+  <div id="p-live"><b class="num" id="p-nf">0</b> <em id="p-nfl">lit</em> &nbsp;<b class="num" id="p-nl">0</b> <em id="p-nll">stmt</em></div>
+  <button class="pbtn" id="p-spd" title="Playback speed">1x</button>
+</div>
+
+<div id="tip"></div>
+<div id="fail"><div><strong>WebGL2 unavailable.</strong><br>This city needs a WebGL2 context to render.</div></div>
+
+<script>
+const CITY = {"files":15,"loc":4448,"maxloc":542,"maxchurn":1,"hm":49.5,"h0":0.977,"hx":0.52,"hv":0.4,"districts":[{"y":49.6,"n":"src/world","x":-20.94,"z":-20.55,"w":44.69,"d":45.47,"c":[1.0,0.45,0.22],"f":4,"l":1231},{"y":50.3,"n":"src/ink","x":-20.94,"z":24.45,"w":44.69,"d":37.68,"c":[0.36,0.8,1.0],"f":3,"l":1122},{"y":55.7,"n":"src","x":24.06,"z":-23.47,"w":38.45,"d":39.63,"c":[0.6,0.95,0.62],"f":3,"l":1124},{"y":55.7,"n":"src/gfx","x":24.06,"z":18.15,"w":38.45,"d":36.74,"c":[0.78,0.58,1.0],"f":3,"l":918},{"y":17.7,"n":"misc","x":24.06,"z":41.62,"w":38.45,"d":3.33,"c":[1.0,0.78,0.3],"f":2,"l":53}],"b":[{"p":"src/main.js","x":24.06,"z":-31.57,"w":38.01,"d":23.0,"h":50.48,"c":[1.0,0.66,0.22],"l":850,"s":28010,"k":1,"e":".js","g":2,"v":0,"lm":1},{"p":"src/gfx/textures.js","x":14.22,"z":18.15,"w":18.33,"d":36.31,"h":50.48,"c":[1.0,0.66,0.22],"l":542,"s":17179,"k":1,"e":".js","g":3,"v":0,"lm":1},{"p":"src/ink/ribbon.js","x":-27.23,"z":15.19,"w":31.68,"d":18.72,"h":45.13,"c":[1.0,0.66,0.22],"l":435,"s":12667,"k":1,"e":".js","g":1,"v":0,"lm":1},{"p":"src/world/sheetGeometry.js","x":-31.02,"z":-30.8,"w":24.1,"d":24.53,"h":44.38,"c":[1.0,0.66,0.22],"l":421,"s":13152,"k":1,"e":".js","g":0,"v":0,"lm":1},{"p":"src/ink/fluid.js","x":-27.23,"z":34.03,"w":31.68,"d":18.08,"h":43.79,"c":[1.0,0.66,0.22],"l":410,"s":12676,"k":1,"e":".js","g":1,"v":0,"lm":1},{"p":"src/world/terminal.js","x":-8.67,"z":-30.8,"w":19.72,"d":24.53,"h":37.37,"c":[1.0,0.66,0.22],"l":300,"s":8776,"k":1,"e":".js","g":0,"v":0,"lm":1},{"p":"src/gfx/post.js","x":33.45,"z":11.73,"w":19.24,"d":23.46,"h":36.09,"c":[1.0,0.66,0.22],"l":280,"s":9676,"k":1,"e":".js","g":3,"v":0,"lm":1},{"p":"src/ink/script.js","x":-4.88,"z":24.45,"w":12.14,"d":37.24,"h":35.89,"c":[1.0,0.66,0.22],"l":277,"s":11161,"k":1,"e":".js","g":1,"v":0,"lm":1},{"p":"src/world/sheetMaterial.js","x":-31.98,"z":-8.07,"w":22.16,"d":20.06,"h":34.76,"c":[1.0,0.66,0.22],"l":260,"s":8181,"k":1,"e":".js","g":0,"v":0,"lm":1},{"p":"src/world/pen.js","x":-9.64,"z":-8.07,"w":21.65,"d":20.06,"h":34.08,"c":[1.0,0.66,0.22],"l":250,"s":7328,"k":1,"e":".js","g":0,"v":0,"lm":1},{"p":"src/audio.js","x":15.43,"z":-11.75,"w":20.75,"d":15.76,"h":27.31,"c":[1.0,0.66,0.22],"l":161,"s":4998,"k":1,"e":".js","g":2,"v":0,"lm":1},{"p":"src/style.css","x":34.66,"z":-11.75,"w":16.82,"d":15.76,"h":22.88,"c":[0.96,0.45,0.72],"l":113,"s":1826,"k":1,"e":".css","g":2,"v":0,"lm":1},{"p":"src/gfx/glsl.js","x":33.45,"z":30.1,"w":19.24,"d":12.41,"h":21.1,"c":[1.0,0.66,0.22],"l":96,"s":2688,"k":1,"e":".js","g":3,"v":0},{"p":"index.html","x":15.84,"z":41.62,"w":21.56,"d":2.9,"h":12.53,"c":[0.98,0.45,0.44],"l":33,"s":1552,"k":1,"e":".html","g":4,"v":0},{"p":"package.json","x":35.06,"z":41.62,"w":16.01,"d":2.9,"h":9.88,"c":[0.66,0.53,0.98],"l":20,"s":449,"k":1,"e":".json","g":4,"v":0}],"legend":[["JavaScript",[1.0,0.66,0.22]],["TypeScript",[0.25,0.72,0.98]],["Python",[0.33,0.86,0.52]],["Hyperfy .hyp",[1.0,0.42,0.2]],["JSON / YAML",[0.66,0.53,0.98]],["Markdown",[0.6,0.66,0.76]],["CSS",[0.96,0.45,0.72]],["HTML",[0.98,0.45,0.44]],["Shell",[0.18,0.83,0.75]],["Assets",[0.36,0.42,0.52]],["Vendored / generated",[0.3,0.35,0.44]]]};
+const BRANCH = "HEAD";
+(function(){
+"use strict";
+const cv=document.getElementById("gl");
+const gl=cv.getContext("webgl2",{antialias:true,alpha:false,powerPreference:"high-performance"});
+if(!gl){document.getElementById("fail").style.display="grid";return;}
+const RM=matchMedia("(prefers-reduced-motion:reduce)").matches;
+const FIT=50.2, TY=5.5;
+
+/* ---------- math ---------- */
+function mul(a,b){const o=new Float32Array(16);
+ for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
+function persp(f,ar,n,fa){const t=1/Math.tan(f/2),o=new Float32Array(16);
+ o[0]=t/ar;o[5]=t;o[10]=(fa+n)/(n-fa);o[11]=-1;o[14]=2*fa*n/(n-fa);return o;}
+function look(e,c,u){
+ let z=[e[0]-c[0],e[1]-c[1],e[2]-c[2]];let l=Math.hypot(z[0],z[1],z[2])||1;z=[z[0]/l,z[1]/l,z[2]/l];
+ let x=[u[1]*z[2]-u[2]*z[1],u[2]*z[0]-u[0]*z[2],u[0]*z[1]-u[1]*z[0]];l=Math.hypot(x[0],x[1],x[2])||1;x=[x[0]/l,x[1]/l,x[2]/l];
+ const y=[z[1]*x[2]-z[2]*x[1],z[2]*x[0]-z[0]*x[2],z[0]*x[1]-z[1]*x[0]];
+ return new Float32Array([x[0],y[0],z[0],0, x[1],y[1],z[1],0, x[2],y[2],z[2],0,
+  -(x[0]*e[0]+x[1]*e[1]+x[2]*e[2]), -(y[0]*e[0]+y[1]*e[1]+y[2]*e[2]), -(z[0]*e[0]+z[1]*e[1]+z[2]*e[2]), 1]);}
+
+/* ---------- gl helpers ---------- */
+function sh(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);
+ if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s)+"\n"+src);return s;}
+function prog(v,f){const p=gl.createProgram();gl.attachShader(p,sh(gl.VERTEX_SHADER,v));
+ gl.attachShader(p,sh(gl.FRAGMENT_SHADER,f));gl.linkProgram(p);
+ if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
+ p.u=new Proxy({},{get:(c,k)=>(k in c?c[k]:(c[k]=gl.getUniformLocation(p,k)))});return p;}
+function buf(data,tgt){const b=gl.createBuffer();tgt=tgt||gl.ARRAY_BUFFER;
+ gl.bindBuffer(tgt,b);gl.bufferData(tgt,data,gl.STATIC_DRAW);return b;}
+function attr(loc,b,n,div){gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.enableVertexAttribArray(loc);
+ gl.vertexAttribPointer(loc,n,gl.FLOAT,false,0,0);if(div)gl.vertexAttribDivisor(loc,div);}
+
+const FOG="vec3(0.051,0.082,0.137)";
+
+/* ---------- geometry ---------- */
+const F=[[[0,0,1],[[-.5,0,.5],[.5,0,.5],[.5,1,.5],[-.5,1,.5]]],
+         [[0,0,-1],[[.5,0,-.5],[-.5,0,-.5],[-.5,1,-.5],[.5,1,-.5]]],
+         [[1,0,0],[[.5,0,.5],[.5,0,-.5],[.5,1,-.5],[.5,1,.5]]],
+         [[-1,0,0],[[-.5,0,-.5],[-.5,0,.5],[-.5,1,.5],[-.5,1,-.5]]],
+         [[0,1,0],[[-.5,1,.5],[.5,1,.5],[.5,1,-.5],[-.5,1,-.5]]]];
+const bp=[],bn=[],bi=[];
+F.forEach(([n,vs])=>{const o=bp.length/3;vs.forEach(v=>{bp.push(v[0],v[1],v[2]);bn.push(n[0],n[1],n[2]);});
+ bi.push(o,o+1,o+2,o,o+2,o+3);});
+
+/* ---------- instance data ---------- */
+const B=CITY.b, NB=B.length, D=CITY.districts;
+const iOff=new Float32Array(NB*3), iScl=new Float32Array(NB*3),
+      iCol=new Float32Array(NB*3), iMeta=new Float32Array(NB*3), iMark=new Float32Array(NB);
+const maxChurn=Math.max(1,CITY.maxchurn);
+B.forEach((b,i)=>{
+  iOff.set([b.x,0,b.z],i*3); iScl.set([b.w,b.h,b.d],i*3); iCol.set(b.c,i*3);
+  iMeta.set([i, Math.pow(Math.min(b.k/maxChurn,1),0.42), b.v],i*3);
+  iMark[i]=1;
+});
+
+/* Three dynamic per-building channels, one per thing a mode animates: height
+   for the timelapse, coverage for the trace, and a decaying flare for whatever
+   the current step touched. Footprints, colours and district assignment are
+   uploaded once and never touched, in every mode. */
+const iCov=new Float32Array(NB), iHot=new Float32Array(NB);
+const vaoB=gl.createVertexArray(); gl.bindVertexArray(vaoB);
+attr(0,buf(new Float32Array(bp)),3); attr(1,buf(new Float32Array(bn)),3);
+attr(2,buf(iOff),3,1);
+const sclBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,sclBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iScl,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(3); gl.vertexAttribPointer(3,3,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(3,1);
+attr(4,buf(iCol),3,1); attr(5,buf(iMeta),3,1);
+const markBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,markBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iMark,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(6); gl.vertexAttribPointer(6,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(6,1);
+const covBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,covBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iCov,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(7,1);
+const hotBuf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,hotBuf);
+gl.bufferData(gl.ARRAY_BUFFER,iHot,gl.DYNAMIC_DRAW);
+gl.enableVertexAttribArray(8); gl.vertexAttribPointer(8,1,gl.FLOAT,false,0,0); gl.vertexAttribDivisor(8,1);
+gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,buf(new Uint16Array(bi),gl.ELEMENT_ARRAY_BUFFER));
+gl.bindVertexArray(null);
+
+/* ---------- shaders ---------- */
+const VS_B=`#version 300 es
+layout(location=0)in vec3 a_pos;layout(location=1)in vec3 a_norm;
+layout(location=2)in vec3 a_off;layout(location=3)in vec3 a_scale;
+layout(location=4)in vec3 a_col;layout(location=5)in vec3 a_meta;layout(location=6)in float a_mark;
+layout(location=7)in float a_cov;layout(location=8)in float a_hot;
+uniform mat4 u_vp;uniform float u_vend;
+out vec3 v_w;out vec3 v_n;out vec3 v_c;out vec3 v_m;out float v_k;
+out float v_cov;out float v_hot;
+void main(){
+  vec3 s=a_scale; if(a_meta.z>0.5) s*=u_vend;
+  /* A file that does not exist yet has height 0, and a zero-height box is a
+     flat quad lying exactly on the district plate: it z-fights instead of
+     disappearing. Collapse the whole instance outside the clip volume. Inert
+     outside the timelapse, where every height is well above this. */
+  if(s.y<0.02){ v_w=vec3(0.0);v_n=vec3(0.0,1.0,0.0);v_c=vec3(0.0);
+    v_m=vec3(-9.0,0.0,0.0);v_k=0.0;v_cov=0.0;v_hot=0.0;
+    gl_Position=vec4(2.0,2.0,2.0,1.0); return; }
+  vec3 w=a_off+a_pos*s;
+  v_w=w;v_n=a_norm;v_c=a_col;v_m=a_meta;v_k=a_mark;v_cov=a_cov;v_hot=a_hot;
+  gl_Position=u_vp*vec4(w,1.0);}`;
+
+const FS_B=`#version 300 es
+precision highp float;
+in vec3 v_w;in vec3 v_n;in vec3 v_c;in vec3 v_m;in float v_k;in float v_cov;in float v_hot;
+uniform vec3 u_eye;uniform float u_hover;uniform float u_sel;uniform float u_srch;uniform float u_t;
+uniform float u_trace;
+out vec4 o;
+float h21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
+void main(){
+  vec3 N=normalize(v_n), V=normalize(u_eye-v_w), L=normalize(vec3(0.42,0.74,0.30));
+  float lam=max(dot(N,L),0.0)*0.55+0.45;
+  float amb=0.30+0.32*max(N.y,0.0);
+
+  /* Outside the coverage trace a building is its language, lit by how often it
+     changes. Inside it, colour and light both mean coverage: c < 0 is a file
+     coverage cannot measure and stays a neutral slate, drawn only so the city
+     keeps its shape; c == 0 is measurable code the suite never reached and gets
+     a rust cast so it reads as debt rather than scenery; above that the language
+     colour returns in proportion to how much of the file has run.
+
+     u_trace is a continuous 0..1 blend rather than a branch, so switching views
+     cross-fades the whole skyline instead of snapping. That also removes the
+     need to gate the windows: at full trace with c == 0 the lit threshold sits
+     at 1.02, above anything the hash can return, so not one window can light. */
+  float c=v_cov;
+  vec3 dead=vec3(0.128,0.146,0.180);
+  vec3 cold=vec3(0.150,0.098,0.082);
+  vec3 traceCol = c<0.0 ? dead : mix(cold,v_c,clamp(c,0.0,1.0)*0.88+0.12);
+  vec3 base = mix(v_c,traceCol,u_trace);
+  vec3 col=base*(lam*0.50+amb*0.52)*mix(1.0,(c<0.0?0.80:1.0),u_trace);
+  col*=mix(1.0,0.50,v_m.z);
+
+  float win=0.0;
+  float dens = mix(v_m.y, max(c,0.0), u_trace);
+  if(abs(N.y)<0.5 && v_w.y>1.15){
+    float u=abs(N.x)>0.5?v_w.z:v_w.x;
+    vec2 cel=vec2(floor(u/2.30),floor(v_w.y/2.85));
+    vec2 f=vec2(fract(u/2.30),fract(v_w.y/2.85));
+    float sd=v_m.x*0.1373;
+    float r=h21(cel+vec2(sd,sd*1.71));
+    float lit=step(mix(mix(0.82,1.02,u_trace),mix(0.26,0.14,u_trace),clamp(dens,0.0,1.0)),r);
+    float pane=step(0.20,f.x)*step(f.x,0.80)*step(0.24,f.y)*step(f.y,0.76);
+    float fl=1.0-0.30*step(0.975,r)*(0.5+0.5*sin(u_t*2.7+sd*37.0));
+    win=lit*pane*fl*(1.0-v_m.z*0.72);
+  }
+  col+=mix(vec3(1.0,0.855,0.628),v_c,0.28)*win*0.98;
+  if(N.y>0.5)col+=base*0.09+vec3(0.018,0.028,0.045);
+  float rim=pow(1.0-max(dot(N,V),0.0),3.0);
+  col+=mix(vec3(0.20,0.34,0.56),base,0.35)*rim*0.55;
+  /* Whatever this step touched glows and cools off over the next few steps, so
+     the eye can find the work even when the height change is a line or two. */
+  col+=mix(vec3(1.0,0.72,0.34),vec3(1.0),0.18)*v_hot*0.85;
+  if(u_srch>0.5)col*=mix(0.12,1.30,v_k);
+  if(abs(v_m.x-u_hover)<0.5)col=mix(col,vec3(1.0,0.94,0.84),0.34);
+  if(abs(v_m.x-u_sel)<0.5)col=mix(col,vec3(1.0,0.58,0.28),0.46)+0.20*(0.5+0.5*sin(u_t*3.6));
+  float d=length(u_eye-v_w);
+  col=mix(col,${FOG},clamp(1.0-exp(-pow(d*0.00132,2.15)),0.0,0.93));
+  o=vec4(col,1.0);}`;
+
+const FS_PICK=`#version 300 es
+precision highp float;
+in vec3 v_w;in vec3 v_n;in vec3 v_c;in vec3 v_m;in float v_k;in float v_cov;in float v_hot;
+out vec4 o;
+void main(){float i=v_m.x+1.0;
+  o=vec4(mod(i,256.0)/255.0,mod(floor(i/256.0),256.0)/255.0,mod(floor(i/65536.0),256.0)/255.0,1.0);}`;
+
+const VS_Q=`#version 300 es
+layout(location=0)in vec2 a_p;layout(location=1)in vec3 a_off;layout(location=2)in vec2 a_s;layout(location=3)in vec3 a_c;
+uniform mat4 u_vp;out vec2 v_uv;out vec3 v_c;out vec2 v_s;out vec3 v_w;
+void main(){v_uv=a_p+0.5;v_c=a_c;v_s=a_s;
+  vec3 w=a_off+vec3(a_p.x*a_s.x,0.0,a_p.y*a_s.y);v_w=w;gl_Position=u_vp*vec4(w,1.0);}`;
+
+const FS_PLATE=`#version 300 es
+precision highp float;in vec2 v_uv;in vec3 v_c;in vec2 v_s;in vec3 v_w;
+uniform vec3 u_eye;out vec4 o;
+void main(){
+  vec2 e=min(v_uv,1.0-v_uv)*v_s;
+  float d=min(e.x,e.y);
+  float edge=1.0-smoothstep(0.0,2.6,d);
+  float a=0.055+edge*0.55;
+  float f=exp(-pow(length(u_eye-v_w)*0.00132,2.15));
+  o=vec4(v_c*a*f,1.0);}`;
+
+const VS_G=`#version 300 es
+layout(location=0)in vec2 a_p;uniform mat4 u_vp;out vec3 v_w;
+void main(){v_w=vec3(a_p.x,0.0,a_p.y);gl_Position=u_vp*vec4(v_w,1.0);}`;
+
+const FS_G=`#version 300 es
+precision highp float;in vec3 v_w;uniform vec3 u_eye;out vec4 o;
+float grid(vec2 p,float s){vec2 c=p/s;vec2 g=abs(fract(c-0.5)-0.5)/fwidth(c);
+  return 1.0-min(min(g.x,g.y),1.0);}
+void main(){
+  float m=grid(v_w.xz,26.0), M=grid(v_w.xz,130.0);
+  float r=1.0-smoothstep(120.0,760.0,length(v_w.xz));
+  vec3 col=vec3(0.024,0.034,0.052)*(0.35+0.65*r);
+  col+=vec3(0.075,0.105,0.152)*m*(0.20+0.80*r);
+  col+=vec3(0.135,0.180,0.255)*M*(0.30+0.70*r);
+  float d=length(u_eye-v_w);
+  col=mix(col,vec3(0.058,0.090,0.148),clamp(1.0-exp(-pow(d*0.00120,2.0)),0.0,1.0));
+  o=vec4(col,1.0);}`;
+
+const pB=prog(VS_B,FS_B), pP=prog(VS_B,FS_PICK), pL=prog(VS_Q,FS_PLATE), pG=prog(VS_G,FS_G);
+
+/* plates + ground vaos */
+const qp=new Float32Array([-.5,-.5, .5,-.5, .5,.5, -.5,-.5, .5,.5, -.5,.5]);
+const pOff=new Float32Array(D.length*3), pScl=new Float32Array(D.length*2), pCol=new Float32Array(D.length*3);
+D.forEach((d,i)=>{pOff.set([d.x,0.05,d.z],i*3);pScl.set([d.w,d.d],i*2);pCol.set(d.c,i*3);});
+const vaoP=gl.createVertexArray(); gl.bindVertexArray(vaoP);
+attr(0,buf(qp),2); attr(1,buf(pOff),3,1); attr(2,buf(pScl),2,1); attr(3,buf(pCol),3,1);
+const vaoG=gl.createVertexArray(); gl.bindVertexArray(vaoG);
+attr(0,buf(new Float32Array(qp.map(v=>v*1900))),2);
+gl.bindVertexArray(null);
+
+/* ---------- pick target ---------- */
+let fbo=gl.createFramebuffer(), ptex=gl.createTexture(), pdep=gl.createRenderbuffer(), pw=0,ph=0;
+function pickSize(w,h){ if(w===pw&&h===ph)return; pw=w;ph=h;
+  gl.bindTexture(gl.TEXTURE_2D,ptex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+  gl.bindRenderbuffer(gl.RENDERBUFFER,pdep);
+  gl.renderbufferStorage(gl.RENDERBUFFER,gl.DEPTH_COMPONENT16,w,h);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,ptex,0);
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,gl.DEPTH_ATTACHMENT,gl.RENDERBUFFER,pdep);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+}
+
+/* ---------- camera ---------- */
+const cam={tx:0,ty:TY,tz:0,dist:900,yaw:0.72,pitch:RM?0.50:0.95};
+const goal={...cam}; let anim=RM?0:1;
+let vend=1, showVend=true, orbit=false, hoverId=-1, selId=-1, srch=0;
+let W=0,H=0,DPR=1,vp=null,eye=[0,0,0];
+let lastFit=null;
+
+function resize(){
+  DPR=Math.min(devicePixelRatio||1,2);
+  W=Math.floor(innerWidth*DPR); H=Math.floor(innerHeight*DPR);
+  cv.width=W; cv.height=H; pickSize(W,H);
+  // keep the framing the viewport earned: rescale zoom by how the fit distance moved,
+  // otherwise a resize or a phone rotation leaves the camera buried in the city
+  const f=fitDist(FIT);
+  if(lastFit){ const r=f/lastFit; cam.dist*=r; goal.dist*=r; }
+  lastFit=f;
+}
+addEventListener("resize",resize); resize();
+function fitDist(half){const t=Math.tan(0.43),ar=W/H;return Math.max(half/t,half/(t*ar))*1.00;}
+function home(){return fitDist(FIT);}
+cam.dist=RM?home():home()*1.15; goal.dist=home(); goal.pitch=0.50; goal.ty=TY;
+
+function camEye(){
+  const cp=Math.cos(cam.pitch);
+  return [cam.tx+cam.dist*cp*Math.sin(cam.yaw), cam.ty+cam.dist*Math.sin(cam.pitch), cam.tz+cam.dist*cp*Math.cos(cam.yaw)];
+}
+
+/* ---------- input ---------- */
+let drag=null;
+cv.addEventListener("pointerdown",e=>{
+  cv.setPointerCapture(e.pointerId); cv.classList.add("drag");
+  drag={x:e.clientX,y:e.clientY,pan:e.shiftKey||e.button===1||e.button===2,moved:0}; anim=0; orbit=false; syncOrb();
+});
+cv.addEventListener("pointermove",e=>{
+  if(drag){
+    const dx=e.clientX-drag.x, dy=e.clientY-drag.y; drag.x=e.clientX; drag.y=e.clientY;
+    drag.moved+=Math.abs(dx)+Math.abs(dy);
+    if(drag.pan){
+      const s=cam.dist*0.0016, sy=Math.sin(cam.yaw), cy=Math.cos(cam.yaw);
+      cam.tx-=(dx*cy-dy*sy)*s; cam.tz+=(dx*sy+dy*cy)*s;
+    }else{
+      cam.yaw-=dx*0.005; cam.pitch=Math.max(0.06,Math.min(1.50,cam.pitch+dy*0.004));
+    }
+    goal.tx=cam.tx;goal.tz=cam.tz;goal.ty=cam.ty;goal.yaw=cam.yaw;goal.pitch=cam.pitch;
+  }
+  mx=e.clientX; my=e.clientY; needPick=true;
+});
+function endDrag(e){ if(!drag)return; const d=drag; drag=null; cv.classList.remove("drag");
+  if(d.moved<5) doClick(e.clientX,e.clientY); }
+cv.addEventListener("pointerup",endDrag);
+cv.addEventListener("pointercancel",()=>{drag=null;cv.classList.remove("drag");});
+cv.addEventListener("contextmenu",e=>e.preventDefault());
+cv.addEventListener("wheel",e=>{e.preventDefault();
+  cam.dist=Math.max(28,Math.min(2200,cam.dist*Math.exp(e.deltaY*0.0011))); goal.dist=cam.dist; anim=0;
+},{passive:false});
+let pinch=0;
+cv.addEventListener("touchmove",e=>{
+  if(e.touches.length===2){
+    const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    if(pinch)cam.dist=Math.max(28,Math.min(2200,cam.dist*pinch/d));
+    pinch=d; goal.dist=cam.dist; drag=null;
+  }
+},{passive:true});
+cv.addEventListener("touchend",()=>{pinch=0;});
+
+/* ---------- picking ---------- */
+let mx=-1,my=-1,needPick=false,lastPick=0;
+function pickAt(cx,cy){
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.viewport(0,0,W,H); gl.clearColor(0,0,0,1);
+  gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.enable(gl.CULL_FACE); gl.disable(gl.BLEND);
+  gl.useProgram(pP); gl.uniformMatrix4fv(pP.u.u_vp,false,vp); gl.uniform1f(pP.u.u_vend,vend);
+  gl.bindVertexArray(vaoB);
+  gl.drawElementsInstanced(gl.TRIANGLES,bi.length,gl.UNSIGNED_SHORT,0,NB);
+  const px=new Uint8Array(4);
+  const gx=Math.floor(cx*DPR), gy=Math.floor(H-cy*DPR);
+  if(gx>=0&&gy>=0&&gx<W&&gy<H) gl.readPixels(gx,gy,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  const id=px[0]+px[1]*256+px[2]*65536-1;
+  return (id>=0&&id<NB)?id:-1;
+}
+function doClick(cx,cy){ const id=pickAt(cx,cy); select(id); }
+
+/* ---------- render ---------- */
+const tip=document.getElementById("tip");
+function frame(t){
+  t*=0.001;
+  tick(t);
+  if(anim||orbit){
+    if(anim){ cam.dist+=(goal.dist-cam.dist)*0.045; cam.pitch+=(goal.pitch-cam.pitch)*0.045;
+      cam.tx+=(goal.tx-cam.tx)*0.055; cam.tz+=(goal.tz-cam.tz)*0.055; cam.ty+=(goal.ty-cam.ty)*0.055;
+      cam.yaw+=(goal.yaw-cam.yaw)*0.045;
+      if(Math.abs(goal.dist-cam.dist)<0.6&&Math.abs(goal.tx-cam.tx)<0.6&&Math.abs(goal.tz-cam.tz)<0.6)anim=0; }
+    if(orbit){ cam.yaw+=0.0013; goal.yaw=cam.yaw; }
+  }
+  vend+=((showVend?1:0)-vend)*0.14;
+  eye=camEye();
+  vp=mul(persp(0.86,W/H,1.2,5200),look(eye,[cam.tx,cam.ty,cam.tz],[0,1,0]));
+
+  if(needPick&&t-lastPick>0.045&&!drag){ lastPick=t; needPick=false;
+    const id=pickAt(mx,my); if(id!==hoverId){hoverId=id;showTip(id);} }
+
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);
+  gl.viewport(0,0,W,H);
+  gl.clearColor(0.051,0.082,0.137,1); gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.disable(gl.CULL_FACE);
+
+  gl.useProgram(pG); gl.uniformMatrix4fv(pG.u.u_vp,false,vp); gl.uniform3fv(pG.u.u_eye,eye);
+  gl.bindVertexArray(vaoG); gl.drawArrays(gl.TRIANGLES,0,6);
+
+  gl.enable(gl.BLEND); gl.blendFunc(gl.ONE,gl.ONE); gl.depthMask(false);
+  gl.useProgram(pL); gl.uniformMatrix4fv(pL.u.u_vp,false,vp); gl.uniform3fv(pL.u.u_eye,eye);
+  gl.bindVertexArray(vaoP); gl.drawArraysInstanced(gl.TRIANGLES,0,6,D.length);
+  gl.depthMask(true); gl.disable(gl.BLEND);
+
+  gl.enable(gl.CULL_FACE);
+  gl.useProgram(pB);
+  gl.uniformMatrix4fv(pB.u.u_vp,false,vp); gl.uniform3fv(pB.u.u_eye,eye);
+  gl.uniform1f(pB.u.u_hover,hoverId); gl.uniform1f(pB.u.u_sel,selId);
+  gl.uniform1f(pB.u.u_srch,srch); gl.uniform1f(pB.u.u_t,t); gl.uniform1f(pB.u.u_vend,vend);
+  gl.uniform1f(pB.u.u_trace,traceLit);
+  gl.bindVertexArray(vaoB);
+  gl.drawElementsInstanced(gl.TRIANGLES,bi.length,gl.UNSIGNED_SHORT,0,NB);
+  gl.bindVertexArray(null);
+
+  placeLabels();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- labels ---------- */
+const lbox=document.getElementById("labels"), labs=D.map(d=>{
+  const e=document.createElement("div"); e.className="dlab"; e.textContent=d.n; lbox.appendChild(e); return e;});
+function placeLabels(){
+  for(let i=0;i<D.length;i++){
+    const d=D[i], e=labs[i];
+    const ly=d.y;
+    const x=vp[0]*d.x+vp[4]*ly+vp[8]*d.z+vp[12], y=vp[1]*d.x+vp[5]*ly+vp[9]*d.z+vp[13],
+          w=vp[3]*d.x+vp[7]*ly+vp[11]*d.z+vp[15];
+    if(w<=0.1){e.style.opacity=0;continue;}
+    const sx=(x/w*0.5+0.5)*innerWidth, sy=(1-(y/w*0.5+0.5))*innerHeight;
+    const dd=Math.hypot(eye[0]-d.x,eye[1]-d.y,eye[2]-d.z);
+    e.style.opacity=Math.max(0,Math.min(0.95,(2100-dd)/1200))*(srch?0.25:1);
+    e.style.left=sx+"px"; e.style.top=sy+"px";
+  }
+}
+
+/* ---------- ui ---------- */
+const $=id=>document.getElementById(id);
+const nf=n=>n.toLocaleString("en-US");
+$("s-d").textContent=D.length;
+
+function buildLegend(){
+  $("llist").innerHTML="";
+  /* In the trace the colour is saying coverage, not language, so reading a
+     building as "green means Python" there would be a mistake. The spectrum
+     stays underneath it because the hue is still the language. */
+  const head = mode==="trace"
+    ? [["Executed by the suite",[1.00,0.855,0.628]],
+       ["Reached, partly covered",[0.62,0.50,0.38]],
+       ["Code nothing ran",[0.150,0.098,0.082]],
+       ["Not measurable",[0.128,0.146,0.180]]]
+    : [];
+  $("leg").querySelector(".lbl").textContent =
+    mode==="trace" ? "Reading the light" : "Spectrum";
+  head.concat(CITY.legend).forEach(([n,c])=>{
+    const li=document.createElement("li");
+    li.innerHTML='<i></i><span></span>';
+    li.querySelector("i").style.background=`rgb(${c.map(v=>Math.round(v*255)).join(",")})`;
+    li.querySelector("span").textContent=n; $("llist").appendChild(li);});
+}
+
+const rows=D.map((d,i)=>{
+  const b=document.createElement("button"); b.className="drow"; b.type="button";
+  b.innerHTML='<span class="sw"></span><span class="nm"></span><span class="ct"></span>';
+  b.querySelector(".sw").style.background=`rgb(${d.c.map(v=>Math.round(v*255)).join(",")})`;
+  b.querySelector(".nm").textContent=d.n;
+  b.querySelector(".ct").textContent=nf(d.l);
+  b.addEventListener("click",()=>flyTo(d,i));
+  $("dlist").appendChild(b); return b;});
+
+function flyTo(d,i){
+  goal.tx=d.x; goal.tz=d.z; goal.ty=d.y*0.42; goal.dist=fitDist(Math.max(d.w,d.d)*0.60)+d.y*0.5; goal.pitch=0.44; anim=1; orbit=false; syncOrb();
+  rows.forEach((r,j)=>r.classList.toggle("on",j===i));
+}
+
+const sortedRank=B.map((b,i)=>i).sort((a,c)=>B[c].l-B[a].l);
+const rankOf=new Int32Array(NB); sortedRank.forEach((id,r)=>rankOf[id]=r+1);
+const maxLoc=Math.max(...B.map(b=>b.l));
+
+function select(id){
+  selId=id;
+  const p=$("insp");
+  if(id<0){p.classList.remove("open"); rows.forEach(r=>r.classList.remove("on")); return;}
+  const b=B[id], d=D[b.g];
+  const parts=b.p.split("/"), file=parts.pop();
+  $("i-path").innerHTML=`<em>${parts.length?parts.join("/")+"/":""}</em>${file}`;
+  $("i-dist").querySelector("i").style.background=`rgb(${d.c.map(v=>Math.round(v*255)).join(",")})`;
+  $("i-dist").querySelector("span").textContent=d.n;
+  /* Everything that can change with the scrubber is reported as of the step on
+     screen, not as of the final commit or the end of the run. An inspector that
+     quoted today's numbers while you watch 2025 would make the scrubber a lie. */
+  const st=TR?TR.stmts[id]:-1, got=TR?covAt[id]:0;
+  const v=locAt[id], born=v!==-2&&v!==0;
+  $("i-loc").textContent = mode==="time" ? (!born?"not built yet":(v>0?nf(v):"\u2014"))
+                                         : (b.l?nf(b.l):"\u2014");
+  $("i-size").textContent=b.s<1024?b.s+" B":(b.s<1048576?(b.s/1024).toFixed(1)+" KB":(b.s/1048576).toFixed(1)+" MB");
+  $("i-churn").textContent=nf(b.k);
+  $("i-ext").textContent=(b.v?"vendored ":"")+b.e;
+  if(mode==="trace"){
+    $("i-cov").textContent=st<0?"not measurable":`${nf(got)} of ${nf(st)} stmt`;
+    $("i-hits").textContent=st<0?"\u2014":(hits[id]?nf(hits[id])+(hits[id]===1?" test":" tests"):"nothing yet");
+    $("i-bar").style.width=(st>0?Math.max(1.5,(got/st)*100):0)+"%";
+    $("i-rank").textContent=st<0?"outside the suite's reach"
+      :(got===0?"never executed":Math.round(got/st*100)+"% covered so far");
+    $("i-of").textContent=st<0?"":`${nf(TR.measured)} files measured`;
+  } else if(mode==="time"){
+    $("i-bar").style.width=(born&&v>0?Math.max(1.5,(v/maxLoc)*100):0)+"%";
+    $("i-rank").textContent=!born?"absent on this "+TL.step
+      :(b.l?`#${rankOf[id]} by size at the end`:"binary asset");
+    $("i-of").textContent=`of ${nf(NB)}`;
+  } else {
+    $("i-bar").style.width=Math.max(1.5,(b.l/maxLoc)*100)+"%";
+    $("i-rank").textContent=b.l?`#${rankOf[id]} by size`:"binary asset";
+    $("i-of").textContent=`of ${nf(NB)}`;
+  }
+  p.classList.add("open");
+  rows.forEach((r,j)=>r.classList.toggle("on",j===b.g));
+}
+$("close").addEventListener("click",()=>select(-1));
+
+function showTip(id){
+  if(id<0){tip.style.opacity=0;return;}
+  const b=B[id];
+  let badge;
+  if(mode==="trace"){ const st=TR.stmts[id];
+    badge = st<0 ? b.e : (covAt[id]===0?"dark":Math.round(covAt[id]/st*100)+"%"); }
+  else { const v = mode==="time" ? locAt[id] : b.l;
+    badge = v>0 ? nf(v)+" ln" : b.e; }
+  tip.innerHTML=`${b.p.split("/").pop()} &nbsp;<b>${badge}</b>`;
+  const flip=mx>innerWidth-250;
+  tip.style.transform=flip?"translate(calc(-100% - 12px),-50%)":"translate(12px,-50%)";
+  tip.style.left=mx+"px"; tip.style.top=my+"px"; tip.style.opacity=1;
+}
+
+const q=$("q");
+q.addEventListener("input",()=>{
+  const v=q.value.trim().toLowerCase();
+  srch=v?1:0;
+  for(let i=0;i<NB;i++) iMark[i]=(!v||B[i].p.toLowerCase().includes(v))?1:0;
+  gl.bindBuffer(gl.ARRAY_BUFFER,markBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iMark);
+});
+addEventListener("keydown",e=>{
+  if(e.key==="/"&&document.activeElement!==q){e.preventDefault();q.focus();}
+  if(e.key==="Escape"){ if(document.activeElement===q&&q.value){q.value="";q.dispatchEvent(new Event("input"));}
+    else select(-1); }
+});
+
+const tv=$("t-vend"), to=$("t-orb");
+tv.addEventListener("click",()=>{showVend=!showVend; tv.setAttribute("aria-pressed",showVend);});
+function syncOrb(){to.setAttribute("aria-pressed",orbit);}
+to.addEventListener("click",()=>{orbit=!orbit; if(orbit)anim=0; syncOrb();});
+$("t-rst").addEventListener("click",()=>{
+  goal.tx=0;goal.tz=0;goal.ty=TY;goal.dist=home();goal.pitch=0.50;goal.yaw=0.72;anim=1;orbit=false;syncOrb();
+  select(-1); q.value=""; q.dispatchEvent(new Event("input"));
+});
+
+/* ---------- panel collapse, hide-all, narrow relayout ---------- */
+function setPanel(el,open,save){
+  if(!el) return;
+  el.classList.toggle("collapsed",!open);
+  const h=el.querySelector(".phead[data-p]");
+  if(h) h.setAttribute("aria-expanded",open?"true":"false");
+  if(save){ try{ localStorage.setItem("cs:"+el.id,open?"1":"0"); }catch(e){} }
+}
+document.querySelectorAll(".phead[data-p]").forEach(h=>{
+  h.addEventListener("click",()=>{
+    const el=h.closest(".panel");
+    setPanel(el,el.classList.contains("collapsed"),true);
+  });
+});
+const narrow=()=>innerWidth<=900;
+["id","dist","leg"].forEach(id=>{
+  let st=null; try{ st=localStorage.getItem("cs:"+id); }catch(e){}
+  const dflt = narrow() ? (id==="id") : (innerHeight<640 ? id!=="leg" : true);
+  setPanel($(id), st===null?dflt:st==="1", false);
+});
+
+let uiOn=true;
+function setUI(v){
+  uiOn=v;
+  document.body.classList.toggle("noui",!v);
+  const b=$("t-ui");
+  b.textContent=v?"Hide UI":"Show UI";
+  b.setAttribute("aria-pressed",v?"false":"true");
+}
+$("t-ui").addEventListener("click",()=>setUI(!uiOn));
+addEventListener("keydown",e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey) return;
+  if((e.key==="h"||e.key==="H") && document.activeElement!==q){ e.preventDefault(); setUI(!uiOn); }
+});
+
+/* the search + buttons belong to the top rail on narrow screens, the right rail otherwise,
+   so the two rails never fight for the same corner */
+let wasNarrow=null;
+function relayout(){
+  const n=narrow();
+  if(n===wasNarrow) return;
+  wasNarrow=n;
+  const ctl=$("ctl");
+  if(n) $("rail-l").insertBefore(ctl,$("id"));
+  else  $("rail-r").insertBefore(ctl,$("rail-r").firstChild);
+}
+relayout();
+addEventListener("resize",relayout);
+
+/* ---------- views ----------
+   One city, three readings of it. The geometry is identical in all three and is
+   uploaded once; what changes is which channel the transport drives.
+
+     city    the repository as it stands. Height is lines, colour is language,
+             windows are churn. No transport.
+     time    height is driven by history. locAt[i] is what building i knew at
+             the current step: -2 not built yet, -1 an asset with no line
+             history at its final height, otherwise a line count.
+     trace   height is final, light is driven by the test suite. covAt[i] is how
+             many statements of building i have executed so far, against
+             TR.stmts[i] total, or -1 where coverage cannot speak.
+
+   Both tracks keep their own position, so switching views and switching back
+   lands where you left off rather than rewinding.                            */
+const TL=CITY.tl||null, TR=CITY.tr||null;
+const HM=CITY.hm, H0=CITY.h0, HX=CITY.hx, HV=CITY.hv, MX=Math.max(1,CITY.maxloc);
+
+const locAt=new Int32Array(NB), covAt=new Int32Array(NB), hits=new Int32Array(NB);
+const tgtH=new Float32Array(NB), curH=new Float32Array(NB);
+const tgtC=new Float32Array(NB), curC=new Float32Array(NB);
+const finalH=new Float32Array(NB);
+const dOff=new Float32Array(D.length), dMax=new Float32Array(D.length), dFin=new Float32Array(D.length);
+B.forEach((b,i)=>{ finalH[i]=b.h; if(b.h>dFin[b.g]) dFin[b.g]=b.h; });
+D.forEach((d,i)=>dOff[i]=d.y-dFin[i]);
+curH.set(finalH); tgtH.set(finalH); tgtC.fill(-1); curC.fill(-1);
+
+const TRACKS={};
+if(TL) TRACKS.time ={labels:TL.labels, steps:TL.steps, unit:TL.step};
+if(TR) TRACKS.trace={labels:TR.labels, steps:TR.steps, unit:"test"};
+const atOf={time:-1, trace:-1};
+let mode="city", traceLit=0;
+
+function heightOf(i){
+  const v=locAt[i];
+  if(v===-2||v===0) return 0;
+  if(v===-1) return finalH[i];
+  const h=H0+HM*Math.pow(Math.min(v,MX)/MX,HX);
+  return B[i].v?h*HV:h;
+}
+
+function resetTrack(m){
+  if(m==="time"){ locAt.fill(-2); for(let j=0;j<TL.never.length;j++) locAt[TL.never[j]]=-1; }
+  else { covAt.fill(0); hits.fill(0); }
+  atOf[m]=-1;
+}
+function applyStep(m,st,heat){
+  for(let j=0;j<st.length;j++){
+    const e=st[j];
+    if(m==="time") locAt[e[0]]=e[1]; else { covAt[e[0]]=e[1]; hits[e[0]]++; }
+    if(heat) iHot[e[0]]=1;
+  }
+}
+
+function refresh(){
+  let a=0,b=0;
+  if(mode==="trace"){
+    dMax.set(dFin);
+    for(let j=0;j<NB;j++){
+      const st=TR.stmts[j];
+      tgtH[j]=finalH[j];
+      /* -1 rides through to the shader untouched: a file coverage cannot
+         measure must not render as one the suite failed to reach. */
+      tgtC[j]= st<0 ? -1 : (st===0 ? 0 : covAt[j]/st);
+      if(st>0&&covAt[j]>0){ a++; b+=covAt[j]; }
+    }
+    $("s-d").textContent=(TR.total?(b/TR.total*100).toFixed(1):"0")+"%";
+  } else if(mode==="time"){
+    /* tgtC is deliberately left alone outside the trace. Resetting it to -1
+       makes every building the unmeasurable slate, and since u_trace fades out
+       over half a second rather than switching, the whole skyline would wash
+       through grey on the way back to the city. */
+    dMax.fill(0);
+    for(let j=0;j<NB;j++){
+      const h=heightOf(j); tgtH[j]=h;
+      if(h>0){ a++; if(locAt[j]>0) b+=locAt[j]; if(h>dMax[B[j].g]) dMax[B[j].g]=h; }
+    }
+    $("s-d").textContent=D.length;
+  } else {
+    dMax.set(dFin);
+    tgtH.set(finalH);
+    a=CITY.files; b=CITY.loc; $("s-d").textContent=D.length;
+  }
+  $("s-f").textContent=nf(a); $("s-l").textContent=nf(b);
+  if(mode!=="city"){
+    const T=TRACKS[mode], i=atOf[mode];
+    $("p-date").textContent = mode==="time" ? T.labels[i].slice(-10) : T.labels[i];
+    $("p-of").textContent = (mode==="time"?T.unit:"test")+" "+(i+1)+" of "+T.steps.length;
+    $("p-nf").textContent=nf(a); $("p-nl").textContent=nf(b);
+    if(scrub.value!=i) scrub.value=i;
+  }
+  if(selId>=0) select(selId);
+}
+
+function seek(i,heat){
+  if(mode==="city") return;
+  const m=mode, T=TRACKS[m], NS=T.steps.length;
+  i=Math.max(0,Math.min(NS-1,i|0));
+  if(i<atOf[m]) resetTrack(m);
+  for(let s=atOf[m]+1;s<=i;s++) applyStep(m,T.steps[s],heat&&s===i);
+  atOf[m]=i;
+  refresh();
+}
+
+/* ---------- transport ---------- */
+const scrub=$("p-scrub"), go=$("p-go");
+let playing=false, acc=0, last=0, BASE=200;
+const SPD=[1,2,4,0.5];
+let spd=0;
+
+function setPlay(v){
+  playing=v&&mode!=="city";
+  go.innerHTML=playing?"&#9646;&#9646;":"&#9654;";
+  go.setAttribute("aria-label",playing?"Pause":"Play");
+}
+go.addEventListener("click",()=>{
+  if(mode==="city") return;
+  /* Replaying from the end restarts: from the empty lot, or the dark city. */
+  if(!playing&&atOf[mode]>=TRACKS[mode].steps.length-1) seek(0,false);
+  setPlay(!playing); acc=0;
+});
+scrub.addEventListener("input",()=>{ setPlay(false); seek(+scrub.value,false); });
+$("p-spd").addEventListener("click",()=>{
+  spd=(spd+1)%SPD.length; $("p-spd").textContent=SPD[spd]+"x";
+});
+
+/* ---------- mode switch ---------- */
+const BLURB={
+  city:"The repository rendered as a city. Every building is one tracked file: height is lines of code, colour is language, lit windows are how often it changes. Districts are subsystems.",
+  time:"The same city built one __UNIT__ at a time. The streets never move, so what you are watching is the city you already know being constructed. Height rises with each file's line count.",
+  trace:"The same city lit by its own test suite. Geometry is unchanged; the light is what the tests actually executed, and window density is how much of a file has run. Whatever stays dark is code nothing ran."
+};
+const mbox=$("modes"), mbtn={};
+[["city","City"],["time","Timelapse"],["trace","Coverage"]].forEach(([k,label])=>{
+  if(k!=="city"&&!TRACKS[k]) return;
+  const btn=document.createElement("button");
+  btn.type="button"; btn.textContent=label; btn.setAttribute("aria-pressed","false");
+  btn.addEventListener("click",()=>setMode(k));
+  mbox.appendChild(btn); mbtn[k]=btn;
+});
+
+function setMode(m){
+  if(m!=="city"&&!TRACKS[m]) return;
+  mode=m;
+  document.body.classList.toggle("mode-city",m==="city");
+  for(const k in mbtn) mbtn[k].setAttribute("aria-pressed",k===m?"true":"false");
+  setPlay(false);
+
+  $("sub").textContent = (m==="city"?"Codescape":m==="time"?"Timelapse":"Coverage trace")
+    + " \u00b7 " + BRANCH;
+  $("blurb").textContent = BLURB[m].replace("__UNIT__", TL?TL.step:"step");
+  $("s-fl").textContent = m==="trace"?"Reached":"Files";
+  $("s-ll").textContent = m==="trace"?"Covered":"Lines";
+  $("s-dl").textContent = m==="trace"?"Percent":"Districts";
+  $("r-cov").style.display=$("r-hits").style.display = m==="trace"?"":"none";
+  if(m!=="city"){
+    const T=TRACKS[m];
+    $("p-nfl").textContent = m==="trace"?"lit":"files";
+    $("p-nll").textContent = m==="trace"?"stmt":"lines";
+    scrub.max=T.steps.length-1;
+    BASE=Math.max(90,Math.min(420,24000/T.steps.length));
+    /* First visit lands on the finished state, so switching in shows the real
+       city or the completed run rather than an empty lot. Play rewinds. */
+    if(atOf[m]<0){ resetTrack(m); seek(T.steps.length-1,false); }
+  }
+  buildLegend();
+  refresh();
+  if(m!=="city"){ curC.set(tgtC); curH.set(tgtH); }
+}
+
+function tick(t){
+  if(!last) last=t;
+  const dt=Math.min(0.25,t-last); last=t;
+  if(playing){
+    acc+=dt*1000*SPD[spd];
+    const NS=TRACKS[mode].steps.length;
+    while(acc>=BASE){
+      acc-=BASE;
+      if(atOf[mode]>=NS-1){ setPlay(false); acc=0; break; }
+      seek(atOf[mode]+1,true);
+    }
+  }
+  /* Ease every channel so a step reads as construction or as a light coming on
+     rather than a jump cut, and let the flare fade over about a second. */
+  const k=1-Math.pow(0.001,dt*1.7), kh=1-Math.pow(0.001,dt*0.55);
+  traceLit+=((mode==="trace"?1:0)-traceLit)*k;
+  if(traceLit<0.0015) traceLit=0; if(traceLit>0.9985) traceLit=1;
+  for(let i=0;i<NB;i++){
+    curH[i]+=(tgtH[i]-curH[i])*k;
+    if(Math.abs(tgtH[i]-curH[i])<0.01) curH[i]=tgtH[i];
+    iScl[i*3+1]=curH[i];
+    if(tgtC[i]<0) curC[i]=-1;
+    else{
+      if(curC[i]<0) curC[i]=0;
+      curC[i]+=(tgtC[i]-curC[i])*k;
+      if(Math.abs(tgtC[i]-curC[i])<0.002) curC[i]=tgtC[i];
+    }
+    iCov[i]=curC[i];
+    if(iHot[i]>0){ iHot[i]-=iHot[i]*kh; if(iHot[i]<0.004) iHot[i]=0; }
+  }
+  gl.bindBuffer(gl.ARRAY_BUFFER,sclBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iScl);
+  gl.bindBuffer(gl.ARRAY_BUFFER,covBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iCov);
+  gl.bindBuffer(gl.ARRAY_BUFFER,hotBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iHot);
+}
+
+addEventListener("keydown",e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey||document.activeElement===q) return;
+  const el=document.activeElement, tag=el?el.tagName:"";
+  if(tag==="BUTTON"||tag==="INPUT") return;
+  if(e.key==="1") setMode("city");
+  else if(e.key==="2") setMode("time");
+  else if(e.key==="3") setMode("trace");
+  else if(mode==="city") return;
+  else if(e.key===" "){ e.preventDefault(); go.click(); }
+  else if(e.key==="ArrowRight"){ e.preventDefault(); setPlay(false); seek(atOf[mode]+1,true); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); setPlay(false); seek(atOf[mode]-1,false); }
+  else if(e.key==="Home"){ e.preventDefault(); setPlay(false); seek(0,false); }
+  else if(e.key==="End"){ e.preventDefault(); setPlay(false); seek(TRACKS[mode].steps.length-1,false); }
+});
+
+/* Open on the city itself. The other two views are readings of it, and neither
+   makes sense until you have seen the thing being read. */
+setMode("city");
+iCov.set(curC);
+gl.bindBuffer(gl.ARRAY_BUFFER,covBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iCov);
+gl.bindBuffer(gl.ARRAY_BUFFER,sclBuf); gl.bufferSubData(gl.ARRAY_BUFFER,0,iScl);
+
+requestAnimationFrame(frame);
+})();
+</script>
+
+</body>
+</html>

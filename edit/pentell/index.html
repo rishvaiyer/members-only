@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PenTell paper editor / Rishva Iyer</title>
+  <style>
+    :root { color-scheme: light; --ink:#15252a; --muted:#5c6f71; --petrol:#0c5555; --coral:#ef735f; --paper:#fbf9f5; --line:#d8cec0; --ground:#efe8dc; }
+    * { box-sizing:border-box; }
+    body { margin:0; color:var(--ink); background:var(--ground); font:16px/1.6 Georgia, serif; }
+    .top { position:sticky; top:0; z-index:3; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 22px; background:rgba(251,249,245,.95); border-bottom:1px solid var(--line); font:13px/1.2 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .top a { color:var(--petrol); text-decoration:none; }
+    .actions { display:flex; gap:8px; align-items:center; }
+    button { border:1px solid var(--petrol); border-radius:7px; padding:8px 12px; color:white; background:var(--petrol); font:inherit; cursor:pointer; }
+    button.secondary { color:var(--petrol); background:transparent; }
+    button:disabled { opacity:.55; cursor:wait; }
+    .status { color:var(--muted); }
+    .wrap { max-width:930px; margin:38px auto; padding:0 18px 80px; }
+    .login { max-width:420px; margin:12vh auto; padding:30px; background:var(--paper); border:1px solid var(--line); box-shadow:0 14px 40px rgba(21,37,42,.08); }
+    label { display:block; margin:16px 0 6px; color:var(--muted); font:12px ui-monospace, SFMono-Regular, Menlo, monospace; text-transform:uppercase; letter-spacing:.08em; }
+    input, .editor { width:100%; border:1px solid var(--line); border-radius:6px; background:white; color:var(--ink); padding:12px 14px; font:inherit; }
+    input:focus, .editor:focus { outline:2px solid rgba(239,115,95,.6); outline-offset:2px; }
+    .paper { padding:58px 64px; background:var(--paper); border:1px solid var(--line); box-shadow:0 20px 55px rgba(21,37,42,.1); }
+    .kicker { color:var(--petrol); font:700 12px ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing:.14em; }
+    h1 { margin:20px 0 12px; font-size:clamp(32px,5vw,58px); line-height:1.05; }
+    .dek { color:var(--muted); font-size:20px; line-height:1.45; }
+    .toolbar { display:flex; flex-wrap:wrap; gap:6px; padding:10px; border:1px solid var(--line); border-bottom:0; background:#f4eee5; }
+    .toolbar button { padding:5px 9px; color:var(--ink); background:transparent; border-color:var(--line); }
+    .editor { min-height:520px; white-space:normal; }
+    .editor p { margin:0 0 14px; }
+    .editor h2, .editor h3 { color:var(--petrol); line-height:1.2; }
+    .hint { color:var(--muted); font:13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .error { color:#9d2e25; min-height:24px; }
+    @media (max-width:650px) { .top { align-items:flex-start; flex-direction:column; } .paper { padding:32px 22px; } .actions { width:100%; } .actions button { flex:1; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <a href="/">← Rishva Iyer</a>
+    <span>Owner editor / PenTell paper</span>
+    <div class="actions"><span class="status" id="status">Private</span><button id="save" class="secondary" hidden>Save draft</button><button id="publish" hidden>Publish PDF</button></div>
+  </header>
+  <main class="wrap">
+    <section class="login" id="login-panel">
+      <div class="kicker">PRIVATE OWNER ACCESS</div>
+      <h1>PenTell paper</h1>
+      <p>Unlock the browser editor. Your password is never stored in the paper.</p>
+      <label for="password">Owner password</label>
+      <input id="password" type="password" autocomplete="current-password">
+      <p class="error" id="login-error"></p>
+      <button id="unlock">Unlock editor</button>
+    </section>
+    <section id="editor-panel" hidden>
+      <p class="hint">Click into the title, subtitle, or paper body and type like a document editor. Save keeps a draft. Publish regenerates the live PDF.</p>
+      <article class="paper">
+        <div class="kicker">PENTEL / RED-TEAM LAB</div>
+        <label for="title">Title</label>
+        <input id="title">
+        <label for="dek">Subtitle</label>
+        <input id="dek">
+        <label>Paper body</label>
+        <div class="toolbar" aria-label="Formatting toolbar">
+          <button data-command="bold" type="button"><strong>B</strong></button><button data-command="italic" type="button"><em>I</em></button><button data-command="formatBlock" data-value="h2" type="button">Heading</button><button data-command="insertUnorderedList" type="button">List</button>
+        </div>
+        <div id="body" class="editor" contenteditable="true" spellcheck="true"></div>
+      </article>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const loginPanel = $('login-panel'), editorPanel = $('editor-panel'), error = $('login-error');
+    const setStatus = (text) => $('status').textContent = text;
+    async function request(path, options = {}) { const response = await fetch(path, { credentials:'same-origin', ...options }); const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'Request failed.'); return data; }
+    function fill(content) { $('title').value = content.title || ''; $('dek').value = content.dek || ''; $('body').innerHTML = content.body_html || ''; }
+    async function openEditor() { try { const content = await request('/api/pentell/content'); fill(content); loginPanel.hidden = true; editorPanel.hidden = false; $('save').hidden = false; $('publish').hidden = false; setStatus('Owner unlocked'); } catch (e) { error.textContent = e.message; } }
+    $('unlock').addEventListener('click', async () => { error.textContent = ''; $('unlock').disabled = true; try { await request('/api/pentell/login', { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({ password:$('password').value }) }); await openEditor(); } catch (e) { error.textContent = e.message; } finally { $('unlock').disabled = false; } });
+    $('password').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('unlock').click(); });
+    document.querySelectorAll('[data-command]').forEach((button) => button.addEventListener('click', () => { $('body').focus(); document.execCommand(button.dataset.command, false, button.dataset.value || null); }));
+    function payload() { return { title:$('title').value, dek:$('dek').value, body_html:$('body').innerHTML }; }
+    async function save(kind) { const button = kind === 'publish' ? $('publish') : $('save'); button.disabled = true; setStatus(kind === 'publish' ? 'Publishing…' : 'Saving…'); try { const result = await request('/api/pentell/' + kind, { method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify(payload()) }); setStatus(kind === 'publish' ? 'Published just now' : 'Draft saved'); if (result.pdf) window.open(result.pdf + '?v=' + Date.now(), '_blank'); } catch (e) { setStatus(e.message); } finally { button.disabled = false; } }
+    $('save').addEventListener('click', () => save('save')); $('publish').addEventListener('click', () => save('publish'));
+  </script>
+</body>
+</html>

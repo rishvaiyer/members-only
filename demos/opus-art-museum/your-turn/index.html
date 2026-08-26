@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canvas Creature</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #faf9f6; }
+  canvas { display: block; cursor: crosshair; }
+  #info {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    font-family: 'Courier New', monospace; font-size: 13px; color: #bbb;
+    pointer-events: none; user-select: none; letter-spacing: 0.5px;
+    transition: opacity 2s; opacity: 1;
+  }
+  #info.fade { opacity: 0; }
+
+  #frameBtn {
+    position: fixed; bottom: 28px; right: 28px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #888; background: rgba(255,255,255,0.85);
+    border: 1px solid #ddd; border-radius: 4px;
+    padding: 10px 18px; cursor: pointer;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s, transform 0.6s, background 0.2s, color 0.2s;
+    pointer-events: none; backdrop-filter: blur(6px);
+  }
+  #frameBtn.show { opacity: 1; transform: none; pointer-events: auto; }
+  #frameBtn:hover { background: #171819; color: #ece9e2; border-color: #171819; }
+  #frameBtn.recording { background: #c0392b; color: #fff; border-color: #c0392b; pointer-events: none; }
+
+  #museum {
+    position: fixed; inset: 0; z-index: 100;
+    background: #f4f2ed;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+  #museum.open { opacity: 1; pointer-events: auto; }
+
+  .art-frame {
+    position: relative; border-radius: 2px;
+  }
+  .art-frame .mat { position: relative; height: 100%; }
+  .art-frame .art {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: #faf9f6;
+  }
+  .art-frame .art canvas {
+    display: block; width: 100%; height: 100%;
+  }
+
+  .frame--blackLacquer {
+    padding: clamp(10px, 2.5vw, 18px);
+    background: linear-gradient(145deg, #1a1a1a, #0d0d0d 40%, #222 70%, #111);
+    box-shadow: inset 1px 1px 2px rgba(255,255,255,0.08),
+                inset -1px -1px 3px rgba(0,0,0,0.8),
+                0 30px 60px -20px rgba(23,24,25,0.4);
+  }
+  .frame--blackLacquer::after {
+    content: ""; position: absolute; inset: 6px; border-radius: 1px; pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+  }
+  .frame--blackLacquer .mat { background: #f7f5f0; padding: clamp(16px, 4vw, 30px); }
+  .frame--blackLacquer .art {
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.2), 0 0 0 4px #f7f5f0, 0 0 0 5px rgba(0,0,0,0.15);
+  }
+
+  .wall-label {
+    margin-top: 18px; padding-left: 2px; text-align: left;
+    max-width: min(70vw, 500px);
+  }
+  .wall-label .no {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #68715b;
+  }
+  .wall-label h4 {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: 400; font-style: italic; font-size: 16px;
+    margin: 4px 0; line-height: 1.3; color: #171819;
+  }
+  .wall-label .m {
+    font-family: 'Helvetica Neue', Inter, system-ui, sans-serif;
+    font-size: 11px; color: #787b7e;
+  }
+
+  .museum-controls { display: flex; gap: 12px; margin-top: 24px; }
+  .museum-btn {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #787b7e; background: none; border: 1px solid #ddd;
+    border-radius: 3px; padding: 8px 16px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .museum-btn:hover { background: #171819; color: #ece9e2; border-color: #171819; }
+  .museum-btn.primary { background: #171819; color: #ece9e2; border-color: #171819; }
+  .museum-btn.primary:hover { background: #333; }
+
+  #galleryCount {
+    position: fixed; bottom: 28px; left: 28px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #bbb; pointer-events: none; user-select: none;
+    opacity: 0; transition: opacity 0.6s;
+  }
+  #galleryCount.show { opacity: 1; }
+
+  #gallery {
+    position: fixed; inset: 0; z-index: 200;
+    background: #f4f2ed; overflow-y: auto;
+    opacity: 0; pointer-events: none; transition: opacity 0.6s;
+  }
+  #gallery.open { opacity: 1; pointer-events: auto; }
+  #gallery .gallery-header {
+    padding: 40px 40px 20px; border-bottom: 1px solid #e8e8e6;
+  }
+  #gallery .gallery-header h2 {
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: 400; font-style: italic; font-size: 28px;
+    color: #171819; margin-bottom: 6px;
+  }
+  #gallery .gallery-header .subtitle {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: #68715b;
+  }
+  #gallery .gallery-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 40px; padding: 40px;
+  }
+  #gallery .gallery-piece { cursor: pointer; transition: transform 0.3s; }
+  #gallery .gallery-piece:hover { transform: translateY(-4px); }
+  #gallery .gallery-piece canvas {
+    width: 100%; border-radius: 2px;
+    box-shadow: 0 8px 24px -8px rgba(0,0,0,0.15);
+  }
+  #gallery .gallery-piece .mini-label { margin-top: 8px; }
+  #gallery .gallery-piece .mini-label h5 {
+    font-family: Georgia, serif; font-weight: 400; font-style: italic;
+    font-size: 13px; color: #171819;
+  }
+  #gallery .gallery-piece .mini-label span {
+    font-size: 10px; color: #787b7e;
+    font-family: 'Helvetica Neue', system-ui, sans-serif;
+  }
+  .gallery-close {
+    position: fixed; top: 20px; right: 28px; z-index: 201;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #787b7e; background: rgba(244,242,237,0.9); border: 1px solid #ddd;
+    border-radius: 3px; padding: 8px 16px; cursor: pointer;
+    backdrop-filter: blur(6px);
+  }
+  .gallery-close:hover { background: #171819; color: #ece9e2; border-color: #171819; }
+
+  /* Recording countdown overlay */
+  #recOverlay {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: #c0392b; background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(192,57,43,0.3); border-radius: 4px;
+    padding: 8px 20px; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s;
+    backdrop-filter: blur(6px);
+  }
+  #recOverlay.show { opacity: 1; }
+  #recOverlay .dot {
+    display: inline-block; width: 6px; height: 6px;
+    background: #c0392b; border-radius: 50%;
+    margin-right: 8px; vertical-align: middle;
+    animation: pulse-dot 1s infinite;
+  }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</head>
+<body>
+<canvas id="world"></canvas>
+<div id="info">draw near the little guy. he doesn't like it.</div>
+<button id="frameBtn">Frame It</button>
+<div id="galleryCount"></div>
+<div id="recOverlay"><span class="dot"></span> <span id="recText">recording 3s</span></div>
+
+<div id="museum">
+  <div id="museumContent" style="display:flex;flex-direction:column;align-items:center;"></div>
+</div>
+
+<div id="gallery">
+  <button class="gallery-close" id="galleryClose">Back to canvas</button>
+  <div class="gallery-header">
+    <h2>The Gallery</h2>
+    <div class="subtitle">Collected works from this session</div>
+  </div>
+  <div class="gallery-grid" id="galleryGrid"></div>
+</div>
+
+<script>
+const canvas = document.getElementById('world');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+const inkTrails = [];
+let isDrawing = false;
+let lastMouse = null;
+let mousePos = { x: -999, y: -999 };
+let hasDrawn = false;
+let totalStrokes = 0;
+
+const inkColors = [
+  '#2a2a2a', '#3a3a3a', '#4a4a4a', '#555',
+  '#c0392b', '#2980b9', '#27ae60', '#8e44ad',
+  '#e67e22', '#16a085', '#d35400', '#2c3e50'
+];
+let currentInkIdx = 0;
+let strokeCount = 0;
+
+const gallery = [];
+
+// ── Recording state ──
+let isRecording = false;
+let recordFrames = [];
+let recordStartTime = 0;
+const RECORD_SECONDS = 3;
+const RECORD_FPS = 10;
+const RECORD_W = 360;
+let RECORD_H = 200;
+const recCanvas = document.createElement('canvas');
+const recCtx = recCanvas.getContext('2d');
+let lastRecordCapture = 0;
+
+// ── The creature ──
+const guy = {
+  x: W*0.5, y: H*0.5, vx: 0, vy: 0,
+  targetX: W*0.5, targetY: H*0.5,
+  state: 'idle', stateTimer: 0, facing: 1,
+  blinkTimer: 0, blinkDuration: 0, isBlinking: false,
+  breathPhase: 0, legPhase: 0, armWave: 0,
+  eyeSize: 1, mouthState: 'neutral',
+  sweatDrops: [], wobble: 0, panicLevel: 0,
+  trailNearby: 0, lookAngle: 0,
+  jumpY: 0, jumpVY: 0, hatBounce: 0,
+  lastSafeSpot: null, idleAction: 'sit',
+  idleTimer: 0, wanderAngle: 0,
+  expressionTimer: 0, thoughtBubble: '', thoughtTimer: 0,
+};
+guy.x = W*0.3+Math.random()*W*0.4;
+guy.y = H*0.3+Math.random()*H*0.4;
+guy.targetX = guy.x; guy.targetY = guy.y;
+
+// ── Input ──
+canvas.addEventListener('mousedown', (e) => {
+  isDrawing = true;
+  lastMouse = { x: e.clientX, y: e.clientY };
+  if (!hasDrawn) { hasDrawn = true; document.getElementById('info').classList.add('fade'); }
+});
+canvas.addEventListener('mouseup', () => {
+  isDrawing = false; lastMouse = null;
+  strokeCount++; totalStrokes++;
+  if (strokeCount % 3 === 0) currentInkIdx = (currentInkIdx+1) % inkColors.length;
+  updateFrameBtn();
+});
+canvas.addEventListener('mouseleave', () => { isDrawing = false; lastMouse = null; mousePos = { x: -999, y: -999 }; });
+canvas.addEventListener('mousemove', (e) => {
+  mousePos = { x: e.clientX, y: e.clientY };
+  if (isDrawing && lastMouse) {
+    inkTrails.push({ x1: lastMouse.x, y1: lastMouse.y, x2: e.clientX, y2: e.clientY,
+      color: inkColors[currentInkIdx], width: 2+Math.random()*3, age: 0, opacity: 0.7+Math.random()*0.3 });
+    lastMouse = { x: e.clientX, y: e.clientY };
+  }
+});
+canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault(); const t = e.touches[0];
+  isDrawing = true; lastMouse = { x: t.clientX, y: t.clientY };
+  mousePos = { x: t.clientX, y: t.clientY };
+  if (!hasDrawn) { hasDrawn = true; document.getElementById('info').classList.add('fade'); }
+});
+canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault(); const t = e.touches[0];
+  mousePos = { x: t.clientX, y: t.clientY };
+  if (isDrawing && lastMouse) {
+    inkTrails.push({ x1: lastMouse.x, y1: lastMouse.y, x2: t.clientX, y2: t.clientY,
+      color: inkColors[currentInkIdx], width: 2+Math.random()*3, age: 0, opacity: 0.7+Math.random()*0.3 });
+    lastMouse = { x: t.clientX, y: t.clientY };
+  }
+});
+canvas.addEventListener('touchend', (e) => {
+  e.preventDefault(); isDrawing = false; lastMouse = null;
+  strokeCount++; totalStrokes++;
+  if (strokeCount % 3 === 0) currentInkIdx = (currentInkIdx+1) % inkColors.length;
+  updateFrameBtn();
+});
+
+function updateFrameBtn() {
+  const btn = document.getElementById('frameBtn');
+  if (totalStrokes >= 2 && inkTrails.length > 10 && !isRecording) btn.classList.add('show');
+}
+
+// ── Helpers ──
+function dist(ax, ay, bx, by) { return Math.sqrt((ax-bx)**2 + (ay-by)**2); }
+
+function inkDensityNear(px, py, radius) {
+  let count = 0;
+  for (const seg of inkTrails) {
+    const mx = (seg.x1+seg.x2)/2, my = (seg.y1+seg.y2)/2;
+    if (dist(px,py,mx,my) < radius) count++;
+  }
+  return count;
+}
+
+function findSafeSpot(fromX, fromY, awayFromX, awayFromY) {
+  let bestX = fromX, bestY = fromY, bestScore = -Infinity;
+  const fleeAngle = Math.atan2(fromY-awayFromY, fromX-awayFromX);
+  for (let i = 0; i < 12; i++) {
+    const angle = fleeAngle + (Math.random()-0.5)*Math.PI*0.8;
+    const fd = 150+Math.random()*200;
+    const cx = Math.max(60, Math.min(W-60, fromX+Math.cos(angle)*fd));
+    const cy = Math.max(60, Math.min(H-60, fromY+Math.sin(angle)*fd));
+    const score = -inkDensityNear(cx,cy,100)*10 + Math.min(cx,cy,W-cx,H-cy)*0.3 + dist(cx,cy,awayFromX,awayFromY)*0.5;
+    if (score > bestScore) { bestScore = score; bestX = cx; bestY = cy; }
+  }
+  return { x: bestX, y: bestY };
+}
+
+const idleThoughts = ['...', 'nice day', 'hmm', '*yawn*', 'la la la', 'zzz'];
+const alertThoughts = ['huh?', '...!', 'what was that', 'uh oh'];
+const scaredThoughts = ['AAAH', 'NO NO NO', 'HELP', 'not again!!', 'STOP', 'go away!!', 'WHY'];
+const reliefThoughts = ['phew', 'ok... ok...', 'is it over?', 'safe...', '*deep breath*'];
+function pickThought(arr) { return arr[Math.floor(Math.random()*arr.length)]; }
+
+const titleAdj = [
+  'Untitled Study of', 'Composition with', 'Small Panic Near',
+  'Landscape After', 'Still Life, Disturbed by', 'Portrait of Escape from',
+  'Meditation on', 'Figure Fleeing', 'The Unwelcome Arrival of',
+  'Notes on Running from', 'Sketch of Terror and', 'Arrangement in',
+  'Nocturne with', 'Investigation of', 'Document of',
+];
+const titleNoun = [
+  'Ink', 'Lines', 'Color', 'the Cursor', 'an Artist',
+  'Chaos', 'Scribbles', 'Someone Drawing', 'the Inevitable',
+  'Too Much Enthusiasm', 'Wild Strokes', 'Relentless Pursuit',
+  'Boundaries', 'a Very Small Canvas', 'Nowhere to Hide',
+];
+function generateTitle() {
+  return titleAdj[Math.floor(Math.random()*titleAdj.length)] + ' ' +
+         titleNoun[Math.floor(Math.random()*titleNoun.length)];
+}
+
+function toRoman(n) {
+  const v=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const s=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let r=''; for (let i=0;i<v.length;i++) { while(n>=v[i]){r+=s[i];n-=v[i];} } return r;
+}
+
+// ── Recording ──
+function captureFrame() {
+  recCtx.clearRect(0, 0, RECORD_W, RECORD_H);
+  recCtx.drawImage(canvas, 0, 0, RECORD_W, RECORD_H);
+  return recCtx.getImageData(0, 0, RECORD_W, RECORD_H);
+}
+
+function frameIt() {
+  if (isRecording) return;
+  isRecording = true;
+  recordFrames = [];
+  RECORD_H = Math.round(RECORD_W * (H / W));
+  recCanvas.width = RECORD_W;
+  recCanvas.height = RECORD_H;
+  recordStartTime = performance.now();
+  lastRecordCapture = 0;
+
+  const btn = document.getElementById('frameBtn');
+  btn.classList.add('recording');
+  btn.textContent = 'REC 3';
+
+  document.getElementById('recOverlay').classList.add('show');
+}
+
+function finishRecording() {
+  isRecording = false;
+  const btn = document.getElementById('frameBtn');
+  btn.classList.remove('recording');
+  btn.textContent = 'Frame It';
+  document.getElementById('recOverlay').classList.remove('show');
+
+  const title = generateTitle();
+  const num = gallery.length + 1;
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' });
+  const colorsUsed = [...new Set(inkTrails.map(s => s.color))].length;
+
+  const piece = { frames: recordFrames.slice(), title, num, dateStr, colorsUsed,
+    strokes: totalStrokes, w: RECORD_W, h: RECORD_H };
+  gallery.push(piece);
+  showMuseum(piece);
+  updateGalleryCount();
+}
+
+// ── Museum display with animation ──
+let activePlaybacks = [];
+
+function createPlaybackCanvas(piece, cssWidth) {
+  const c = document.createElement('canvas');
+  c.width = piece.w;
+  c.height = piece.h;
+  c.style.width = '100%';
+  c.style.height = '100%';
+  const pctx = c.getContext('2d');
+  let frameIdx = 0;
+  let lastSwap = 0;
+  const interval = 1000 / RECORD_FPS;
+
+  function animate(now) {
+    if (!c.isConnected) return;
+    if (now - lastSwap >= interval) {
+      lastSwap = now;
+      if (piece.frames.length > 0) {
+        pctx.putImageData(piece.frames[frameIdx], 0, 0);
+        frameIdx = (frameIdx + 1) % piece.frames.length;
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+  return c;
+}
+
+function showMuseum(piece) {
+  const museum = document.getElementById('museum');
+  const content = document.getElementById('museumContent');
+  const maxW = Math.min(window.innerWidth * 0.65, 600);
+
+  content.innerHTML = `
+    <div class="art-frame frame--blackLacquer" style="max-width:${maxW}px;width:90vw;">
+      <div class="mat">
+        <div class="art" id="museumArt" style="aspect-ratio:${piece.w}/${piece.h};"></div>
+      </div>
+    </div>
+    <div class="wall-label">
+      <span class="no">${toRoman(piece.num)}</span>
+      <h4>${piece.title}</h4>
+      <span class="m">Cursor on canvas, ${piece.colorsUsed} color${piece.colorsUsed !== 1 ? 's' : ''}, ${RECORD_SECONDS}s loop &middot; ${piece.dateStr}</span>
+    </div>
+    <div class="museum-controls">
+      <button class="museum-btn" id="btnDrawAgain">Draw again</button>
+      ${gallery.length > 1 ? '<button class="museum-btn" id="btnGallery">View gallery</button>' : ''}
+      <button class="museum-btn primary" id="btnNewCanvas">New canvas</button>
+    </div>
+  `;
+
+  const artEl = document.getElementById('museumArt');
+  const playCanvas = createPlaybackCanvas(piece);
+  artEl.appendChild(playCanvas);
+
+  museum.classList.add('open');
+
+  document.getElementById('btnDrawAgain').onclick = () => museum.classList.remove('open');
+  const gb = document.getElementById('btnGallery');
+  if (gb) gb.onclick = () => { museum.classList.remove('open'); openGallery(); };
+  document.getElementById('btnNewCanvas').onclick = () => {
+    museum.classList.remove('open');
+    inkTrails.length = 0; totalStrokes = 0; strokeCount = 0;
+    currentInkIdx = 0; hasDrawn = false;
+    document.getElementById('frameBtn').classList.remove('show');
+    document.getElementById('info').classList.remove('fade');
+    guy.x = W*0.3+Math.random()*W*0.4;
+    guy.y = H*0.3+Math.random()*H*0.4;
+    guy.state = 'idle'; guy.panicLevel = 0; guy.sweatDrops = [];
+  };
+}
+
+function updateGalleryCount() {
+  const el = document.getElementById('galleryCount');
+  if (gallery.length > 0) {
+    el.textContent = gallery.length + ' piece' + (gallery.length !== 1 ? 's' : '') + ' collected';
+    el.classList.add('show');
+    el.style.pointerEvents = 'auto'; el.style.cursor = 'pointer';
+    el.onclick = openGallery;
+  }
+}
+
+function openGallery() {
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '';
+  gallery.forEach((piece) => {
+    const div = document.createElement('div');
+    div.className = 'gallery-piece';
+    const thumb = createPlaybackCanvas(piece);
+    div.appendChild(thumb);
+    const label = document.createElement('div');
+    label.className = 'mini-label';
+    label.innerHTML = `<h5>${piece.title}</h5><span>${piece.dateStr}</span>`;
+    div.appendChild(label);
+    div.onclick = () => { document.getElementById('gallery').classList.remove('open'); showMuseum(piece); };
+    grid.appendChild(div);
+  });
+  document.getElementById('gallery').classList.add('open');
+}
+
+document.getElementById('galleryClose').onclick = () => document.getElementById('gallery').classList.remove('open');
+document.getElementById('frameBtn').onclick = frameIt;
+
+// ── Creature AI ──
+function updateCreature(dt) {
+  const g = guy;
+  const distToMouse = dist(g.x, g.y, mousePos.x, mousePos.y);
+  const nearbyInk = inkDensityNear(g.x, g.y, 120);
+  g.trailNearby = nearbyInk;
+  g.breathPhase += dt*2; g.blinkTimer -= dt; g.stateTimer += dt;
+  g.idleTimer += dt; g.expressionTimer -= dt; g.thoughtTimer -= dt;
+
+  if (g.blinkTimer <= 0 && !g.isBlinking) {
+    g.isBlinking = true; g.blinkDuration = 0.1+Math.random()*0.05; g.blinkTimer = g.blinkDuration;
+  }
+  if (g.isBlinking) { g.blinkTimer -= dt; if (g.blinkTimer <= 0) { g.isBlinking = false; g.blinkTimer = 2+Math.random()*4; } }
+
+  const cursorThreat = isDrawing && distToMouse < 200;
+  const inkThreat = nearbyInk > 5;
+  const closeCursor = distToMouse < 100;
+  const veryClose = distToMouse < 60;
+
+  switch (g.state) {
+    case 'idle':
+      g.panicLevel = Math.max(0, g.panicLevel-dt*0.5); g.mouthState = 'neutral'; g.eyeSize = 1;
+      if (g.idleTimer > 4+Math.random()*6) {
+        g.idleTimer = 0; g.idleAction = ['sit','stand','wander'][Math.floor(Math.random()*3)];
+        if (Math.random()<0.3 && g.thoughtTimer<=0) { g.thoughtBubble = pickThought(idleThoughts); g.thoughtTimer = 2.5; }
+      }
+      if (g.idleAction === 'wander') { g.wanderAngle += (Math.random()-0.5)*dt*2; g.vx += Math.cos(g.wanderAngle)*15*dt; g.vy += Math.sin(g.wanderAngle)*15*dt; }
+      if (cursorThreat || closeCursor) {
+        g.state = 'alert'; g.stateTimer = 0; g.lookAngle = Math.atan2(mousePos.y-g.y, mousePos.x-g.x);
+        if (g.thoughtTimer<=0) { g.thoughtBubble = pickThought(alertThoughts); g.thoughtTimer = 1.5; }
+      }
+      if (inkThreat) { g.state = 'fleeing'; g.stateTimer = 0; }
+      break;
+    case 'alert':
+      g.panicLevel = Math.min(1, g.panicLevel+dt*1.5); g.mouthState = 'worried'; g.eyeSize = 1.3;
+      g.lookAngle = Math.atan2(mousePos.y-g.y, mousePos.x-g.x); g.facing = mousePos.x > g.x ? 1 : -1;
+      if (veryClose || (cursorThreat && distToMouse<150) || inkThreat) {
+        g.state = 'fleeing'; g.stateTimer = 0; g.jumpVY = -8;
+        if (g.thoughtTimer<=0) { g.thoughtBubble = pickThought(scaredThoughts); g.thoughtTimer = 1; }
+      }
+      if (!cursorThreat && !closeCursor && g.stateTimer > 2) { g.state = 'idle'; g.stateTimer = 0; g.idleAction = 'stand'; }
+      break;
+    case 'fleeing':
+      g.panicLevel = Math.min(1, g.panicLevel+dt*3); g.mouthState = 'scared'; g.eyeSize = 1.6;
+      const safe = findSafeSpot(g.x, g.y, mousePos.x, mousePos.y);
+      g.targetX = safe.x; g.targetY = safe.y;
+      const fs = 200+g.panicLevel*300;
+      const dx = g.targetX-g.x, dy = g.targetY-g.y, dd = Math.sqrt(dx*dx+dy*dy)||1;
+      g.vx += (dx/dd)*fs*dt; g.vy += (dy/dd)*fs*dt;
+      g.facing = g.vx > 0 ? 1 : -1; g.legPhase += dt*15;
+      g.hatBounce = Math.sin(g.legPhase*2)*3; g.wobble = Math.sin(g.legPhase*3)*0.1;
+      if (Math.random() < g.panicLevel*0.3) {
+        g.sweatDrops.push({ x: g.x+(Math.random()-0.5)*20, y: g.y-25+Math.random()*10, vy: -30-Math.random()*20, life: 1 });
+      }
+      if (g.stateTimer>0.5 && Math.random()<0.02 && g.thoughtTimer<=0) { g.thoughtBubble = pickThought(scaredThoughts); g.thoughtTimer = 0.8; }
+      if (!cursorThreat && distToMouse>200 && !inkThreat && g.stateTimer>1) { g.state = 'peeking'; g.stateTimer = 0; g.idleAction = 'stand'; }
+      break;
+    case 'peeking':
+      g.panicLevel = Math.max(0, g.panicLevel-dt*0.8); g.mouthState = 'worried'; g.eyeSize = 1.2;
+      g.lookAngle = Math.atan2(mousePos.y-g.y, mousePos.x-g.x); g.facing = mousePos.x > g.x ? 1 : -1;
+      if (cursorThreat && distToMouse<180) {
+        g.state = 'fleeing'; g.stateTimer = 0;
+        if (g.thoughtTimer<=0) { g.thoughtBubble = pickThought(scaredThoughts); g.thoughtTimer = 0.8; }
+      }
+      if (g.stateTimer>3 && !cursorThreat && distToMouse>200) {
+        g.state = 'idle'; g.stateTimer = 0;
+        if (g.thoughtTimer<=0) { g.thoughtBubble = pickThought(reliefThoughts); g.thoughtTimer = 2; }
+      }
+      break;
+  }
+
+  g.vx *= 0.88; g.vy *= 0.88; g.x += g.vx*dt; g.y += g.vy*dt;
+  g.jumpY += g.jumpVY; g.jumpVY += 0.8; if (g.jumpY > 0) { g.jumpY = 0; g.jumpVY = 0; }
+  const margin = 40;
+  if (g.x<margin) { g.x=margin; g.vx=Math.abs(g.vx)*0.5; }
+  if (g.x>W-margin) { g.x=W-margin; g.vx=-Math.abs(g.vx)*0.5; }
+  if (g.y<margin+30) { g.y=margin+30; g.vy=Math.abs(g.vy)*0.5; }
+  if (g.y>H-margin) { g.y=H-margin; g.vy=-Math.abs(g.vy)*0.5; }
+  for (let i=g.sweatDrops.length-1;i>=0;i--) {
+    const s=g.sweatDrops[i]; s.y+=s.vy*dt; s.vy+=60*dt; s.life-=dt*1.5;
+    if (s.life<=0) g.sweatDrops.splice(i,1);
+  }
+  if (g.state==='alert'||g.state==='peeking') g.armWave+=dt*8; else g.armWave*=0.9;
+}
+
+// ── Draw creature ──
+function drawCreature() {
+  const g = guy;
+  ctx.save(); ctx.translate(g.x, g.y+g.jumpY); ctx.rotate(g.wobble);
+  const scale = g.state==='fleeing' ? 0.9+Math.sin(g.legPhase)*0.05 : 1;
+  ctx.scale(g.facing*scale, scale);
+  const bo = Math.sin(g.breathPhase)*1.5;
+
+  ctx.beginPath(); ctx.ellipse(0,2,14,4,0,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fill();
+  ctx.strokeStyle='#333'; ctx.lineWidth=2.5; ctx.lineCap='round';
+
+  if (g.state==='fleeing') {
+    const la=Math.sin(g.legPhase)*0.6, lb=Math.sin(g.legPhase+Math.PI)*0.6;
+    ctx.beginPath();ctx.moveTo(-4,0);ctx.lineTo(-4+Math.cos(la)*14,12+Math.sin(la)*4);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(4+Math.cos(lb)*14,12+Math.sin(lb)*4);ctx.stroke();
+  } else if (g.idleAction==='sit'&&g.state==='idle') {
+    ctx.beginPath();ctx.moveTo(-5,0);ctx.quadraticCurveTo(-12,5,-14,10);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(5,0);ctx.quadraticCurveTo(12,5,16,8);ctx.stroke();
+  } else {
+    ctx.beginPath();ctx.moveTo(-4,0);ctx.lineTo(-6,14);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(4,0);ctx.lineTo(6,14);ctx.stroke();
+  }
+
+  ctx.beginPath();ctx.ellipse(0,-10+bo,10,12,0,0,Math.PI*2);
+  ctx.fillStyle='#faf9f6';ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=2.2;ctx.stroke();
+
+  ctx.beginPath();ctx.moveTo(-9,-10+bo);
+  if(g.state==='fleeing')ctx.lineTo(-18+Math.sin(g.legPhase)*5,-15+bo+Math.sin(g.legPhase*1.5)*0.8*8);
+  else ctx.lineTo(-16,-5+bo+Math.sin(g.armWave)*4);
+  ctx.strokeStyle='#333';ctx.lineWidth=2.2;ctx.stroke();
+
+  ctx.beginPath();ctx.moveTo(9,-10+bo);
+  if(g.state==='fleeing')ctx.lineTo(18+Math.sin(g.legPhase+Math.PI)*5,-15+bo-Math.sin(g.legPhase*1.5)*0.8*8);
+  else if(g.state==='alert'||g.state==='peeking')ctx.lineTo(14+Math.sin(g.armWave)*3,-18+bo+Math.sin(g.armWave*2)*6);
+  else ctx.lineTo(16,-5+bo-Math.sin(g.armWave)*4);
+  ctx.stroke();
+
+  const hy=-24+bo+g.hatBounce;
+  ctx.beginPath();ctx.arc(0,hy,9,0,Math.PI*2);ctx.fillStyle='#faf9f6';ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=2.2;ctx.stroke();
+
+  const ey=hy-1,es=4,ez=g.eyeSize;
+  if(g.isBlinking){
+    ctx.strokeStyle='#333';ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(-es-2,ey);ctx.lineTo(-es+2,ey);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(es-2,ey);ctx.lineTo(es+2,ey);ctx.stroke();
+  } else {
+    let lx=0,ly=0;
+    if(g.state!=='idle'){lx=Math.cos(g.lookAngle)*1.5*g.facing;ly=Math.sin(g.lookAngle)*1;}
+    ctx.beginPath();ctx.ellipse(-es+lx,ey+ly,2*ez,2.5*ez,0,0,Math.PI*2);ctx.fillStyle='#333';ctx.fill();
+    ctx.beginPath();ctx.ellipse(es+lx,ey+ly,2*ez,2.5*ez,0,0,Math.PI*2);ctx.fillStyle='#333';ctx.fill();
+    if(g.panicLevel>0.5){
+      ctx.beginPath();ctx.arc(-es+lx+0.5,ey+ly-0.5,0.8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+      ctx.beginPath();ctx.arc(es+lx+0.5,ey+ly-0.5,0.8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+    }
+    if(g.panicLevel>0.2){
+      ctx.strokeStyle='#333';ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(-es-3,ey-4-g.panicLevel*2);ctx.lineTo(-es+2,ey-5);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(es+3,ey-4-g.panicLevel*2);ctx.lineTo(es-2,ey-5);ctx.stroke();
+    }
+  }
+
+  const my=hy+4;ctx.strokeStyle='#333';ctx.lineWidth=1.5;ctx.lineCap='round';
+  if(g.mouthState==='scared'){ctx.beginPath();ctx.ellipse(0,my+1,3*g.panicLevel+1,3*g.panicLevel+1,0,0,Math.PI*2);ctx.stroke();}
+  else if(g.mouthState==='worried'){ctx.beginPath();ctx.moveTo(-3,my+1);ctx.quadraticCurveTo(0,my+3,3,my+1);ctx.stroke();}
+  else{ctx.beginPath();ctx.moveTo(-2,my+1);ctx.lineTo(2,my+1);ctx.stroke();}
+
+  const hty=hy-8;
+  ctx.beginPath();ctx.ellipse(0,hty+2,10,2,0,0,Math.PI*2);ctx.fillStyle='#555';ctx.fill();
+  ctx.beginPath();ctx.moveTo(-6,hty+2);ctx.quadraticCurveTo(-4,hty-5,0,hty-6);ctx.quadraticCurveTo(5,hty-5,7,hty+2);ctx.fillStyle='#555';ctx.fill();
+  ctx.beginPath();ctx.arc(1,hty-6,2,0,Math.PI*2);ctx.fillStyle='#777';ctx.fill();
+
+  for(const s of g.sweatDrops){
+    ctx.globalAlpha=s.life;ctx.fillStyle='#6eb5ff';ctx.beginPath();
+    const sx=(s.x-g.x)*g.facing,sy=s.y-(g.y+g.jumpY);
+    ctx.moveTo(sx,sy-3);ctx.quadraticCurveTo(sx+2,sy,sx,sy+2);ctx.quadraticCurveTo(sx-2,sy,sx,sy-3);ctx.fill();ctx.globalAlpha=1;
+  }
+  ctx.restore();
+
+  if(g.thoughtTimer>0&&g.thoughtBubble){
+    ctx.save();ctx.globalAlpha=Math.min(1,g.thoughtTimer*2);
+    const bx=g.x+g.facing*25,by=g.y+g.jumpY-50;
+    ctx.fillStyle='#ddd';
+    ctx.beginPath();ctx.arc(g.x+g.facing*8,g.y+g.jumpY-35,2,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(g.x+g.facing*15,g.y+g.jumpY-42,3,0,Math.PI*2);ctx.fill();
+    ctx.font='11px Courier New, monospace';
+    const tw=ctx.measureText(g.thoughtBubble).width,bw=tw+16,bh=22;
+    ctx.beginPath();ctx.roundRect(bx-bw/2,by-bh/2,bw,bh,8);ctx.fillStyle='#fff';ctx.fill();
+    ctx.strokeStyle='#ccc';ctx.lineWidth=1;ctx.stroke();
+    ctx.fillStyle='#555';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(g.thoughtBubble,bx,by);ctx.restore();
+  }
+}
+
+function drawInk() {
+  for (const seg of inkTrails) {
+    ctx.beginPath();ctx.moveTo(seg.x1,seg.y1);ctx.lineTo(seg.x2,seg.y2);
+    ctx.strokeStyle=seg.color;ctx.lineWidth=seg.width;ctx.lineCap='round';
+    ctx.globalAlpha=seg.opacity;ctx.stroke();ctx.globalAlpha=1;
+  }
+}
+
+function drawCursor() {
+  if(mousePos.x<0)return;
+  ctx.save();ctx.beginPath();ctx.arc(mousePos.x,mousePos.y,3,0,Math.PI*2);
+  ctx.fillStyle=isDrawing?inkColors[currentInkIdx]:'rgba(0,0,0,0.15)';ctx.fill();
+  if(isDrawing){ctx.beginPath();ctx.arc(mousePos.x,mousePos.y,8,0,Math.PI*2);
+    ctx.strokeStyle=inkColors[currentInkIdx];ctx.globalAlpha=0.3;ctx.lineWidth=1;ctx.stroke();}
+  ctx.restore();
+}
+
+const particles=[];
+for(let i=0;i<30;i++) particles.push({x:Math.random()*W,y:Math.random()*H,size:1+Math.random()*2,speed:0.2+Math.random()*0.5,angle:Math.random()*Math.PI*2,opacity:0.05+Math.random()*0.1});
+
+function drawParticles(dt) {
+  for(const p of particles){
+    p.x+=Math.cos(p.angle)*p.speed;p.y+=Math.sin(p.angle)*p.speed;p.angle+=(Math.random()-0.5)*0.1;
+    if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.size,0,Math.PI*2);ctx.fillStyle=`rgba(0,0,0,${p.opacity})`;ctx.fill();
+  }
+}
+
+// ── Main loop ──
+let lastTime = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now-lastTime)/1000);
+  lastTime = now;
+
+  ctx.clearRect(0, 0, W, H);
+  drawParticles(dt);
+  drawInk();
+  updateCreature(dt);
+  drawCreature();
+  drawCursor();
+
+  // Recording logic
+  if (isRecording) {
+    const elapsed = (now - recordStartTime) / 1000;
+    const remaining = Math.ceil(RECORD_SECONDS - elapsed);
+
+    if (now - lastRecordCapture >= 1000/RECORD_FPS) {
+      recordFrames.push(captureFrame());
+      lastRecordCapture = now;
+    }
+
+    const btn = document.getElementById('frameBtn');
+    btn.textContent = 'REC ' + Math.max(1, remaining);
+    document.getElementById('recText').textContent = 'recording ' + Math.max(1, remaining) + 's';
+
+    if (elapsed >= RECORD_SECONDS) {
+      finishRecording();
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
