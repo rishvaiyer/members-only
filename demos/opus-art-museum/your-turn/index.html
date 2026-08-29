@@ -88,8 +88,9 @@
     font-size: 11px; color: #787b7e;
   }
 
-  .museum-controls { display: flex; gap: 12px; margin-top: 24px; }
+  .museum-controls { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; justify-content: center; }
   .museum-btn {
+    display: inline-flex; align-items: center; text-decoration: none; line-height: 1;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
     color: #787b7e; background: none; border: 1px solid #ddd;
@@ -413,6 +414,68 @@ function finishRecording() {
   gallery.push(piece);
   showMuseum(piece);
   updateGalleryCount();
+  saveToFramedRoom(piece);
+}
+
+/* ── Keeping a piece ──────────────────────────────────────────────
+   `gallery` above is in-memory, so everything framed here used to vanish
+   on reload. A kept piece is flattened into one sprite sheet (every loop
+   frame stacked vertically, encoded once) so the Framed room can replay
+   the loop without storing raw ImageData, which runs to megabytes a piece.
+   Everything stays in this browser: nothing is uploaded.
+   ---------------------------------------------------------------- */
+const FRAMED_KEY = 'opus:framed-room:v1';
+const FRAMED_MAX = 12;          /* newest kept, oldest evicted */
+const SHEET_W = 300;            /* sprite sheet column width */
+const SHEET_STRIDE = 2;         /* keep every Nth frame: 3s at 10fps -> 15 */
+
+function buildSheet(piece) {
+  const frames = piece.frames.filter((_, i) => i % SHEET_STRIDE === 0);
+  if (!frames.length) return null;
+  const scale = SHEET_W / piece.w;
+  const fh = Math.max(1, Math.round(piece.h * scale));
+  const src = document.createElement('canvas');
+  src.width = piece.w; src.height = piece.h;
+  const sctx = src.getContext('2d');
+  const sheet = document.createElement('canvas');
+  sheet.width = SHEET_W; sheet.height = fh * frames.length;
+  const ctx = sheet.getContext('2d');
+  frames.forEach((f, i) => {
+    sctx.putImageData(f, 0, 0);
+    ctx.drawImage(src, 0, 0, piece.w, piece.h, 0, i * fh, SHEET_W, fh);
+  });
+  let url = sheet.toDataURL('image/webp', 0.72);
+  if (url.indexOf('data:image/webp') !== 0) url = sheet.toDataURL('image/jpeg', 0.78);
+  return { url: url, count: frames.length, fw: SHEET_W, fh: fh };
+}
+
+function readFramed() {
+  try { return JSON.parse(localStorage.getItem(FRAMED_KEY)) || []; }
+  catch (e) { return []; }
+}
+
+function saveToFramedRoom(piece) {
+  let sheet;
+  try { sheet = buildSheet(piece); } catch (e) { return; }
+  if (!sheet) return;
+  const kept = readFramed();
+  kept.push({
+    id: 'p' + Date.now() + Math.floor(Math.random() * 1000),
+    title: piece.title,
+    dateStr: piece.dateStr,
+    colorsUsed: piece.colorsUsed,
+    strokes: piece.strokes,
+    seconds: RECORD_SECONDS,
+    fps: RECORD_FPS / SHEET_STRIDE,
+    sheet: sheet.url, count: sheet.count, fw: sheet.fw, fh: sheet.fh,
+    savedAt: Date.now()
+  });
+  /* localStorage is a few megabytes, and a sheet is tens of kilobytes, so
+     drop the oldest until it fits rather than failing the save outright. */
+  while (kept.length) {
+    try { localStorage.setItem(FRAMED_KEY, JSON.stringify(kept.slice(-FRAMED_MAX))); return; }
+    catch (e) { kept.shift(); }
+  }
 }
 
 // ── Museum display with animation ──
@@ -463,6 +526,7 @@ function showMuseum(piece) {
     <div class="museum-controls">
       <button class="museum-btn" id="btnDrawAgain">Draw again</button>
       ${gallery.length > 1 ? '<button class="museum-btn" id="btnGallery">View gallery</button>' : ''}
+      <a class="museum-btn" href="../framed/">See it in Framed</a>
       <button class="museum-btn primary" id="btnNewCanvas">New canvas</button>
     </div>
   `;

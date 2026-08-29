@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Framed, Opus Art Museum</title>
+<style>
+:root{--shadow:0 30px 60px -34px rgba(23,24,25,.34)}
+.framed-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:clamp(52px,6vw,86px) clamp(24px,3vw,44px);align-items:start;margin-top:8px}
+.framed-piece{opacity:0;transform:translateY(14px);transition:opacity .7s ease,transform .7s ease}
+.framed-piece.in{opacity:1;transform:none}
+
+/* The frame system, matching the collection wall. */
+.art-frame{position:relative;border-radius:2px;padding:clamp(14px,3.2vw,22px);background:#161513;box-shadow:var(--shadow)}
+.art-frame::after{content:"";position:absolute;inset:8px;border-radius:1px;pointer-events:none}
+.mat{position:relative;background:#fbfaf7;padding:clamp(18px,4vw,30px);height:100%}
+.art{position:relative;width:100%;aspect-ratio:var(--ar,4/5);overflow:hidden;background:#faf9f6;box-shadow:0 0 0 1px var(--liner,rgba(0,0,0,.16))}
+.frame--goldOrnate{padding:clamp(18px,4.2vw,28px);background:linear-gradient(135deg,#f2dc97 0%,#b8892f 24%,#f0d488 48%,#98671f 74%,#f4de9a 100%);box-shadow:inset 2px 2px 4px rgba(255,247,214,.75),inset -3px -3px 7px rgba(84,54,8,.6),var(--shadow)}
+.frame--goldOrnate::after{inset:10px;box-shadow:inset 0 0 0 2px rgba(120,84,20,.7),inset 0 0 0 4px rgba(255,240,200,.5),inset 0 0 0 5px rgba(120,84,20,.4)}
+.frame--goldOrnate .mat{background:#f4ecd8;--liner:#a67f2e}
+.frame--goldOrnate .art{box-shadow:0 0 0 2px #a67f2e,0 0 0 5px #f4ecd8,0 0 0 7px rgba(120,84,20,.55)}
+.frame--midnightSilver{padding:clamp(16px,3.6vw,24px);background:radial-gradient(120% 90% at 50% 0%,rgba(150,170,220,.18),transparent 58%),linear-gradient(160deg,#1b2444,#0c1122 70%,#161d38);box-shadow:inset 2px 2px 5px rgba(150,170,220,.28),inset -3px -3px 8px rgba(0,0,0,.7),var(--shadow)}
+.frame--midnightSilver::after{inset:9px;box-shadow:inset 0 0 0 1px rgba(210,220,240,.5),inset 0 0 0 3px rgba(20,26,52,.7)}
+.frame--midnightSilver .mat{background:#eef0f4;--liner:#8b93a8}
+.frame--midnightSilver .art{box-shadow:0 0 0 1px #8b93a8,0 0 0 5px #eef0f4,0 0 0 6px rgba(30,40,70,.5)}
+.frame--blackLacquer{padding:clamp(16px,3.6vw,24px);background:linear-gradient(125deg,#3a3a3d 0%,#0c0c0d 30%,#26262a 52%,#080809 78%,#2c2c30 100%);box-shadow:inset 2px 2px 4px rgba(255,255,255,.14),inset -3px -3px 7px rgba(0,0,0,.8),var(--shadow)}
+.frame--blackLacquer::after{inset:9px;box-shadow:inset 0 0 0 2px #7c1f1a,inset 0 0 0 3px rgba(0,0,0,.6)}
+.frame--blackLacquer .mat{background:#f3efe8;--liner:#7c1f1a}
+.frame--blackLacquer .art{box-shadow:0 0 0 2px #7c1f1a,0 0 0 5px #f3efe8}
+.frame--walnutReeded{padding:clamp(18px,4vw,26px);background:repeating-linear-gradient(90deg,rgba(255,226,180,.10) 0 2px,rgba(40,20,6,.16) 2px 5px,rgba(255,226,180,.05) 5px 7px),repeating-linear-gradient(87deg,rgba(30,14,4,.10) 0 3px,transparent 3px 12px),linear-gradient(150deg,#6f4c2c,#3c2714 58%,#7c5636);box-shadow:inset 2px 2px 4px rgba(190,140,90,.4),inset -3px -3px 7px rgba(0,0,0,.6),var(--shadow)}
+.frame--walnutReeded::after{inset:9px;box-shadow:inset 0 0 0 2px rgba(40,22,8,.6),inset 0 0 0 3px rgba(180,130,80,.35)}
+.frame--walnutReeded .mat{background:#efe9dd;--liner:#7a5c3a}
+.frame--walnutReeded .art{box-shadow:0 0 0 1px #7a5c3a,0 0 0 5px #efe9dd,0 0 0 6px rgba(60,35,15,.5)}
+.frame--decoStep{padding:clamp(18px,4vw,28px);background:linear-gradient(135deg,#141416,#0a0a0b);box-shadow:inset 0 0 0 3px #0a0a0b,inset 0 0 0 5px #c69a45,inset 0 0 0 9px #0a0a0b,inset 0 0 0 11px #c69a45,inset 0 0 0 16px #141416,var(--shadow)}
+.frame--decoStep::after{inset:16px;box-shadow:inset 0 0 0 1px rgba(198,154,69,.7)}
+.frame--decoStep .mat{background:#0e0e10;padding:clamp(14px,3vw,22px);--liner:rgba(198,154,69,.5)}
+.frame--decoStep .art{box-shadow:0 0 0 2px #c69a45}
+.frame--silverBrushed{padding:clamp(15px,3.4vw,22px);background:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 1px,rgba(0,0,0,.05) 1px 2px),linear-gradient(135deg,#e2e4e7,#a4aaae 48%,#f0f1f3 62%,#9aa0a4);box-shadow:inset 2px 2px 4px rgba(255,255,255,.8),inset -3px -3px 7px rgba(70,76,80,.5),var(--shadow)}
+.frame--silverBrushed::after{inset:8px;box-shadow:inset 0 0 0 1px rgba(120,126,130,.6),inset 0 0 0 2px rgba(255,255,255,.6)}
+.frame--silverBrushed .mat{background:#f1f2f0;--liner:#9aa0a3}
+.frame--silverBrushed .art{box-shadow:0 0 0 1px #9aa0a3,0 0 0 5px #f1f2f0}
+.frame--duskClay{padding:clamp(16px,3.6vw,24px);background:radial-gradient(circle at 25% 30%,rgba(255,255,255,.3) 0 1px,transparent 1px),radial-gradient(circle at 70% 65%,rgba(90,50,30,.2) 0 1px,transparent 1px),linear-gradient(150deg,#d99a72,#b06a44 55%,#e0ab84);background-size:12px 12px,16px 16px,100% 100%;box-shadow:inset 2px 2px 4px rgba(255,230,210,.6),inset -3px -3px 7px rgba(80,40,20,.45),var(--shadow)}
+.frame--duskClay::after{inset:9px;box-shadow:inset 0 0 0 1px rgba(255,230,210,.4),inset 0 0 0 3px rgba(100,55,30,.35)}
+.frame--duskClay .mat{background:#f7ece0;--liner:#b06a44}
+.frame--duskClay .art{box-shadow:0 0 0 1px #b06a44,0 0 0 5px #f7ece0}
+.frame--limedOak{padding:clamp(18px,4.2vw,28px);background:repeating-linear-gradient(89deg,rgba(120,100,70,.10) 0 2px,transparent 2px 10px),linear-gradient(150deg,#ddcca9,#c3b184 55%,#e6d8b6);box-shadow:inset 2px 2px 4px rgba(255,250,235,.7),inset -3px -3px 7px rgba(120,100,66,.4),var(--shadow)}
+.frame--limedOak::after{inset:9px;box-shadow:inset 0 0 0 1px rgba(150,128,90,.5),inset 0 0 0 3px rgba(255,250,235,.5)}
+.frame--limedOak .mat{background:#f7f2e6;--liner:#b6a072}
+.frame--limedOak .art{box-shadow:0 0 0 1px #b6a072,0 0 0 5px #f7f2e6}
+
+/* A kept piece is one sprite sheet stepped by background-position, so a wall
+   of loops costs one image each and no canvas or timer per piece. */
+.loop{position:absolute;inset:0;background-repeat:no-repeat;background-size:100% auto;image-rendering:auto}
+
+.wall-label{margin-top:14px}
+.wall-label .no{font-family:var(--museum-type);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--museum-faint)}
+.wall-label h4{font-family:var(--museum-display, Georgia, "Times New Roman", serif);font-weight:400;font-style:italic;font-size:18px;margin:5px 0 4px;letter-spacing:-.01em}
+.wall-label .m{font-family:var(--museum-type);font-size:10.5px;letter-spacing:.04em;color:var(--museum-muted);display:block;line-height:1.5}
+.framed-piece .rm{margin-top:9px;font-family:var(--museum-type);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--museum-faint);background:none;border:0;padding:0;cursor:pointer}
+.framed-piece .rm:hover{color:var(--museum-accent)}
+
+.empty{border:1px dashed var(--museum-rule);padding:clamp(38px,7vw,72px) clamp(22px,5vw,54px);text-align:center;max-width:640px}
+.empty h2{font-family:var(--museum-display, Georgia, "Times New Roman", serif);font-weight:400;font-size:clamp(24px,3.4vw,34px);margin:0 0 12px}
+.empty p{color:var(--museum-muted);margin:0 auto 22px;max-width:430px}
+.cta{display:inline-block;font-family:var(--museum-type);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;text-decoration:none;color:var(--museum-ink);border:1px solid var(--museum-rule);padding:12px 20px;transition:border-color .2s,color .2s}
+.cta:hover{color:var(--museum-accent);border-color:var(--museum-accent)}
+.framed-tools{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:26px;padding-top:16px;border-top:1px solid var(--museum-rule)}
+.framed-tools .n{font-family:var(--museum-type);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--museum-muted);margin-right:auto}
+.framed-tools button,.framed-tools a{font-family:var(--museum-type);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--museum-muted);background:none;border:1px solid var(--museum-rule);padding:9px 14px;cursor:pointer;text-decoration:none;transition:border-color .2s,color .2s}
+.framed-tools button:hover,.framed-tools a:hover{color:var(--museum-accent);border-color:var(--museum-accent)}
+.local{margin-top:30px;font-family:var(--museum-type);font-size:9.5px;letter-spacing:.1em;color:var(--museum-faint);line-height:1.7;max-width:560px}
+@media (prefers-reduced-motion:reduce){.framed-piece{transition:none;opacity:1;transform:none}}
+</style>
+<link rel="stylesheet" href="../museum-subpages.css">
+</head>
+<body>
+<div class="page">
+  <div class="bar">
+    <span class="brand">Opus <b>Art Museum</b></span>
+    <nav class="links" aria-label="Museum pages"></nav>
+  </div>
+
+  <main>
+    <header class="intro">
+      <div class="eyebrow">Visitors</div>
+      <h1>Framed</h1>
+      <p class="lede">Every drawing you framed in Your Turn, hung the way the rest of the museum hangs.</p>
+    </header>
+
+    <div id="room"></div>
+  </main>
+</div>
+
+<script>
+/* Reads what Your Turn kept in this browser. Nothing here is uploaded, and a
+   visitor only ever sees their own wall. */
+const FRAMED_KEY = 'opus:framed-room:v1';
+const FRAMES = ['goldOrnate','midnightSilver','blackLacquer','walnutReeded','decoStep','silverBrushed','duskClay','limedOak'];
+const room = document.getElementById('room');
+
+function read() {
+  try { return JSON.parse(localStorage.getItem(FRAMED_KEY)) || []; }
+  catch (e) { return []; }
+}
+function write(list) {
+  try { localStorage.setItem(FRAMED_KEY, JSON.stringify(list)); } catch (e) {}
+}
+function toRoman(n) {
+  const v=[1000,900,500,400,100,90,50,40,10,9,5,4,1];
+  const s=['M','CM','D','CD','C','XC','L','XL','X','IX','V','IV','I'];
+  let r=''; for (let i=0;i<v.length;i++){ while(n>=v[i]){ r+=s[i]; n-=v[i]; } } return r;
+}
+function esc(t){ return String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function renderEmpty() {
+  room.innerHTML =
+    '<div class="empty">' +
+      '<h2>Nothing hung yet</h2>' +
+      '<p>Draw something in Your Turn and press Frame It. Whatever you keep is hung here, in this browser.</p>' +
+      '<a class="cta" href="../your-turn/">Go to Your Turn</a>' +
+    '</div>' +
+    '<p class="local">Kept in this browser only. Clearing site data empties the room, and it does not follow you to another device.</p>';
+}
+
+function renderWall(list) {
+  const newestFirst = list.slice().reverse();
+  room.innerHTML =
+    '<div class="framed-grid" id="grid"></div>' +
+    '<div class="framed-tools">' +
+      '<span class="n">' + list.length + ' piece' + (list.length !== 1 ? 's' : '') + '</span>' +
+      '<a href="../your-turn/">Frame another</a>' +
+      '<button id="clearAll" type="button">Empty the room</button>' +
+    '</div>' +
+    '<p class="local">Kept in this browser only. Clearing site data empties the room, and it does not follow you to another device.</p>';
+
+  const grid = document.getElementById('grid');
+  newestFirst.forEach((p, i) => {
+    const n = list.length - i;
+    const el = document.createElement('div');
+    el.className = 'framed-piece';
+    const ar = (p.fw && p.fh) ? p.fw + '/' + p.fh : '4/5';
+    el.innerHTML =
+      '<div class="art-frame frame--' + FRAMES[n % FRAMES.length] + '">' +
+        '<div class="mat"><div class="art" style="--ar:' + ar + '"><div class="loop"></div></div></div>' +
+      '</div>' +
+      '<div class="wall-label">' +
+        '<div class="no">Visitor No. ' + toRoman(n) + '</div>' +
+        '<h4>' + esc(p.title) + '</h4>' +
+        '<span class="m">Cursor on canvas, ' + p.colorsUsed + ' colour' + (p.colorsUsed !== 1 ? 's' : '') +
+          ', ' + p.seconds + 's loop</span>' +
+        '<span class="m">' + esc(p.dateStr) + '</span>' +
+        '<button class="rm" type="button" data-id="' + p.id + '">Take it down</button>' +
+      '</div>';
+
+    const loop = el.querySelector('.loop');
+    loop.style.backgroundImage = 'url(' + p.sheet + ')';
+    loop.style.backgroundSize = '100% ' + (p.count * 100) + '%';
+    grid.appendChild(el);
+    play(loop, p);
+  });
+
+  grid.addEventListener('click', e => {
+    const b = e.target.closest('.rm');
+    if (!b) return;
+    const next = read().filter(x => x.id !== b.dataset.id);
+    write(next);
+    draw();
+  });
+  document.getElementById('clearAll').addEventListener('click', () => {
+    if (!confirm('Take down everything in this room? This cannot be undone.')) return;
+    write([]);
+    draw();
+  });
+
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+  }), { threshold: .12 });
+  grid.querySelectorAll('.framed-piece').forEach(el => io.observe(el));
+}
+
+/* One rAF loop per piece would mean a timer per frame; stepping the sheet on an
+   interval keeps a wall of loops cheap, and it stops while the tab is hidden. */
+const timers = [];
+function play(el, p) {
+  if (!p.count || p.count < 2) return;
+  const step = 1 / (p.count - 1) * 100;
+  let i = 0;
+  const tick = () => {
+    if (!el.isConnected) return;
+    if (!document.hidden) {
+      el.style.backgroundPosition = '0 ' + (i * step) + '%';
+      i = (i + 1) % p.count;
+    }
+  };
+  tick();
+  timers.push(setInterval(tick, 1000 / (p.fps || 5)));
+}
+
+function draw() {
+  timers.splice(0).forEach(clearInterval);
+  const list = read();
+  if (!list.length) renderEmpty(); else renderWall(list);
+}
+draw();
+
+/* Framing in another tab fills this room without a reload. */
+addEventListener('storage', e => { if (e.key === FRAMED_KEY) draw(); });
+</script>
+<script src="../museum-system.js"></script>
+</body>
+</html>

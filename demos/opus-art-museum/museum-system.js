@@ -23,7 +23,7 @@
     ["curators-desk", "Curator’s Desk", "Notes on how the museum runs"],
     ["visitor-notes", "Visitor Notes", "Leave a line in the book"],
     ["your-turn", "Your Turn", "Make something yourself"],
-    ["prototypes.html", "Studies", "Prototypes and dead ends"]
+    ["framed", "Framed", "What you framed in Your Turn"]
   ];
 
   var segments = location.pathname.split("/").filter(Boolean);
