@@ -177,8 +177,17 @@
   }
   @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 </style>
+<style>
+  .museum-back{position:fixed;top:14px;left:14px;z-index:9999;display:inline-flex;align-items:center;gap:7px;
+    padding:8px 13px;border:1px solid rgba(20,20,18,.18);border-radius:2px;background:rgba(252,251,247,.92);
+    color:#26251f;font:500 12px/1 "Avenir Next","Helvetica Neue",Helvetica,sans-serif;text-decoration:none;
+    -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .18s,border-color .18s}
+  .museum-back:hover{background:#fff;border-color:rgba(20,20,18,.42)}
+  .museum-back:focus-visible{outline:2px solid #8a3f2d;outline-offset:2px}
+</style>
 </head>
 <body>
+<a class="museum-back" href="../">← Opus Art Museum</a>
 <canvas id="world"></canvas>
 <div id="info">draw near the little guy. he doesn't like it.</div>
 <button id="frameBtn">Frame It</button>

@@ -107,7 +107,7 @@ main.wrap > header {
   align-items: stretch !important;
   gap: 0 !important;
   margin: 0 !important;
-  overflow-x: auto !important;
+  overflow: visible !important;
   overscroll-behavior-inline: contain;
   scrollbar-width: none;
   white-space: nowrap;
@@ -221,13 +221,28 @@ p, .lede, .intro { color: var(--museum-muted) !important; }
 }
 .museum-nav::before, .museum-nav::after { display: none !important; }
 .museum-nav .nav-head {
+  display: flex !important;
+  align-items: center;
+  gap: 20px;
   min-height: 62px;
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
 }
 .museum-nav .nav-head strong { font-size: 15px !important; letter-spacing: -.02em !important; }
-.museum-nav .nav-head span { display: none !important; }
+.museum-nav .nav-head-tools {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-left: auto;
+}
+.museum-nav .nav-head .nav-status {
+  margin: 0 !important;
+  font-size: 12px;
+  color: var(--museum-muted);
+  font-variant-numeric: tabular-nums;
+}
+.museum-nav .nav-head .museum-search { flex: 1 1 auto; max-width: 380px; }
 .museum-nav.is-collapsed { padding: 0 !important; }
 .museum-nav.is-collapsed .nav-row { display: none !important; }
 .nav-row {
@@ -467,8 +482,8 @@ body:has(.room) .room { margin-top: 0 !important; }
 .wrap > .note { display: grid !important; grid-template-columns: 1fr 1fr; gap: 56px; padding: 28px 0 !important; border: 0 !important; border-top: 1px solid var(--museum-rule) !important; background: transparent !important; }
 
 @media (max-width: 980px) {
-  .bar { grid-template-columns: auto auto; gap: 0 18px !important; }
-  .links, .site-nav { grid-column: 1 / -1; justify-content: flex-start; order: 3; border-top: 1px solid var(--museum-rule); }
+  .bar { grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 18px !important; }
+  .links, .site-nav { justify-content: flex-end; }
   .links a, .site-link { min-height: 52px; padding: 0 10px !important; }
   .tools { justify-self: end; }
   .grid, .grid.view-salon, .grid.view-compact { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 80px 32px !important; }
@@ -483,12 +498,17 @@ body:has(.room) .room { margin-top: 0 !important; }
   .bar .mark, .bar > a:first-child, .bar .brand { font-size: 15px !important; }
   .tools .mini { min-width: 0 !important; padding: 0 10px !important; }
   #themeBtn { display: none !important; }
-  .links, .site-nav { width: 100% !important; mask-image: linear-gradient(to right, #000 88%, transparent); }
+  .links, .site-nav { width: auto !important; }
+  .bar { grid-template-columns: auto minmax(0, 1fr) auto; gap: 0 10px !important; }
+  .site-nav .site-link { padding: 0 7px !important; }
   .links a, .site-link { min-height: 48px; padding: 0 9px !important; font-size: 11px !important; }
   main { padding-top: 18px !important; }
   h1 { font-size: 34px !important; }
   .wrap > .intro, .wrap > main > .intro { padding-top: 34px !important; }
-  .museum-nav .nav-head { min-height: 56px; }
+  .museum-nav .nav-head { min-height: 56px; flex-wrap: wrap; gap: 10px 14px; padding: 10px 0 !important; }
+  .museum-nav .nav-head .museum-search { flex: 1 1 100%; max-width: none; }
+  .museum-nav .nav-head-tools { margin-left: 0; gap: 14px; width: 100%; }
+  .museum-nav .nav-head .nav-status { order: 3; margin-left: auto !important; }
   .nav-row { grid-template-columns: 1fr !important; }
   .timeline-wrap { min-width: 0 !important; width: 100% !important; }
   .section-head { margin-bottom: 22px !important; }
@@ -509,4 +529,81 @@ body:has(.room) .room { margin-top: 0 !important; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+/* ------------------------------------------------------------------
+   Museum nav: one Collection link plus a Rooms menu.
+
+   Lives here, not in index.html, because museum-system.js rebuilds the
+   same nav into the .links bar on every room page too; it tags each host
+   .site-nav so one set of rules covers the collection and the rooms.
+
+   The .rooms-btn also carries .site-link on purpose, so it inherits the
+   sizing and the active underline from the block above rather than
+   restating them here. Only the menu itself is new.
+   ------------------------------------------------------------------ */
+.site-nav .rooms { position: relative; display: flex; }
+.site-nav .rooms-btn { background: transparent; cursor: pointer; gap: 6px; }
+.site-nav .rooms-btn .chev { transition: transform .22s ease; flex: none; }
+.site-nav .rooms-btn[aria-expanded="true"] { color: var(--museum-ink) !important; }
+.site-nav .rooms-btn[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.site-nav .rooms-btn[aria-expanded="true"]::after { opacity: 1; }
+
+.rooms-menu {
+  position: absolute;
+  top: calc(100% - 8px);
+  right: 0;
+  z-index: 120;
+  display: grid;
+  gap: 1px;
+  min-width: 300px;
+  padding: 6px;
+  border: 1px solid var(--museum-rule, #d9d7d0);
+  background: var(--museum-paper, var(--paper, #fffefa));
+  box-shadow: 0 18px 44px rgba(24, 21, 16, .17);
+  white-space: normal;
+}
+.rooms-menu[hidden] { display: none; }
+.rooms-menu a {
+  display: block !important;
+  min-height: 0 !important;
+  padding: 10px 13px !important;
+  border-left: 2px solid transparent !important;
+  text-decoration: none;
+  transition: background .16s, border-color .16s;
+}
+.rooms-menu a::after { display: none; }
+.rooms-menu a b {
+  display: block;
+  font-family: var(--museum-display, var(--serif));
+  font-size: 15px;
+  font-weight: 400;
+  letter-spacing: -.01em;
+  color: var(--museum-ink, var(--text));
+}
+.rooms-menu a span {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--museum-muted, var(--faint));
+}
+.rooms-menu a:hover, .rooms-menu a:focus-visible {
+  background: var(--museum-rule, var(--line));
+  border-left-color: var(--museum-ink, var(--accent)) !important;
+  outline: none;
+}
+.rooms-menu a.is-current { border-left-color: var(--museum-ink, var(--accent)) !important; }
+
+@media (max-width: 620px) {
+  .rooms-menu {
+    position: fixed;
+    top: 62px;
+    right: 12px;
+    left: 12px;
+    min-width: 0;
+    max-height: calc(100vh - 78px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

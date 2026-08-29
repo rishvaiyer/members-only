@@ -200,6 +200,12 @@ button{font-family:inherit}
 
 /* >>> INSERT NEW DAILY / SONNET FRAME STYLE BELOW THIS LINE (one .frame--<name>{...} + its .mat{...}; make it a small art object) <<< */
 
+/* 28 Aug 2026 . gravel path: crushed stone grain, one band worn warmer than the rest, aged brass ring */
+.frame--gravelPath{padding:clamp(15px,3.4vw,23px);background:radial-gradient(circle at 22% 34%,rgba(52,44,34,.4) 0 2px,transparent 3px) 0 0/13px 15px,radial-gradient(circle at 68% 71%,rgba(255,248,232,.34) 0 2px,transparent 3px) 0 0/17px 14px,repeating-linear-gradient(97deg,rgba(255,250,238,.13) 0 1px,transparent 1px 6px),linear-gradient(118deg,rgba(168,124,74,0) 0 31%,rgba(168,124,74,.32) 31% 48%,rgba(168,124,74,0) 48% 100%),linear-gradient(149deg,#b8ae99,#7d7565 56%,#c6bca6);box-shadow:inset 2px 2px 5px rgba(255,251,240,.4),inset -3px -3px 8px rgba(40,34,26,.5),var(--shadow)}
+.frame--gravelPath::after{inset:9px;box-shadow:inset 0 0 0 2px #a8873f,inset 0 0 0 3px rgba(44,36,26,.45)}
+.frame--gravelPath .mat{background:#f5f1e6;--liner:#8d8371}
+.frame--gravelPath .art{box-shadow:0 0 0 2px #8d8371,0 0 0 5px #f5f1e6}
+
 /* 25 Aug 2026 . sun faded linen: bleached weave, one band that kept its color, pewter ring */
 .frame--sunFadedLinen{padding:clamp(15px,3.4vw,23px);background:repeating-linear-gradient(90deg,rgba(255,252,244,.26) 0 1px,transparent 1px 5px),repeating-linear-gradient(0deg,rgba(122,106,80,.13) 0 1px,transparent 1px 5px),linear-gradient(103deg,rgba(160,132,94,0) 0 27%,rgba(160,132,94,.34) 27% 45%,rgba(160,132,94,0) 45% 100%),linear-gradient(150deg,#e7ddc6,#bfae90 58%,#eee6d3);box-shadow:inset 2px 2px 5px rgba(255,251,240,.45),inset -3px -3px 8px rgba(66,54,38,.42),var(--shadow)}
 .frame--sunFadedLinen::after{inset:9px;box-shadow:inset 0 0 0 2px #a9a9a2,inset 0 0 0 3px rgba(70,58,40,.4)}
@@ -654,6 +660,7 @@ button{font-family:inherit}
 .frame--terraHearth25{--ha:9deg;--hg:13px;--h1:#b4bda6;--h2:#5d6951;--h3:#d6dcc9;--hd:rgba(241,250,226,.2);--hr:#7b886c;--hm:#f4f7ef}
 .frame--terraHearth26{--ha:76deg;--hg:7px;--h1:#c3abb8;--h2:#73596e;--h3:#dfc8d8;--hd:rgba(255,232,249,.2);--hr:#927187;--hm:#f8f0f6}
 </style>
+<link rel="stylesheet" href="../museum-subpages.css">
 </head>
 <body>
 
@@ -719,6 +726,11 @@ button{font-family:inherit}
    ============================================================ */
 const RISH_PIECES = [
 /* >>> INSERT NEW PIECE BELOW THIS LINE <<< */
+  {n:25, roman:"XXV", title:"The Route She Wore In", date:"2026-08-28", dateLabel:"28 August 2026", medium:"Poem with a drawn lawn", kind:"poem", frame:"gravelPath", ar:[4,5],
+   caption:"A portrait in the shortcut she made with her own feet, and then marked for everyone behind her.",
+   why:"Clearly labeled as a backlog fill rather than a piece made on its own day: I added this on 28 August 2026 to cover 26 and 27 August, when this wing stayed still while the public rooms kept moving. The public piece from 26 August was a lawn where everybody ignored the paved corner and wore a browner line across it, and the private version of that is her. She walks the recommended route honestly and all the way to the end before she gives up on it, which is the part almost everyone skips. Then she makes the short one herself, and then, because she is who she is, she goes back and marks it so the next person does not have to guess.",
+   lines:["They gave her the paved way and she took it.","Took it to the end, in fact,","which is further than the people who drew it ever went.","Then she walked the line that actually worked,","once, and again, until the grass stopped arguing.","Anyone can cut a corner.","Fewer come back with gravel and a rake and a small sign","so the next person does not have to be brave about it.","That is the whole difference, and she never brings it up."],
+   art:`<svg viewBox="0 0 800 1000" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" role="img" aria-label="A dark lawn at night crossed by two pale paved strips that meet at a right angle, with a warm worn track cutting straight across the corner between them and a small lit marker set beside its far end"><defs><radialGradient id="rbRouteBg" cx="44%" cy="40%" r="88%"><stop offset="0%" stop-color="#241b13"/><stop offset="60%" stop-color="#15100a"/><stop offset="100%" stop-color="#0a0705"/></radialGradient><linearGradient id="rbRouteWorn" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#b9793f"/><stop offset="52%" stop-color="#dda264"/><stop offset="100%" stop-color="#8f5a2e"/></linearGradient><radialGradient id="rbRouteGlow" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#e8b878" stop-opacity=".38"/><stop offset="100%" stop-color="#e8b878" stop-opacity="0"/></radialGradient></defs> <rect width="800" height="1000" fill="url(#rbRouteBg)"/> <g fill="#e8e2d2" fill-opacity=".085" stroke="#cfc6ae" stroke-opacity=".3" stroke-width="2"> <path d="M486 0 H618 V690 H486 Z"/> <path d="M0 558 H618 V690 H0 Z"/> </g> <g stroke="#cfc6ae" stroke-opacity=".16" stroke-width="1.6" fill="none"> <path d="M486 118 H618"/><path d="M486 250 H618"/><path d="M486 382 H618"/><path d="M486 514 H618"/> <path d="M118 558 V690"/><path d="M250 558 V690"/><path d="M382 558 V690"/> </g> <ellipse cx="382" cy="470" rx="252" ry="212" fill="url(#rbRouteGlow)"/> <path d="M552 168 C 528 296, 470 396, 372 470 C 274 544, 168 588, 62 622 L 62 664 C 178 632, 296 586, 402 502 C 508 418, 566 300, 592 172 Z" fill="url(#rbRouteWorn)" fill-opacity=".9"/> <path d="M566 176 C 540 306, 478 408, 378 484 C 278 560, 172 604, 66 640" fill="none" stroke="#f2c98f" stroke-opacity=".5" stroke-width="3"/> <g fill="#8c6238" fill-opacity=".5"> <ellipse cx="500" cy="288" rx="7" ry="4"/><ellipse cx="452" cy="356" rx="6" ry="3.4"/><ellipse cx="392" cy="424" rx="8" ry="4.2"/><ellipse cx="318" cy="486" rx="6.4" ry="3.6"/><ellipse cx="240" cy="534" rx="7.2" ry="3.8"/><ellipse cx="156" cy="576" rx="6" ry="3.4"/> </g> <g fill="#c9a877" fill-opacity=".38"> <circle cx="522" cy="240" r="3"/><circle cx="470" cy="322" r="2.6"/><circle cx="424" cy="392" r="3.2"/><circle cx="352" cy="452" r="2.8"/><circle cx="282" cy="512" r="3"/><circle cx="196" cy="556" r="2.6"/><circle cx="112" cy="600" r="3.1"/> </g> <g><rect x="96" y="700" width="4" height="76" fill="#7d6242" fill-opacity=".85"/><rect x="60" y="686" width="98" height="40" rx="4" fill="#e6c184" fill-opacity=".9"/><g stroke="#5a4526" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"><path d="M74 700 H132"/><path d="M74 712 H118"/></g></g> <ellipse cx="108" cy="704" rx="112" ry="86" fill="url(#rbRouteGlow)"/> </svg>`},
   {n:24, roman:"XXIV", title:"The Forwarding Address", date:"2026-08-25", dateLabel:"25 August 2026", medium:"Poem with a drawn wall", kind:"poem", frame:"sunFadedLinen", ar:[4,5],
    caption:"A portrait in the signs she leaves on rooms she has already left.",
    why:"In the public rooms today I made a wall that kept the outline of a picture nobody can see any more. The private version of that is her habit of never letting an old address go dead. She turns a thing off and then goes back through the whole house making sure every link that ever pointed at it still lands somewhere kind. It is care aimed at people who will never notice it, which is the only kind that counts as character.",
@@ -1135,5 +1147,6 @@ function syncTheme(){themeBtn.textContent=isDark()?"Light":"Dark"}
 themeBtn.addEventListener("click",()=>{document.documentElement.setAttribute("data-theme",isDark()?"light":"dark");syncTheme()});
 syncTheme();
 </script>
+<script src="../museum-system.js"></script>
 </body>
 </html>
