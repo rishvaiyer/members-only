@@ -20,6 +20,12 @@ from reportlab.lib.units import inch
 from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer
 
 
+ALLOWED_STATIC_EXTENSIONS = {
+    ".html", ".css", ".js", ".mjs", ".json", ".geojson",
+    ".jpg", ".jpeg", ".png", ".webp", ".svg", ".ico",
+    ".woff", ".woff2", ".txt",
+}
+
 ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("PENTELL_DATA_DIR", "/data"))
 DATA.mkdir(parents=True, exist_ok=True)
@@ -206,9 +212,13 @@ class Handler(BaseHTTPRequestHandler):
         candidate = (ROOT / relative).resolve()
         if ROOT not in candidate.parents and candidate != ROOT:
             return self.send_bytes(b"Not found", "text/plain", HTTPStatus.NOT_FOUND)
+        if any(part.startswith(".") for part in candidate.relative_to(ROOT).parts):
+            return self.send_bytes(b"Not found", "text/plain", HTTPStatus.NOT_FOUND)
         if candidate.is_dir():
             candidate = candidate / "index.html"
         if not candidate.is_file():
+            return self.send_bytes(b"Not found", "text/plain", HTTPStatus.NOT_FOUND)
+        if candidate.suffix.lower() not in ALLOWED_STATIC_EXTENSIONS:
             return self.send_bytes(b"Not found", "text/plain", HTTPStatus.NOT_FOUND)
         content_type = "text/html; charset=utf-8" if candidate.suffix == ".html" else "application/octet-stream"
         if candidate.suffix == ".css":
