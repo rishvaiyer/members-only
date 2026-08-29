@@ -1,3 +1,11 @@
 index.orig.html
 Dockerfile
 .dockerignore
+
+# Never ship docs or Finder metadata: server.py serves any file by path, so anything
+# copied into the image is publicly readable. Contributor guides live in
+# ../portfolio-night-notes/museum-guides/ instead.
+*.md
+**/*.md
+.DS_Store
+**/.DS_Store
