@@ -607,3 +607,14 @@ body:has(.room) .room { margin-top: 0 !important; }
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ------------------------------------------------------------------
+   Full Mode and the lightbox paint on a near-black ground, but the
+   heading rule above forces every h1-h4 to --museum-ink (#171815).
+   The artwork title, the most important label on the screen, was
+   rendering at a contrast ratio of 1.12:1 against the backdrop, which
+   is invisible rather than merely low. These overlays get the light ink.
+   ------------------------------------------------------------------ */
+.phantom h1, .phantom h2, .phantom h3, .phantom h4,
+.lb h1, .lb h2, .lb h3, .lb h4 { color: #efe9dd !important; }
+.phantom .plate .no, .lb .lb-meta .no { color: #c8b78a !important; }

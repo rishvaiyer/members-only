@@ -20,7 +20,6 @@
     ["free-form", "Free Form", "Work that would not sit in a frame"],
     ["sound-room", "Sound Room", "Tone studies, played on request"],
     ["3d-room", "3D Room", "A room you can look around"],
-    ["personalportraitrishbenj", "Portraits", "Benji and Rish"],
     ["curators-desk", "Curator’s Desk", "Notes on how the museum runs"],
     ["visitor-notes", "Visitor Notes", "Leave a line in the book"],
     ["your-turn", "Your Turn", "Make something yourself"],
