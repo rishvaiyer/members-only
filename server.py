@@ -30,12 +30,17 @@ ROOT = Path(__file__).resolve().parent
 DATA = Path(os.environ.get("PENTELL_DATA_DIR", "/data"))
 DATA.mkdir(parents=True, exist_ok=True)
 CONTENT_PATH = DATA / "pentell-content.json"
+TESTING_LINKS_PATH = DATA / "testingstuff-links.json"
 PUBLISHED_PDF = DATA / "canaryNorth_v8_folio.pdf"
 ORIGINAL_PDF = ROOT / "blog" / "canaryNorth_v8_folio.pdf"
 EDITOR_HTML = ROOT / "edit" / "pentell" / "index.html"
 SESSION_COOKIE = "pentell_owner"
 SESSIONS: dict[str, float] = {}
 LOCK = threading.Lock()
+TESTING_LINKS_LOCK = threading.Lock()
+
+TESTING_SLUG = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$")
+TESTING_RESERVED_SLUGS = {"api", "manage", "new", "styles"}
 
 DEFAULT_TITLE = "How me, my cat, a Harry Potter-inspired invisibility cloak, a security guard, and Codex built a Red-Team Lab in 12 hours"
 DEFAULT_DEK = "How one night of AI security curiosity became contextSeal, penTell, Benji7Lives, canaryNorth, and a defensible evidence trail."
@@ -101,6 +106,105 @@ def save_content(content: dict) -> None:
     tmp = CONTENT_PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(content, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(CONTENT_PATH)
+
+
+def load_testing_links() -> list[dict]:
+    if not TESTING_LINKS_PATH.exists():
+        return []
+    try:
+        payload = json.loads(TESTING_LINKS_PATH.read_text(encoding="utf-8"))
+        links = payload.get("links", []) if isinstance(payload, dict) else []
+        return [item for item in links if isinstance(item, dict)]
+    except (OSError, json.JSONDecodeError):
+        return []
+
+
+def save_testing_links(links: list[dict]) -> None:
+    tmp = TESTING_LINKS_PATH.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"links": links}, ensure_ascii=False, indent=2), encoding="utf-8")
+    tmp.replace(TESTING_LINKS_PATH)
+
+
+def testing_link_active(link: dict, now: int | None = None) -> bool:
+    expires_at = link.get("expires_at")
+    if not expires_at:
+        return True
+    try:
+        return int(expires_at) > (now or int(time.time()))
+    except (TypeError, ValueError):
+        return False
+
+
+def public_testing_link(link: dict) -> dict:
+    return {
+        "slug": str(link.get("slug", "")),
+        "title": str(link.get("title", "")),
+        "note": str(link.get("note", "")),
+        "expires_at": link.get("expires_at"),
+        "active": testing_link_active(link),
+    }
+
+
+def owner_testing_link(link: dict) -> dict:
+    payload = public_testing_link(link)
+    payload.update({
+        "id": str(link.get("id", "")),
+        "destination": str(link.get("destination", "")),
+        "listed": bool(link.get("listed", True)),
+        "created_at": link.get("created_at"),
+        "updated_at": link.get("updated_at"),
+    })
+    return payload
+
+
+def normalize_testing_link(payload: dict, existing: dict | None = None) -> dict:
+    existing = existing or {}
+    slug = str(payload.get("slug", "")).strip().lower()
+    title = str(payload.get("title", "")).strip()[:80]
+    note = str(payload.get("note", "")).strip()[:240]
+    destination = str(payload.get("destination", "")).strip()
+    parsed = urlparse(destination)
+    if not TESTING_SLUG.fullmatch(slug) or slug in TESTING_RESERVED_SLUGS:
+        raise ValueError("Use 1-63 lowercase letters, numbers, or hyphens for the link name.")
+    if not title:
+        raise ValueError("A title is required.")
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc or parsed.username or parsed.password:
+        raise ValueError("Destination must be a complete http:// or https:// URL without embedded credentials.")
+    expires_at = payload.get("expires_at")
+    if expires_at in {None, ""}:
+        expires_at = None
+    else:
+        try:
+            expires_at = int(expires_at)
+        except (TypeError, ValueError):
+            raise ValueError("Expiration must be a valid date and time.") from None
+        if expires_at <= int(time.time()):
+            raise ValueError("Expiration must be in the future.")
+    now = int(time.time())
+    return {
+        "id": str(existing.get("id") or secrets.token_urlsafe(12)),
+        "slug": slug,
+        "title": title,
+        "destination": destination,
+        "note": note,
+        "listed": bool(payload.get("listed", True)),
+        "expires_at": expires_at,
+        "created_at": int(existing.get("created_at") or now),
+        "updated_at": now,
+    }
+
+
+def issue_owner_session(handler: BaseHTTPRequestHandler, password: str):
+    expected = os.environ.get("PENTELL_EDITOR_PASSWORD", "")
+    if not expected or not hmac.compare_digest(password, expected):
+        return handler.json({"error": "Owner access denied."}, HTTPStatus.UNAUTHORIZED)
+    token = secrets.token_urlsafe(32)
+    with LOCK:
+        SESSIONS[token] = time.time() + 1800
+    return handler.json(
+        {"ok": True},
+        extra={"Set-Cookie": f"{SESSION_COOKIE}={token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=1800"},
+    )
 
 
 def html_to_plain(value: str) -> list[str]:
@@ -174,11 +278,15 @@ class Handler(BaseHTTPRequestHandler):
         print(f"{self.address_string()} - {format % args}")
 
     def send_bytes(self, payload: bytes, content_type: str, status=HTTPStatus.OK, extra=None):
+        headers = dict(extra or {})
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(payload)))
-        self.send_header("Cache-Control", "no-store" if self.path.startswith("/edit/") or self.path.startswith("/api/") else "public, max-age=60")
-        for key, value in (extra or {}).items():
+        private_page = self.path.startswith("/edit/") or self.path.startswith("/api/") or self.path.startswith("/testingstuff/manage")
+        self.send_header("Cache-Control", headers.pop("Cache-Control", "no-store" if private_page else "public, max-age=60"))
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        for key, value in headers.items():
             self.send_header(key, value)
         self.end_headers()
         self.wfile.write(payload)
@@ -202,9 +310,37 @@ class Handler(BaseHTTPRequestHandler):
             if not authorized(self):
                 return self.json({"error": "Owner access required."}, HTTPStatus.UNAUTHORIZED)
             return self.json(load_content())
+        if path == "/api/testingstuff/session":
+            return self.json({"authorized": authorized(self)})
+        if path == "/api/testingstuff/links":
+            owner = authorized(self)
+            now = int(time.time())
+            with TESTING_LINKS_LOCK:
+                links = load_testing_links()
+            if not owner:
+                links = [link for link in links if bool(link.get("listed", True)) and testing_link_active(link, now)]
+            serialize = owner_testing_link if owner else public_testing_link
+            return self.json({"links": [serialize(link) for link in links], "owner": owner})
         if path == "/blog/canaryNorth_v8_folio.pdf":
             source = PUBLISHED_PDF if PUBLISHED_PDF.exists() else ORIGINAL_PDF
             return self.send_bytes(source.read_bytes(), "application/pdf", extra={"Content-Disposition": "inline"})
+        if path in {"/testingstuff/manage", "/testingstuff/manage/"}:
+            return self.serve_static("/testingstuff/manage/index.html")
+        match = re.fullmatch(r"/testingstuff/([a-z0-9-]+)/?", path)
+        if match:
+            slug = match.group(1)
+            with TESTING_LINKS_LOCK:
+                link = next((item for item in load_testing_links() if item.get("slug") == slug), None)
+            if not link:
+                return self.send_bytes(b"Link not found", "text/plain; charset=utf-8", HTTPStatus.NOT_FOUND)
+            if not testing_link_active(link):
+                return self.send_bytes(b"This temporary link has expired.", "text/plain; charset=utf-8", HTTPStatus.GONE)
+            return self.send_bytes(
+                b"Redirecting...",
+                "text/plain; charset=utf-8",
+                HTTPStatus.FOUND,
+                {"Location": str(link.get("destination", "/testingstuff/")), "Cache-Control": "no-store"},
+            )
         return self.serve_static(path)
 
     def serve_static(self, path):
@@ -241,15 +377,28 @@ class Handler(BaseHTTPRequestHandler):
             payload = self.read_json()
         except (ValueError, json.JSONDecodeError):
             return self.json({"error": "Invalid request."}, HTTPStatus.BAD_REQUEST)
-        if path == "/api/pentell/login":
-            expected = os.environ.get("PENTELL_EDITOR_PASSWORD", "")
-            supplied = str(payload.get("password", ""))
-            if not expected or not hmac.compare_digest(supplied, expected):
-                return self.json({"error": "Owner access denied."}, HTTPStatus.UNAUTHORIZED)
-            token = secrets.token_urlsafe(32)
+        if path in {"/api/pentell/login", "/api/testingstuff/login"}:
+            return issue_owner_session(self, str(payload.get("password", "")))
+        if path == "/api/testingstuff/logout":
+            raw = self.headers.get("Cookie", "")
+            token = next((part.split("=", 1)[1] for part in raw.split("; ") if part.startswith(f"{SESSION_COOKIE}=")), "")
             with LOCK:
-                SESSIONS[token] = time.time() + 1800
-            return self.json({"ok": True}, extra={"Set-Cookie": f"{SESSION_COOKIE}={token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=1800"})
+                SESSIONS.pop(token, None)
+            return self.json({"ok": True}, extra={"Set-Cookie": f"{SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0"})
+        if path == "/api/testingstuff/links":
+            if not authorized(self):
+                return self.json({"error": "Owner access required."}, HTTPStatus.UNAUTHORIZED)
+            try:
+                link = normalize_testing_link(payload)
+            except ValueError as error:
+                return self.json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
+            with TESTING_LINKS_LOCK:
+                links = load_testing_links()
+                if any(item.get("slug") == link["slug"] for item in links):
+                    return self.json({"error": "That link name is already in use."}, HTTPStatus.CONFLICT)
+                links.append(link)
+                save_testing_links(links)
+            return self.json({"ok": True, "link": owner_testing_link(link)}, HTTPStatus.CREATED)
         if path in {"/api/pentell/save", "/api/pentell/publish"}:
             if not authorized(self):
                 return self.json({"error": "Owner access required."}, HTTPStatus.UNAUTHORIZED)
@@ -267,6 +416,49 @@ class Handler(BaseHTTPRequestHandler):
                 return self.json({"ok": True, "published_at": content["updated_at"], "pdf": "/blog/canaryNorth_v8_folio.pdf"})
             return self.json({"ok": True, "saved_at": content["updated_at"]})
         return self.json({"error": "Not found."}, HTTPStatus.NOT_FOUND)
+
+    def do_PUT(self):
+        path = unquote(urlparse(self.path).path)
+        match = re.fullmatch(r"/api/testingstuff/links/([^/]+)", path)
+        if not match:
+            return self.json({"error": "Not found."}, HTTPStatus.NOT_FOUND)
+        if not authorized(self):
+            return self.json({"error": "Owner access required."}, HTTPStatus.UNAUTHORIZED)
+        try:
+            payload = self.read_json()
+        except (ValueError, json.JSONDecodeError):
+            return self.json({"error": "Invalid request."}, HTTPStatus.BAD_REQUEST)
+        link_id = match.group(1)
+        with TESTING_LINKS_LOCK:
+            links = load_testing_links()
+            index = next((i for i, item in enumerate(links) if item.get("id") == link_id), None)
+            if index is None:
+                return self.json({"error": "Link not found."}, HTTPStatus.NOT_FOUND)
+            try:
+                updated = normalize_testing_link(payload, links[index])
+            except ValueError as error:
+                return self.json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
+            if any(item.get("slug") == updated["slug"] and item.get("id") != link_id for item in links):
+                return self.json({"error": "That link name is already in use."}, HTTPStatus.CONFLICT)
+            links[index] = updated
+            save_testing_links(links)
+        return self.json({"ok": True, "link": owner_testing_link(updated)})
+
+    def do_DELETE(self):
+        path = unquote(urlparse(self.path).path)
+        match = re.fullmatch(r"/api/testingstuff/links/([^/]+)", path)
+        if not match:
+            return self.json({"error": "Not found."}, HTTPStatus.NOT_FOUND)
+        if not authorized(self):
+            return self.json({"error": "Owner access required."}, HTTPStatus.UNAUTHORIZED)
+        link_id = match.group(1)
+        with TESTING_LINKS_LOCK:
+            links = load_testing_links()
+            remaining = [item for item in links if item.get("id") != link_id]
+            if len(remaining) == len(links):
+                return self.json({"error": "Link not found."}, HTTPStatus.NOT_FOUND)
+            save_testing_links(remaining)
+        return self.json({"ok": True})
 
 
 if __name__ == "__main__":
