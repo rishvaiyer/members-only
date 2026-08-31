@@ -194,8 +194,8 @@ def normalize_testing_link(payload: dict, existing: dict | None = None) -> dict:
     }
 
 
-def issue_owner_session(handler: BaseHTTPRequestHandler, password: str):
-    expected = os.environ.get("PENTELL_EDITOR_PASSWORD", "")
+def issue_owner_session(handler: BaseHTTPRequestHandler, password: str, variable_name: str):
+    expected = os.environ.get(variable_name, "")
     if not expected or not hmac.compare_digest(password, expected):
         return handler.json({"error": "Owner access denied."}, HTTPStatus.UNAUTHORIZED)
     token = secrets.token_urlsafe(32)
@@ -377,8 +377,10 @@ class Handler(BaseHTTPRequestHandler):
             payload = self.read_json()
         except (ValueError, json.JSONDecodeError):
             return self.json({"error": "Invalid request."}, HTTPStatus.BAD_REQUEST)
-        if path in {"/api/pentell/login", "/api/testingstuff/login"}:
-            return issue_owner_session(self, str(payload.get("password", "")))
+        if path == "/api/pentell/login":
+            return issue_owner_session(self, str(payload.get("password", "")), "PENTELL_EDITOR_PASSWORD")
+        if path == "/api/testingstuff/login":
+            return issue_owner_session(self, str(payload.get("password", "")), "TESTINGSTUFF_EDITOR_PASSWORD")
         if path == "/api/testingstuff/logout":
             raw = self.headers.get("Cookie", "")
             token = next((part.split("=", 1)[1] for part in raw.split("; ") if part.startswith(f"{SESSION_COOKIE}=")), "")

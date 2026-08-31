@@ -3,6 +3,7 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from unittest import mock
 
 IMPORT_DATA_DIR = tempfile.TemporaryDirectory()
 os.environ["PENTELL_DATA_DIR"] = IMPORT_DATA_DIR.name
@@ -50,6 +51,21 @@ class TestingStuffLinkTests(unittest.TestCase):
         self.assertFalse(server.testing_link_active(expired))
         self.assertTrue(server.testing_link_active(permanent))
         self.assertFalse(server.testing_link_active({"expires_at": "invalid"}))
+
+    def test_testing_manager_uses_its_own_password_variable(self):
+        class Handler:
+            def json(self, payload, status=200, extra=None):
+                return payload, int(status), extra
+
+        with mock.patch.dict(os.environ, {
+            "PENTELL_EDITOR_PASSWORD": "pentell-only",
+            "TESTINGSTUFF_EDITOR_PASSWORD": "testing-only",
+        }):
+            denied = server.issue_owner_session(Handler(), "pentell-only", "TESTINGSTUFF_EDITOR_PASSWORD")
+            allowed = server.issue_owner_session(Handler(), "testing-only", "TESTINGSTUFF_EDITOR_PASSWORD")
+
+        self.assertEqual(denied[1], 401)
+        self.assertTrue(allowed[0]["ok"])
 
 
 if __name__ == "__main__":
